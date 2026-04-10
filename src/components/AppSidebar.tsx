@@ -1,7 +1,7 @@
-import { Home, Building2, Users, FolderOpen, Newspaper, Link, ChevronDown } from "lucide-react";
+import { Home, Building2, Users, FolderOpen, Newspaper, Link } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import hubLogo from "@/assets/hub-logo.png";
+import iwosanLogo from "@/assets/iwosan-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainNav = [
-  { title: "Dashboard", url: "/", icon: Home },
+  { title: "Home", url: "/", icon: Home },
   { title: "About Iwosan", url: "/about", icon: Building2 },
   { title: "Subsidiaries", url: "/subsidiaries", icon: Link },
   { title: "Resources", url: "/resources", icon: FolderOpen },
@@ -28,17 +28,15 @@ const mainNav = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const location = useLocation();
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <img src={hubLogo} alt="Iwosan Innovation Hub" className="h-8 w-auto shrink-0" />
+          <img src={iwosanLogo} alt="Iwosan Healthcare" className="h-8 w-auto shrink-0" />
           {!collapsed && (
             <div className="animate-fade-in">
-              <p className="font-semibold text-sm text-sidebar-foreground">Innovation Hub</p>
-              <p className="text-xs text-sidebar-foreground/60">Iwosan Healthcare</p>
+              <p className="font-sans font-semibold text-sm text-sidebar-foreground">Innovation Hub</p>
             </div>
           )}
         </div>
@@ -46,7 +44,9 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50">Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/40 font-sans uppercase text-[10px] tracking-widest">
+            Menu
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNav.map((item) => (
@@ -55,7 +55,7 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="hover:bg-sidebar-accent/50"
+                      className="hover:bg-sidebar-accent/60 font-sans"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
                       <item.icon className="mr-2 h-4 w-4" />
@@ -71,7 +71,9 @@ export function AppSidebar() {
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         {!collapsed && (
-          <p className="text-xs text-sidebar-foreground/40">© 2024 Iwosan Healthcare Systems</p>
+          <p className="text-[10px] font-sans text-sidebar-foreground/30 tracking-wide">
+            © 2024 Iwosan Healthcare Systems
+          </p>
         )}
       </SidebarFooter>
     </Sidebar>
