@@ -1,6 +1,7 @@
 import { Home, Building2, Users, FolderOpen, Newspaper, Link, ChevronDown } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import hubLogo from "@/assets/hub-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -33,9 +34,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg gradient-accent flex items-center justify-center shrink-0">
-            <span className="text-accent-foreground font-bold text-sm">IH</span>
-          </div>
+          <img src={hubLogo} alt="Iwosan Innovation Hub" className="h-8 w-auto shrink-0" />
           {!collapsed && (
             <div className="animate-fade-in">
               <p className="font-semibold text-sm text-sidebar-foreground">Innovation Hub</p>
