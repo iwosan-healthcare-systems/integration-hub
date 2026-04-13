@@ -3,13 +3,6 @@ import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { newsItems } from "@/data/hub-data";
 import { Clock } from "lucide-react";
 import { useState } from "react";
-import hospitalImg from "@/assets/hospital-interior.jpg";
-import diagnosticsImg from "@/assets/diagnostics.jpg";
-import teamImg from "@/assets/team-photo.jpg";
-import innovationImg from "@/assets/innovation-bg.jpg";
-import iwosanAlaro from "@/assets/iwosan_alaro.jpg";
-
-const images = [iwosanAlaro, diagnosticsImg, teamImg, innovationImg, hospitalImg, diagnosticsImg, teamImg];
 const categories = ["All", ...Array.from(new Set(newsItems.map((n) => n.category)))];
 
 const NewsPage = () => {
@@ -52,7 +45,7 @@ const NewsPage = () => {
           <AnimateOnScroll>
             <article className="grid lg:grid-cols-2 gap-8 mb-14 cursor-pointer group">
               <div className="rounded-2xl overflow-hidden img-zoom h-72 lg:h-auto">
-                <img src={images[0]} alt={filtered[0].title} className="w-full h-full object-cover" loading="lazy" />
+                <img src={filtered[0].image} alt={filtered[0].title} className="w-full h-full object-cover" loading="lazy" />
               </div>
               <div className="flex flex-col justify-center">
                 <div className="flex items-center gap-3 mb-3">
@@ -76,7 +69,7 @@ const NewsPage = () => {
             <AnimateOnScroll key={item.title} delay={i * 0.1}>
               <article className="group cursor-pointer">
                 <div className="h-48 rounded-xl overflow-hidden mb-4 img-zoom">
-                  <img src={images[(i + 1) % images.length]} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                  <img src={item.image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
                 </div>
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-[10px] font-sans uppercase tracking-widest text-accent font-medium">{item.category}</span>

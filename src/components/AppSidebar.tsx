@@ -1,6 +1,5 @@
 import { Home, Building2, Users, FolderOpen, Newspaper, Link } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
 import iwosanLogo from "@/assets/iwosan_logo.jpg";
 
 import {
@@ -31,34 +30,30 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
+    <Sidebar collapsible="icon" className="bg-sidebar/95 border-r border-sidebar-border shadow-sm">
+      <SidebarHeader className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <img src={iwosanLogo} alt="Iwosan Healthcare" className="h-8 w-auto shrink-0" />
-          {!collapsed && (
-            <div className="animate-fade-in">
-            </div>
-          )}
+          <img src={iwosanLogo} alt="Iwosan Healthcare" className="h-9 w-auto shrink-0" />
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-y-auto px-2 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/40 font-sans uppercase text-[10px] tracking-widest">
+          <SidebarGroupLabel className="text-sidebar-foreground/40 font-sans uppercase text-[10px] tracking-widest mb-3">
             Menu
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {mainNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.title} className="rounded-2xl">
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="hover:bg-sidebar-accent/60 font-sans"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                      className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-sidebar-foreground transition-colors duration-200 hover:bg-sidebar-accent/20 hover:text-foreground"
+                      activeClassName="bg-sidebar-accent text-foreground font-semibold"
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
+                      <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
@@ -71,8 +66,8 @@ export function AppSidebar() {
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         {!collapsed && (
-          <p className="text-[10px] font-sans text-sidebar-foreground/30 tracking-wide">
-            © {new Date().getFullYear()}  Iwosan Healthcare Systems
+          <p className="text-[10px] font-sans text-sidebar-foreground/40 tracking-wide">
+            © {new Date().getFullYear()} Iwosan Healthcare Systems
           </p>
         )}
       </SidebarFooter>

@@ -5,6 +5,7 @@ import { Heart, Shield, BookOpen, Lightbulb, Globe, Target, Eye, Compass } from 
 import teamImg from "@/assets/team-photo.jpg";
 import hospitalImg from "@/assets/hospital-interior.jpg";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const valueIcons: Record<string, any> = { Heart, Shield, BookOpen, Lightbulb, Globe };
 
 const AboutPage = () => {

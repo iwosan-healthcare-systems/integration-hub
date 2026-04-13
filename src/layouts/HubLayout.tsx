@@ -1,10 +1,12 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TopNavbar } from "@/components/TopNavbar";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 export function HubLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
+      <ScrollToTop />
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">

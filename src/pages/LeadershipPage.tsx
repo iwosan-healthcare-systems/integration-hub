@@ -27,11 +27,11 @@ const LeadershipPage = () => {
           </p>
         </AnimateOnScroll>
 
-        <div className="space-y-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {leadershipTeam.map((member, i) => (
-            <AnimateOnScroll key={member.name} delay={i * 0.12} direction={i % 2 === 0 ? "left" : "right"}>
-              <div className="flex flex-col md:flex-row gap-6 items-start group">
-                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300 shrink-0">
+            <AnimateOnScroll key={member.name} delay={i * 0.1}>
+              <div className="group text-center">
+                <div className="w-32 h-32 mx-auto rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300 mb-4">
                   {member.image ? (
                     <img
                       src={member.image}
@@ -47,12 +47,10 @@ const LeadershipPage = () => {
                     </div>
                   )}
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-serif font-semibold text-xl text-foreground mb-1 group-hover:text-accent transition-colors">
-                    {member.name}
-                  </h3>
-                  <p className="font-sans text-sm text-accent font-medium mb-4">{member.role}</p>
-                </div>
+                <h3 className="font-serif font-semibold text-lg text-foreground mb-1 group-hover:text-accent transition-colors">
+                  {member.name}
+                </h3>
+                <p className="font-sans text-sm text-accent font-medium">{member.role}</p>
               </div>
             </AnimateOnScroll>
           ))}

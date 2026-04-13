@@ -9,6 +9,7 @@ import diagnosticsImg from "@/assets/diagnostics.jpg";
 import { newsItems, subsidiaries, quickLinks } from "@/data/hub-data";
 import { Mail, Headphones, Calendar, CreditCard, GraduationCap } from "lucide-react";
 
+const latestNews = [...newsItems].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const iconMap: Record<string, any> = { Mail, Users, Headphones, Calendar, CreditCard, GraduationCap };
 
@@ -61,8 +62,8 @@ const Index = () => {
       <section className="bg-primary py-8">
         <div className="max-w-6xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
-            { value: "20+", label: "Years of Excellence" },
-            { value: "5", label: "Hospital Locations" },
+            { value: "40+", label: "Years of Excellence" },
+            { value: "5", label: "Locations" },
             { value: "1M+", label: "Patients Served" },
             { value: "2000+", label: "Healthcare Staff" },
           ].map((stat, i) => (
@@ -83,7 +84,7 @@ const Index = () => {
           <h2 className="text-3xl font-bold mb-2">Quick Access</h2>
           <div className="section-divider mb-10" />
         </AnimateOnScroll>
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-6">
+        <div className="grid grid-cols-3 md:grid-cols-3 gap-6">
           {quickLinks.map((link, i) => {
             const Icon = iconMap[link.icon];
             return (
@@ -232,12 +233,12 @@ const Index = () => {
           </div>
         </AnimateOnScroll>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {newsItems.slice(0, 3).map((item, i) => (
+          {latestNews.slice(0, 3).map((item, i) => (
             <AnimateOnScroll key={item.title} delay={i * 0.1}>
               <article className="group cursor-pointer">
                 <div className="h-52 rounded-xl bg-muted overflow-hidden mb-4 img-zoom">
                   <img
-                    src={i === 0 ? hospitalImg : i === 1 ? diagnosticsImg : teamImg}
+                    src={item.image}
                     alt={item.title}
                     className="w-full h-full object-cover"
                     loading="lazy"

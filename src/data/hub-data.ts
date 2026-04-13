@@ -4,6 +4,9 @@ import lagoonLogo from "@/assets/logos/lagoon-logo.png";
 import paelonLogo from "@/assets/logos/paelon-logo.png";
 import iasoLogo from "@/assets/logos/iaso-logo.png";
 import euracareLogo from "@/assets/logos/euracare-logo.svg";
+import adebiyiImg from "@/assets/adebiyi.jpg";
+import mukoroImg from "@/assets/mukoro.jpg";
+import iwosanAlaroImg from "@/assets/iwosan_alaro.jpg";
 
 export const coreValues = [
   {
@@ -120,12 +123,12 @@ export const leadershipTeam = [
   {
     name: "Idowu Adebiyi",
     role: "Group Head, Strategic Projects",
-    image: "@/assets/adebiyi.jpg",
+    image: adebiyiImg,
   },
   {
     name: "Isaiah Mukoro",
     role: "Group Head, Financial",
-    image: "@/assets/mukoro.jpg",
+    image: mukoroImg,
   }
 ];
 
@@ -177,64 +180,113 @@ export const resources = [
 export const newsItems = [
   {
     title: "Iwosan Expands Healthcare Services into Alaro City",
-    excerpt: "The group announces it is now part of the Alaro City community. Residents and businesses can now benefit from closer access to quality healthcare services within the city.",
+    excerpt: "The group announces it is now part of the Alaro City community. Residents and businesses can now benefit from closer access to quality healthcare services within the integrated city.",
     date: "March 30, 2026",
-    category: "New_Expansion",
-    featured: true,
-  },
-  {
-    title: "Iwosan Expands Healthcare Services Across Southwest Nigeria",
-    excerpt: "The group announces plans to open three new specialist clinics in Lagos, Ibadan, and Abeokuta as part of its expansion strategy.",
-    date: "April 5, 2024",
     category: "Expansion",
     featured: true,
+    image: iwosanAlaroImg,
   },
   {
-    title: "New Partnership with Global Health Organizations",
-    excerpt: "Iwosan Healthcare Systems signs MoU with leading international health organizations to improve healthcare standards.",
-    date: "March 28, 2024",
-    category: "Partnerships",
-    featured: false,
-  },
-  {
-    title: "Annual Staff Town Hall Meeting Highlights",
-    excerpt: "Key takeaways from the 2024 Town Hall including new benefits, growth plans, and employee recognition awards.",
-    date: "March 15, 2024",
-    category: "Internal",
-    featured: false,
-  },
-  {
-    title: "Iwosan Launches Digital Health Records System",
-    excerpt: "State-of-the-art electronic health records system deployed across all facilities for improved patient care coordination.",
-    date: "March 1, 2024",
-    category: "Technology",
+    title: "Iwosan Acquires Paelon Memorial Hospital",
+    excerpt: "Iwosan Investments Limited has acquired Paelon Memorial Hospital, a leading multi-specialist healthcare provider in Lagos, further deepening its leadership in Nigeria's private healthcare sector.",
+    date: "November 12, 2025",
+    category: "Acquisition",
     featured: true,
+    image: "https://cdn.vanguardngr.com/wp-content/uploads/2025/01/hospital.jpg",
   },
   {
-    title: "Healthcare Excellence Awards 2024",
-    excerpt: "Iwosan team members recognized for outstanding contributions to patient care and medical innovation.",
-    date: "February 20, 2024",
-    category: "Awards",
+    title: "Doctors' Forum: Management of Fibroids and Uterine Prolapse",
+    excerpt: "Iwosan Lagoon Hospitals hosted an educational afternoon focused on clinical approaches to managing fibroids and uterine prolapse, featuring expert speakers and collaborative discussions among medical professionals.",
+    date: "August 13, 2025",
+    category: "Medical Education",
     featured: false,
+    image: "https://www.lagoonhospitals.com/wp-content/uploads/2025/11/Screenshot-2025-11-08-160347.png",
   },
   {
-    title: "Community Health Outreach Program Success",
-    excerpt: "Over 5,000 community members benefited from the quarterly free health screening and vaccination drive.",
-    date: "February 10, 2024",
+    title: "Doctors' Forum: Peripheral Artery Disease & Brain Tumors",
+    excerpt: "A day of brilliance featuring Prof. Olurotimi Badero (Interventional Cardiologist) and Dr. Tayo Ojo (Consultant Neurosurgeon) discussing Peripheral Artery Disease and Brain Tumors at Iwosan Lagoon Hospitals.",
+    date: "July 1, 2025",
+    category: "Medical Education",
+    featured: false,
+    image: "https://www.lagoonhospitals.com/wp-content/uploads/2025/11/Doctors-Forum-29.webp",
+  },
+  {
+    title: "Tune In to \"Your Health and You\" on Classic FM 97.3",
+    excerpt: "Iwosan Lagoon Hospitals launches a weekly health awareness program every Tuesday at 5:30 PM on Classic FM 97.3, featuring expert medical insights to help Nigerians make better-informed healthcare decisions.",
+    date: "May 15, 2025",
     category: "Community",
     featured: false,
+    image: "https://www.lagoonhospitals.com/wp-content/uploads/2025/05/Radio-Talk-04.jpg",
+  },
+  {
+    title: "Iwosan Acquires Euracare Multi-Specialist Hospital",
+    excerpt: "Iwosan Investments Limited has acquired Euracare Multi-specialist Hospital in Victoria Island, Lagos, strengthening its position as a major player in Nigeria's healthcare sector through shared resources and expertise.",
+    date: "March 12, 2025",
+    category: "Acquisition",
+    featured: true,
+    image: "https://dailypost.ng/wp-content/uploads/2025/03/Screenshot_20250312_093955_Zoho-Mail.jpg",
+  },
+  {
+    title: "Paelon Memorial: Understanding hMPV — Stay Informed, Stay Healthy",
+    excerpt: "The Chinese CDC reported a sharp increase in respiratory viral infections including the Human Metapneumovirus (hMPV) since December 2024. Experts assure that a COVID-like pandemic is unlikely, as hMPV has circulated for decades.",
+    date: "January 15, 2025",
+    category: "Health Advisory",
+    featured: false,
+    image: "https://www.paelonmemorial.com/wp-content/uploads/elementor/thumbs/hmpv-1-r0flph5vrkkmzn1j1w5obd11w00gkmcuqu09qsx4jc.webp",
+  },
+  {
+    title: "Paelon Memorial: Cervical Cancer Awareness & Prevention",
+    excerpt: "Cervical cancer is a gynaecological cancer that can be prevented through HPV vaccination and regular Pap smear testing every 2–3 years — Paelon Memorial Hospital encourages all eligible women to get screened.",
+    date: "January 10, 2025",
+    category: "Health Advisory",
+    featured: false,
+    image: "https://www.paelonmemorial.com/wp-content/uploads/2025/01/Cervical-cancer-1024x1024.jpg",
+  },
+  {
+    title: "Governor Sanwo-Olu Performs Groundbreaking of IASO Medipark Lagos",
+    excerpt: "Governor Babajide Sanwo-Olu attended the groundbreaking for Lagos Medipark, a 140-bed multi-specialist hospital in Ikoyi set to be completed within two years, with 20% of beds reserved for Lagos State's indigent population.",
+    date: "December 14, 2024",
+    category: "Infrastructure",
+    featured: true,
+    image: "https://cdn.pmnewsnigeria.com/wp-content/uploads/2024/12/IMG-20241214-WA0054.jpg",
+  },
+  {
+    title: "Breast Cancer Awareness Walk 2024",
+    excerpt: "Iwosan Lagoon Hospitals hosted a community walk demonstrating shared commitment to breast cancer awareness, with mammograms, breast scans, and consultations offered at reduced rates through November.",
+    date: "November 18, 2024",
+    category: "Community",
+    featured: false,
+    image: "https://www.lagoonhospitals.com/wp-content/uploads/2024/11/Breast-Cancer-Awareness.jpg",
+  },
+  {
+    title: "Iwosan Lagoon Hospitals Achieves Historic Fifth JCI Gold Seal",
+    excerpt: "Iwosan Lagoon Hospitals earned the Joint Commission International Gold Seal of Approval for the fifth consecutive time, reaffirming its commitment to world-class patient care and global healthcare standards.",
+    date: "November 5, 2024",
+    category: "Awards",
+    featured: false,
+    image: "https://dailypost.ng/wp-content/uploads/2024/11/Iwosan-Logo.png",
+  },
+  {
+    title: "Governor Sanwo-Olu Commissions Iwosan Lagoon Hospitals Victoria Island",
+    excerpt: "Governor Babajide Sanwo-Olu officially unveiled the 27-bed multi-specialist facility in Victoria Island — the group's Centre of Excellence for Cardiovascular Care, featuring a state-of-the-art catheterization laboratory.",
+    date: "January 24, 2024",
+    category: "Expansion",
+    featured: false,
+    image: "https://www.lagoonhospitals.com/wp-content/uploads/2024/01/WhatsApp-Image-2024-01-29-at-8.41.49-AM.jpeg",
   },
 ];
 
 export const milestones = [
-  { year: "2000", event: "Iwosan Healthcare Systems founded with a vision to transform Nigerian healthcare." },
-  { year: "2005", event: "Acquired Lagoon Hospitals, establishing a premier multi-specialty hospital network." },
-  { year: "2010", event: "Expanded to five hospital locations across Lagos State." },
-  { year: "2015", event: "Launched Iwosan Diagnostics and Pharmacy divisions." },
-  { year: "2018", event: "Established partnerships with global healthcare institutions." },
-  { year: "2020", event: "Led COVID-19 response efforts across Nigeria." },
-  { year: "2023", event: "Launched Innovation Hub to drive digital healthcare transformation." },
-  { year: "2024", event: "Expanding services to Southwest Nigeria with new specialist clinics." },
+  { year: "1986", event: "Lagoon Hospitals founded in Apapa, Lagos, under the Hygeia Group, providing primary and tertiary healthcare services." },
+  { year: "2000", event: "Lagoon Hospitals expanded to Ikeja, growing its footprint across Lagos State." },
+  { year: "2002", event: "Lagoon Hospitals opened its Victoria Island branch, broadening access to specialist care." },
+  { year: "2011", event: "Lagoon Hospitals became the first hospital in Sub-Saharan Africa to earn the JCI Gold Seal of Approval." },
+  { year: "2014", event: "Performed the first open heart surgery in Nigeria and achieved JCI re-accreditation." },
+  { year: "2019", event: "Iwosan Investments Limited co-founded by Fola Laoye and Fola Adeola with a mission to transform Nigerian healthcare through long-term investment." },
+  { year: "2021", event: "Iwosan acquired Lagoon Hospitals, rebranding it as Iwosan Lagoon Hospitals and beginning major facility upgrades." },
+  { year: "2024", event: "Launched a cutting-edge 27-bed Centre of Excellence for Cardiology; achieved historic fifth JCI Gold Seal of Approval." },
+  { year: "2025", event: "Acquired Euracare Multi-Specialist Hospital (March) and Paelon Memorial Hospital (November), deepening its leadership in Nigeria's healthcare sector." },
+  { year: "2026", event: "Expanded into Alaro City, bringing quality healthcare services closer to residents and businesses within the integrated city community." },
 ];
 
 export const quickLinks = [
