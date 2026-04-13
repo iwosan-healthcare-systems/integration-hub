@@ -9,7 +9,7 @@ import teamImg from "@/assets/team-photo.jpg";
 import innovationImg from "@/assets/innovation-bg.jpg";
 import iwosanAlaro from "@/assets/iwosan-alaro.jpg";
 
-const images = [iwosanAlaro, diagnosticsImg, teamImg, innovationImg, hospitalImg, diagnosticsImg];
+const images = [iwosanAlaro, diagnosticsImg, teamImg, innovationImg, hospitalImg, diagnosticsImg, teamImg];
 const categories = ["All", ...Array.from(new Set(newsItems.map((n) => n.category)))];
 
 const NewsPage = () => {

@@ -169,7 +169,7 @@ export const newsItems = [
     title: "Iwosan Expands Healthcare Services into Alaro City",
     excerpt: "The group announces it is now part of the Alaro City community. Residents and businesses can now benefit from closer access to quality healthcare services within the city.",
     date: "March 30, 2026",
-    category: "Expansion",
+    category: "New_Expansion",
     featured: true,
   },
   {
