@@ -56,7 +56,7 @@ export const subsidiaries = [
   {
     name: "Eurapharma Care Services Nigeria Limited",
     description: "Healthcare services and pharmaceutical care provider delivering medical supply solutions and patient support services across Nigeria.",
-    category: "Healthcare Services",
+    category: "Hospital",
     url: "https://www.euracarehealth.com",
     color: "primary",
     logo: euracareLogo,
