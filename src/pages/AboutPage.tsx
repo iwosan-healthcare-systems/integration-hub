@@ -2,7 +2,6 @@ import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { coreValues, milestones } from "@/data/hub-data";
 import { Heart, Shield, BookOpen, Lightbulb, Globe, Target, Eye, Compass } from "lucide-react";
-import teamImg from "@/assets/team-photo.jpg";
 import hospitalImg from "@/assets/hospital-interior.jpg";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,10 +12,7 @@ const AboutPage = () => {
     <HubLayout>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] flex items-end overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={teamImg} alt="Iwosan Team" className="w-full h-full object-cover" />
-          <div className="overlay-gradient absolute inset-0" />
-        </div>
+        <div className="absolute inset-0 bg-about-header" />
         <div className="relative z-10 px-8 lg:px-16 pb-12 max-w-4xl">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">About Us</p>

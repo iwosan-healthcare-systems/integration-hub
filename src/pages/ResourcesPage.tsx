@@ -21,7 +21,7 @@ const ResourcesPage = () => {
   return (
     <HubLayout>
       {/* Header */}
-      <section className="bg-primary py-16 px-8 lg:px-16">
+      <section className="bg-resources-header py-16 px-8 lg:px-16 relative overflow-hidden">
         <div className="max-w-4xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Knowledge Base</p>

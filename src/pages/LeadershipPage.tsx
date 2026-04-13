@@ -1,16 +1,11 @@
 import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { leadershipTeam } from "@/data/hub-data";
-import teamImg from "@/assets/team-photo.jpg";
-
 const LeadershipPage = () => {
   return (
     <HubLayout>
       <section className="relative h-[40vh] min-h-[300px] flex items-end overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={teamImg} alt="Leadership" className="w-full h-full object-cover" />
-          <div className="overlay-gradient absolute inset-0" />
-        </div>
+        <div className="absolute inset-0 bg-leadership-header" />
         <div className="relative z-10 px-8 lg:px-16 pb-12">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Our Team</p>

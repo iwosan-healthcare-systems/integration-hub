@@ -1,13 +1,14 @@
 import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
-import { ArrowRight, Heart, Stethoscope, BookOpen, Building2, Users, Newspaper } from "lucide-react";
+import { ArrowRight, Heart, Stethoscope, BookOpen, Building2, Users, Newspaper, MapPin, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import hospitalImg from "@/assets/hospital-interior.jpg";
 import teamImg from "@/assets/team-photo.jpg";
 import innovationImg from "@/assets/innovation-bg.jpg";
 import diagnosticsImg from "@/assets/diagnostics.jpg";
 import { newsItems, subsidiaries, quickLinks } from "@/data/hub-data";
-import { Mail, Headphones, Calendar, CreditCard, GraduationCap } from "lucide-react";
+import iwosanLogo from "@/assets/iwosan_logo.jpg";
+import { Headphones, Calendar, CreditCard, GraduationCap } from "lucide-react";
 
 const latestNews = [...newsItems].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -18,10 +19,7 @@ const Index = () => {
     <HubLayout>
       {/* Hero */}
       <section className="relative min-h-[75vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={hospitalImg} alt="" className="w-full h-full object-cover" width={1920} height={1080} />
-          <div className="overlay-gradient absolute inset-0" />
-        </div>
+        <div className="absolute inset-0 bg-hero-innovation" />
         <div className="relative z-10 px-8 lg:px-16 py-20 max-w-3xl">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs mb-4 font-medium">
@@ -259,37 +257,97 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-primary py-12 px-8 lg:px-16">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
-          <div>
-            <h4 className="font-sans text-primary-foreground font-semibold mb-3">Iwosan Innovation Hub</h4>
-            <p className="text-sm font-sans text-primary-foreground/50 leading-relaxed">
-              Your centralized digital hub for healthcare excellence,
-              innovation, and collaboration.
+      <footer className="bg-primary border-t border-primary-foreground/10">
+        <div className="max-w-6xl mx-auto px-8 lg:px-16 py-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+
+          {/* Brand */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
+              <img src={iwosanLogo} alt="Iwosan" className="h-9 w-auto rounded-lg" />
+              <span className="font-serif font-semibold text-primary-foreground text-base leading-tight">
+                Iwosan<br />
+                <span className="text-accent font-sans font-normal text-xs tracking-widest uppercase">Innovation Hub</span>
+              </span>
+            </div>
+            <p className="text-sm font-sans text-primary-foreground/50 leading-relaxed max-w-xs">
+              Your centralized digital hub for healthcare excellence, innovation, and collaboration across the Iwosan network.
             </p>
-          </div>
-          <div>
-            <h4 className="font-sans text-primary-foreground font-semibold mb-3">Quick Links</h4>
-            <div className="space-y-2">
-              {["/about", "/subsidiaries", "/resources", "/news"].map((url) => (
-                <Link key={url} to={url} className="block text-sm font-sans text-primary-foreground/50 hover:text-accent transition-colors">
-                  {url.replace("/", "").replace(/-/g, " ").replace(/^\w/, (c) => c.toUpperCase()) || "Home"}
-                </Link>
-              ))}
+            <div className="flex items-center gap-2 mt-5">
+              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-xs font-sans text-primary-foreground/40 tracking-wide">Transforming Nigerian Healthcare</span>
             </div>
           </div>
+
+          {/* Navigation */}
           <div>
-            <h4 className="font-sans text-primary-foreground font-semibold mb-3">Contact</h4>
-            <p className="text-sm font-sans text-primary-foreground/50">
-              Lagos, Nigeria<br />
-              info@iwosanhealth.com
-            </p>
+            <h4 className="font-sans text-primary-foreground/80 font-semibold text-xs uppercase tracking-widest mb-4">
+              Navigate
+            </h4>
+            <nav className="space-y-2.5">
+              {[
+                { label: "Home", url: "/" },
+                { label: "About Iwosan", url: "/about" },
+                { label: "Our Platforms", url: "/subsidiaries" },
+                { label: "Leadership", url: "/leadership" },
+                { label: "Resources", url: "/resources" },
+                { label: "News & Updates", url: "/news" },
+              ].map(({ label, url }) => (
+                <Link
+                  key={url}
+                  to={url}
+                  className="flex items-center gap-1.5 text-sm font-sans text-primary-foreground/50 hover:text-accent transition-colors duration-200 group"
+                >
+                  <ArrowRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className="font-sans text-primary-foreground/80 font-semibold text-xs uppercase tracking-widest mb-4">
+              Contact
+            </h4>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2.5">
+                <MapPin className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                <span className="text-sm font-sans text-primary-foreground/50 leading-relaxed">
+                  29 Kofo Abayomi Street,<br />Victoria Island, Lagos, Nigeria
+                </span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Phone className="h-4 w-4 text-accent shrink-0" />
+                <a
+                  href="tel:+2349139352779"
+                  className="text-sm font-sans text-primary-foreground/50 hover:text-accent transition-colors duration-200"
+                >
+                  +234 913 935 2779
+                </a>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Mail className="h-4 w-4 text-accent shrink-0" />
+                <a
+                  href="mailto:info@iwosanhealth.com"
+                  className="text-sm font-sans text-primary-foreground/50 hover:text-accent transition-colors duration-200 break-all"
+                >
+                  info@iwosanhealth.com
+                </a>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-primary-foreground/10">
-          <p className="text-xs font-sans text-primary-foreground/30 text-center">
-            © {new Date().getFullYear()}  Iwosan Healthcare Systems. All rights reserved.
-          </p>
+
+        {/* Bottom bar */}
+        <div className="border-t border-primary-foreground/10">
+          <div className="max-w-6xl mx-auto px-8 lg:px-16 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs font-sans text-primary-foreground/30">
+              © {new Date().getFullYear()} Iwosan Healthcare Systems Limited. All rights reserved.
+            </p>
+            <p className="text-xs font-sans text-primary-foreground/20 tracking-wide uppercase">
+              Transforming Healthcare · Nigeria
+            </p>
+          </div>
         </div>
       </footer>
     </HubLayout>
