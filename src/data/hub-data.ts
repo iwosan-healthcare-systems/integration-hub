@@ -204,7 +204,4 @@ export const quickLinks = [
   { title: "Email Portal", url: "https://mail.iwosanhealth.com", icon: "Mail" },
   { title: "HR System", url: "#", icon: "Users" },
   { title: "IT Support", url: "#", icon: "Headphones" },
-  { title: "Leave Request", url: "#", icon: "Calendar" },
-  { title: "Payroll", url: "#", icon: "CreditCard" },
-  { title: "Learning Portal", url: "#", icon: "GraduationCap" },
 ];
