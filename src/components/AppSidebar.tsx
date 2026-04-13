@@ -1,7 +1,7 @@
 import { Home, Building2, Users, FolderOpen, Newspaper, Link } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import iwosanLogo from "@/assets/iwosan-logo.jpg";
+import iwosanLogo from "@/assets/iwosan_logo.jpg";
 import {
   Sidebar,
   SidebarContent,
