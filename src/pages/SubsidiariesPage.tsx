@@ -3,12 +3,8 @@ import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { subsidiaries } from "@/data/hub-data";
 import { ExternalLink, ArrowUpRight } from "lucide-react";
 import { useState } from "react";
-import hospitalImg from "@/assets/hospital-interior.jpg";
-import diagnosticsImg from "@/assets/diagnostics.jpg";
 import innovationImg from "@/assets/innovation-bg.jpg";
-import teamImg from "@/assets/team-photo.jpg";
 
-const images = [hospitalImg, diagnosticsImg, innovationImg, teamImg, hospitalImg, diagnosticsImg];
 const categories = ["All", ...Array.from(new Set(subsidiaries.map((s) => s.category)))];
 
 const SubsidiariesPage = () => {
@@ -66,13 +62,17 @@ const SubsidiariesPage = () => {
                 className="group block hover-lift"
               >
                 <div className="flex gap-5 items-start">
-                  <div className="w-28 h-28 rounded-xl overflow-hidden shrink-0 img-zoom">
-                    <img
-                      src={images[i % images.length]}
-                      alt={sub.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                  <div className="w-28 h-28 rounded-xl overflow-hidden shrink-0 bg-muted flex items-center justify-center">
+                    {sub.logo ? (
+                      <img
+                        src={sub.logo}
+                        alt={`${sub.name} logo`}
+                        className="max-w-full max-h-full object-contain p-3"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-slate-100" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 pt-1">
                     <div className="flex items-center justify-between mb-1">

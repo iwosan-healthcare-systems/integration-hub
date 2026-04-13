@@ -1,4 +1,9 @@
 import { Building2, Heart, Stethoscope, Users, FileText, BookOpen, GraduationCap, Newspaper, Bell, TrendingUp } from "lucide-react";
+import iwosanLogo from "@/assets/iwosan-logo.png";
+import lagoonLogo from "@/assets/logos/lagoon-logo.png";
+import paelonLogo from "@/assets/logos/paelon-logo.png";
+import iasoLogo from "@/assets/logos/iaso-logo.png";
+import euracareLogo from "@/assets/logos/euracare-logo.svg";
 
 export const coreValues = [
   {
@@ -30,46 +35,44 @@ export const coreValues = [
 
 export const subsidiaries = [
   {
-    name: "Iwosan Lagoon Hospitals",
-    description: "Premier multi-specialty hospital delivering world-class healthcare services across Nigeria.",
-    category: "Hospitals",
-    url: "https://lagoonhospitals.com",
-    color: "accent",
-  },
-  {
-    name: "Iwosan Specialist Hospital",
-    description: "Advanced specialist care with cutting-edge medical technology and experienced physicians.",
-    category: "Hospitals",
-    url: "https://iwosanhealth.com",
-    color: "accent",
-  },
-  {
-    name: "Iwosan Medicare",
-    description: "Comprehensive health insurance and managed care solutions for individuals and organizations.",
-    category: "Health Plans",
-    url: "https://iwosanhealth.com",
+    name: "Iwosan Healthcare Systems Limited",
+    description: "Parent company and lead promoter of the Iwosan network, delivering integrated healthcare operations, digital health platforms, and strategic Nigerian partnerships.",
+    category: "Corporate",
+    url: "https://www.iwosanhealth.com",
     color: "primary",
+    logo: iwosanLogo,
   },
   {
-    name: "Iwosan Diagnostics",
-    description: "State-of-the-art diagnostic laboratory services with rapid and accurate results.",
-    category: "Diagnostics",
-    url: "https://iwosanhealth.com",
-    color: "primary",
-  },
-  {
-    name: "Iwosan Pharmacy",
-    description: "Full-service pharmacy providing quality medications and pharmaceutical care.",
-    category: "Pharmacy",
-    url: "https://iwosanhealth.com",
+    name: "Iwosan Lagoon Hospitals Limited",
+    description: "Premier multi-specialty hospital in Lagos offering world-class inpatient, outpatient, emergency, and specialist care.",
+    category: "Hospital",
+    url: "https://www.lagoonhospitals.com",
     color: "accent",
+    logo: lagoonLogo,
   },
   {
-    name: "Iwosan Training Academy",
-    description: "Healthcare education and professional development programs for medical practitioners.",
-    category: "Education",
-    url: "https://iwosanhealth.com",
+    name: "Eurapharma Care Services Nigeria Limited",
+    description: "Healthcare services and pharmaceutical care provider delivering medical supply solutions and patient support services across Nigeria.",
+    category: "Healthcare Services",
+    url: "https://www.euracare.com.ng",
     color: "primary",
+    logo: euracareLogo,
+  },
+  {
+    name: "Paelon Memorial Hospital Limited",
+    description: "Specialist hospital focused on emergency care, maternal health, diagnostics, and patient-centered clinical services.",
+    category: "Hospital",
+    url: "https://www.paelonhospital.com",
+    color: "accent",
+    logo: paelonLogo,
+  },
+  {
+    name: "IASO Medipark Limited",
+    description: "A 140-bed integrated multi-specialty medical campus in Ikoyi, Lagos, offering hospital care, diagnostics, training, and a modern healthcare ecosystem.",
+    category: "Medical Campus",
+    url: "https://www.iasomedipark.com",
+    color: "primary",
+    logo: iasoLogo,
   },
 ];
 
