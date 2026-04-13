@@ -30,16 +30,28 @@ const LeadershipPage = () => {
         <div className="space-y-12">
           {leadershipTeam.map((member, i) => (
             <AnimateOnScroll key={member.name} delay={i * 0.12} direction={i % 2 === 0 ? "left" : "right"}>
-              <div className="flex flex-col md:flex-row gap-6 items-start">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent to-secondary flex items-center justify-center shrink-0">
-                  <span className="text-2xl font-serif font-bold text-accent-foreground">
-                    {member.name.split(" ").map((n) => n[0]).join("")}
-                  </span>
+              <div className="flex flex-col md:flex-row gap-6 items-start group">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300 shrink-0">
+                  {member.image ? (
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-accent to-secondary flex items-center justify-center">
+                      <span className="text-2xl font-serif font-bold text-accent-foreground">
+                        {member.name.split(" ").map((n) => n[0]).join("")}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <h3 className="font-serif font-semibold text-xl text-foreground">{member.name}</h3>
-                  <p className="font-sans text-sm text-accent font-medium mb-3">{member.role}</p>
-                  <p className="font-sans text-muted-foreground leading-relaxed max-w-lg">{member.bio}</p>
+                <div className="flex-1">
+                  <h3 className="font-serif font-semibold text-xl text-foreground mb-1 group-hover:text-accent transition-colors">
+                    {member.name}
+                  </h3>
+                  <p className="font-sans text-sm text-accent font-medium mb-4">{member.role}</p>
                 </div>
               </div>
             </AnimateOnScroll>

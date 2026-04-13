@@ -80,42 +80,52 @@ export const leadershipTeam = [
   {
     name: "Fola Adeola",
     role: "Co-Founder & Chairman",
+    image: "https://iwosanhealth.com/static/media/Fola%20Adeola.f05861b789f487b498bc.jpg",
   },
   {
     name: "Fola Laoye",
     role: "Group Managing Director / CEO",
+    image: "https://iwosanhealth.com/static/media/Fola%20Laoye.a6fdfdb7871120a1c227.jpg",
   },
   {
     name: "Oladapo Oshinusi",
     role: "Co-Founder & Board Member",
+    image: "https://iwosanhealth.com/static/media/Dapo%20Oshinusi.860159dcc709ae26f33d.jpg",
   },
   {
     name: "Prof. Nelson Oyesiku",
     role: "Board Member",
+    image: "https://iwosanhealth.com/static/media/Prof%20Nelson%20Oyesiku.a87ef734170a3102e1ec.jpg",
   },
   {
     name: "Mrs Ibukun Awosika",
     role: "Board Member",
+    image: "https://iwosanhealth.com/static/media/ibukun.df8dd87704b7db13b38d.jpg",
   },
     {
     name: "Rotimi Akinde",
     role: "Board Member",
+    image: "https://iwosanhealth.com/static/media/rotimi-akinde.ef08efb9c90a2f35c7f5.png",
   },
   {
     name: "Ademola Adeyemi-Bero",
     role: "Board Member",
+    image: "https://iwosanhealth.com/static/media/adeyemi.148dc6cd3723c1a368b0.png",
   },
   {
     name: "Otunba Bimbo Ashiru",
     role: "Board Member",
+    image: "https://iwosanhealth.com/static/media/bimbo-ashiru.17d308e3a4de10cd13c9.jpg",
   },
   {
     name: "Idowu Adebiyi",
     role: "Group Head, Strategic Projects",
+    image: "@/assets/adebiyi.jpg",
   },
   {
     name: "Isaiah Mukoro",
     role: "Group Head, Financial",
+    image: "@/assets/mukoro.jpg",
   }
 ];
 
