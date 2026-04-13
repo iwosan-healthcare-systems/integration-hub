@@ -7,6 +7,7 @@ import hospitalImg from "@/assets/hospital-interior.jpg";
 import diagnosticsImg from "@/assets/diagnostics.jpg";
 import teamImg from "@/assets/team-photo.jpg";
 import innovationImg from "@/assets/innovation-bg.jpg";
+import iwosanAlaro from "@/assets/iwosan-alaro.jpg";
 
 const images = [hospitalImg, diagnosticsImg, teamImg, innovationImg, hospitalImg, diagnosticsImg];
 const categories = ["All", ...Array.from(new Set(newsItems.map((n) => n.category)))];

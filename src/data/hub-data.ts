@@ -54,7 +54,7 @@ export const subsidiaries = [
     name: "Eurapharma Care Services Nigeria Limited",
     description: "Healthcare services and pharmaceutical care provider delivering medical supply solutions and patient support services across Nigeria.",
     category: "Healthcare Services",
-    url: "https://www.euracare.com.ng",
+    url: "https://www.euracarehealth.com",
     color: "primary",
     logo: euracareLogo,
   },
@@ -78,25 +78,45 @@ export const subsidiaries = [
 
 export const leadershipTeam = [
   {
+    name: "Fola Adeola",
+    role: "Co-Founder & Chairman",
+  },
+  {
     name: "Fola Laoye",
     role: "Group Managing Director / CEO",
-    bio: "Visionary leader driving Iwosan's mission to transform healthcare delivery in Nigeria with global best practices.",
   },
   {
-    name: "Dr. Tokunbo Shitta-Bey",
-    role: "Chief Medical Director",
-    bio: "Experienced medical professional overseeing clinical excellence and patient care standards across all facilities.",
+    name: "Oladapo Oshinusi",
+    role: "Co-Founder & Board Member",
   },
   {
-    name: "Adebayo Ogunlesi",
-    role: "Chief Operating Officer",
-    bio: "Strategic operations leader ensuring seamless service delivery and organizational efficiency.",
+    name: "Prof. Nelson Oyesiku",
+    role: "Board Member",
   },
   {
-    name: "Funmi Adeyemi",
-    role: "Chief Financial Officer",
-    bio: "Finance expert managing sustainable growth and investment strategies for the healthcare group.",
+    name: "Mrs Ibukun Awosika",
+    role: "Board Member",
   },
+    {
+    name: "Rotimi Akinde",
+    role: "Board Member",
+  },
+  {
+    name: "Ademola Adeyemi-Bero",
+    role: "Board Member",
+  },
+  {
+    name: "Otunba Bimbo Ashiru",
+    role: "Board Member",
+  },
+  {
+    name: "Idowu Adebiyi",
+    role: "Group Head, Strategic Projects",
+  },
+  {
+    name: "Isaiah Mukoro",
+    role: "Group Head, Financial",
+  }
 ];
 
 export const resources = [
@@ -145,6 +165,13 @@ export const resources = [
 ];
 
 export const newsItems = [
+  {
+    title: "Iwosan Expands Healthcare Services into Alaro City",
+    excerpt: "The group announces it is now part of the Alaro City community. Residents and businesses can now benefit from closer access to quality healthcare services within the city.",
+    date: "March 30, 2026",
+    category: "Expansion",
+    featured: true,
+  },
   {
     title: "Iwosan Expands Healthcare Services Across Southwest Nigeria",
     excerpt: "The group announces plans to open three new specialist clinics in Lagos, Ibadan, and Abeokuta as part of its expansion strategy.",

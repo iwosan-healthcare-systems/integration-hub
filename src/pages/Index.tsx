@@ -9,6 +9,7 @@ import diagnosticsImg from "@/assets/diagnostics.jpg";
 import { newsItems, subsidiaries, quickLinks } from "@/data/hub-data";
 import { Mail, Headphones, Calendar, CreditCard, GraduationCap } from "lucide-react";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const iconMap: Record<string, any> = { Mail, Users, Headphones, Calendar, CreditCard, GraduationCap };
 
 const Index = () => {
@@ -286,7 +287,7 @@ const Index = () => {
         </div>
         <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-primary-foreground/10">
           <p className="text-xs font-sans text-primary-foreground/30 text-center">
-            © 2024 Iwosan Healthcare Systems. All rights reserved.
+            © {new Date().getFullYear()}  Iwosan Healthcare Systems. All rights reserved.
           </p>
         </div>
       </footer>

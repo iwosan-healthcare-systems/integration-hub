@@ -1,7 +1,7 @@
-import { Bell, Search, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import iwosanLogo from "@/assets/iwosan-logo.png";
+import iwosanLogo from "@/assets/iwosan_logo.jpg";
 
 export function TopNavbar() {
   return (
@@ -18,12 +18,10 @@ export function TopNavbar() {
         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
           <Search className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-accent rounded-full" />
-        </Button>
         <div className="ml-2 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-          <span className="text-xs font-sans font-semibold text-primary-foreground">IW</span>
+          <span className="text-xs font-sans font-semibold text-primary-foreground">
+            <img src={iwosanLogo} alt="Iwosan Healthcare" className="h-8 w-auto shrink-0" />
+          </span>
         </div>
       </div>
     </header>
