@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# Iwosan Innovation Hub
 
 TODO: Document your project here
