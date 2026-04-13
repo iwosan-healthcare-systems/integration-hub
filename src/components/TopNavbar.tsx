@@ -1,7 +1,7 @@
 import { Search, Menu } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import iwosanLogo from "@/assets/iwosan_logo.jpg";
+import iwosanIcon from "@/assets/iwosan_icon.png";
 
 export function TopNavbar() {
   return (
@@ -20,7 +20,7 @@ export function TopNavbar() {
         </Button>
         <div className="ml-2 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
           <span className="text-xs font-sans font-semibold text-primary-foreground">
-            <img src={iwosanLogo} alt="Iwosan Healthcare" className="h-8 w-auto shrink-0" />
+            <img src={iwosanIcon} alt="Iwosan Healthcare" className="h-8 w-auto shrink-0" />
           </span>
         </div>
       </div>

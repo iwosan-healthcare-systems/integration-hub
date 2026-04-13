@@ -1,7 +1,7 @@
 import { Home, Building2, Users, FolderOpen, Newspaper, Link } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import iwosanIcon from "@/assets/iwosan_icon.png";
+import iwosanLogo from "@/assets/iwosan_logo.jpg";
 
 import {
   Sidebar,
@@ -34,7 +34,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <img src={iwosanIcon} alt="Iwosan Healthcare" className="h-8 w-auto shrink-0" />
+          <img src={iwosanLogo} alt="Iwosan Healthcare" className="h-8 w-auto shrink-0" />
           {!collapsed && (
             <div className="animate-fade-in">
             </div>
