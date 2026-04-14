@@ -312,8 +312,7 @@ const Index = () => {
             <div className="space-y-3">
               <div className="flex items-start gap-2.5">
                 <MapPin className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                <span className="text-sm font-sans text-primary-foreground/50 leading-relaxed">
-                  29 Kofo Abayomi Street,<br />Victoria Island, Lagos, Nigeria
+                <span className="text-sm font-sans text-primary-foreground/50 leading-relaxed">Lagos, Nigeria
                 </span>
               </div>
               <div className="flex items-center gap-2.5">
