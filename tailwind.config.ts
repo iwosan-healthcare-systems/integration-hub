@@ -13,7 +13,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        serif: ["Playfair Display", "Georgia", "serif"],
+        serif: ["Century Gothic", "Futura", "Nunito", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
