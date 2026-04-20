@@ -172,16 +172,16 @@ const Index = () => {
                 rel="noopener noreferrer"
                 className="group block hover-lift"
               >
-                <div className="h-48 rounded-xl bg-primary overflow-hidden relative mb-4 flex items-center justify-center">
+                <div className="h-48 rounded-xl overflow-hidden relative mb-4">
                   <div className={`absolute inset-0 ${sub.logoBg ?? "bg-white"}`} />
                   <img
                     src={sub.logo}
                     alt={sub.name}
-                    className="relative z-10 max-h-24 max-w-[70%] object-contain group-hover:scale-105 transition-transform duration-500"
+                    className="absolute inset-0 w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-500 z-10"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4 z-20">
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/10 to-transparent z-20" />
+                  <div className="absolute bottom-4 left-4 right-4 z-30">
                     <h3 className="text-primary-foreground font-serif font-semibold text-lg drop-shadow">{sub.name}</h3>
                   </div>
                 </div>

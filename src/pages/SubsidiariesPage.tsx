@@ -62,12 +62,12 @@ const SubsidiariesPage = () => {
                 className="group block hover-lift"
               >
                 <div className="flex gap-5 items-start">
-                  <div className={`w-28 h-28 rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${sub.logoBg ?? "bg-muted"}`}>
+                  <div className={`w-36 h-20 rounded-xl overflow-hidden shrink-0 relative ${sub.logoBg ?? "bg-muted"}`}>
                     {sub.logo ? (
                       <img
                         src={sub.logo}
                         alt={`${sub.name} logo`}
-                        className="max-w-full max-h-full object-contain p-3"
+                        className="absolute inset-0 w-full h-full object-contain p-3"
                         loading="lazy"
                       />
                     ) : (
