@@ -233,7 +233,7 @@ const Index = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {latestNews.slice(0, 3).map((item, i) => (
             <AnimateOnScroll key={item.title} delay={i * 0.1}>
-              <article className="group cursor-pointer">
+              <a href={item.url} target="_blank" rel="noopener noreferrer" className="group block">
                 <div className="h-52 rounded-xl bg-muted overflow-hidden mb-4 img-zoom">
                   <img
                     src={item.image}
@@ -250,7 +250,7 @@ const Index = () => {
                   {item.title}
                 </h3>
                 <p className="text-sm font-sans text-muted-foreground leading-relaxed line-clamp-2">{item.excerpt}</p>
-              </article>
+              </a>
             </AnimateOnScroll>
           ))}
         </div>

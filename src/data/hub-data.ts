@@ -185,6 +185,7 @@ export const newsItems = [
     category: "Expansion",
     featured: true,
     image: iwosanAlaroImg,
+    url: "https://www.lagoonhospitals.com/updates/",
   },
   {
     title: "Iwosan Acquires Paelon Memorial Hospital",
@@ -193,6 +194,7 @@ export const newsItems = [
     category: "Acquisition",
     featured: true,
     image: "https://cdn.vanguardngr.com/wp-content/uploads/2025/01/hospital.jpg",
+    url: "https://www.vanguardngr.com/2025/11/iwosan-acquires-paelon-memorial-hospital-to-deepen-presence-in-nigerias-healthcare-sector/",
   },
   {
     title: "Doctors' Forum: Management of Fibroids and Uterine Prolapse",
@@ -201,6 +203,7 @@ export const newsItems = [
     category: "Medical Education",
     featured: false,
     image: "https://www.lagoonhospitals.com/wp-content/uploads/2025/11/Screenshot-2025-11-08-160347.png",
+    url: "https://www.lagoonhospitals.com/updates/doctors-forum-management-of-fibroids-and-uterine-prolapse/",
   },
   {
     title: "Doctors' Forum: Peripheral Artery Disease & Brain Tumors",
@@ -209,6 +212,7 @@ export const newsItems = [
     category: "Medical Education",
     featured: false,
     image: "https://www.lagoonhospitals.com/wp-content/uploads/2025/11/Doctors-Forum-29.webp",
+    url: "https://www.lagoonhospitals.com/updates/doctors-forum/",
   },
   {
     title: "Tune In to \"Your Health and You\" on Classic FM 97.3",
@@ -217,6 +221,7 @@ export const newsItems = [
     category: "Community",
     featured: false,
     image: "https://www.lagoonhospitals.com/wp-content/uploads/2025/05/Radio-Talk-04.jpg",
+    url: "https://www.lagoonhospitals.com/updates/your-health-and-you-health-education-nigeria/",
   },
   {
     title: "Iwosan Acquires Euracare Multi-Specialist Hospital",
@@ -225,6 +230,7 @@ export const newsItems = [
     category: "Acquisition",
     featured: true,
     image: "https://dailypost.ng/wp-content/uploads/2025/03/Screenshot_20250312_093955_Zoho-Mail.jpg",
+    url: "https://dailypost.ng/2025/03/12/iwosan-acquires-euracare-multi-specialist-hospital-expanding-healthcare-footprint-in-nigeria/",
   },
   {
     title: "Paelon Memorial: Understanding hMPV — Stay Informed, Stay Healthy",
@@ -233,6 +239,7 @@ export const newsItems = [
     category: "Health Advisory",
     featured: false,
     image: "https://www.paelonmemorial.com/wp-content/uploads/elementor/thumbs/hmpv-1-r0flph5vrkkmzn1j1w5obd11w00gkmcuqu09qsx4jc.webp",
+    url: "https://www.paelonmemorial.com/blog-2/",
   },
   {
     title: "Paelon Memorial: Cervical Cancer Awareness & Prevention",
@@ -241,6 +248,7 @@ export const newsItems = [
     category: "Health Advisory",
     featured: false,
     image: "https://www.paelonmemorial.com/wp-content/uploads/2025/01/Cervical-cancer-1024x1024.jpg",
+    url: "https://www.paelonmemorial.com/blog-2/",
   },
   {
     title: "Governor Sanwo-Olu Performs Groundbreaking of IASO Medipark Lagos",
@@ -249,6 +257,7 @@ export const newsItems = [
     category: "Infrastructure",
     featured: true,
     image: "https://cdn.pmnewsnigeria.com/wp-content/uploads/2024/12/IMG-20241214-WA0054.jpg",
+    url: "https://pmnewsnigeria.com/2024/12/14/sanwo-olu-present-at-groundbreaking-event-for-game-changing-lagos-hospital/",
   },
   {
     title: "Breast Cancer Awareness Walk 2024",
@@ -257,6 +266,7 @@ export const newsItems = [
     category: "Community",
     featured: false,
     image: "https://www.lagoonhospitals.com/wp-content/uploads/2024/11/Breast-Cancer-Awareness.jpg",
+    url: "https://www.lagoonhospitals.com/updates/breast-cancer-awareness-walk-2024/",
   },
   {
     title: "Iwosan Lagoon Hospitals Achieves Historic Fifth JCI Gold Seal",
@@ -265,6 +275,7 @@ export const newsItems = [
     category: "Awards",
     featured: false,
     image: "https://dailypost.ng/wp-content/uploads/2024/11/Iwosan-Logo.png",
+    url: "https://dailypost.ng/2024/11/05/iwosan-lagoon-hospitals-achieves-historic-fifth-jci-gold-seal-of-approval-accreditation/",
   },
   {
     title: "Governor Sanwo-Olu Commissions Iwosan Lagoon Hospitals Victoria Island",
@@ -273,6 +284,7 @@ export const newsItems = [
     category: "Expansion",
     featured: false,
     image: "https://www.lagoonhospitals.com/wp-content/uploads/2024/01/WhatsApp-Image-2024-01-29-at-8.41.49-AM.jpeg",
+    url: "https://www.lagoonhospitals.com/updates/governor-babatunde-sanwo-olu-commissions-iwosan-lagoon-hospitals-victoria-island/",
   },
 ];
 
@@ -290,7 +302,7 @@ export const milestones = [
 ];
 
 export const quickLinks = [
-  { title: "Email Portal", url: "https://mail.iwosanhealth.com", icon: "Mail" },
-  { title: "HR System", url: "#", icon: "Users" },
-  { title: "IT Support", url: "#", icon: "Headphones" },
+  { title: "Email Portal", url: "mailto:m.info@iwosanhealth.com", icon: "Mail" },
+  { title: "HR System", url: "https://hrportal.lagoonhospitals.com/", icon: "Users" },
+  { title: "IT Support", url: "mailto:m.info@iwosanhealth.com", icon: "Headphones" },
 ];
