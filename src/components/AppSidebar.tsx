@@ -26,14 +26,24 @@ const mainNav = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpen, setOpenMobile, isMobile } = useSidebar();
   const collapsed = state === "collapsed";
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    } else if (collapsed) {
+      setOpen(false);
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" className="bg-sidebar/95 border-r border-sidebar-border shadow-sm">
       <SidebarHeader className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <img src={iwosanLogo} alt="Iwosan Healthcare" className="h-9 w-auto shrink-0" />
+          {!collapsed && (
+            <img src={iwosanLogo} alt="Iwosan Healthcare" className="h-9 w-auto shrink-0" />
+          )}
         </div>
       </SidebarHeader>
 
@@ -50,8 +60,9 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-sidebar-foreground transition-colors duration-200 hover:bg-sidebar-accent/20 hover:text-foreground"
-                      activeClassName="bg-sidebar-accent text-foreground font-semibold"
+                      className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-sidebar-foreground transition-colors duration-200 hover:bg-sidebar-accent/20 hover:text-sidebar-accent-foreground"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
+                      onClick={handleNavClick}
                     >
                       <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
