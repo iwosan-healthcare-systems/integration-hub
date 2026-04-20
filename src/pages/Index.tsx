@@ -2,7 +2,7 @@ import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { ArrowRight, Heart, Stethoscope, BookOpen, Building2, Users, Newspaper, MapPin, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroBannerImg from "@/assets/hero-banner.jpg";
+import heroBannerImg from "@/assets/hero-hub-v2.jpg";
 import teamImg from "@/assets/team-photo.jpg";
 import innovationImg from "@/assets/innovation-bg.jpg";
 import { newsItems, subsidiaries, quickLinks } from "@/data/hub-data";
@@ -182,7 +182,6 @@ const Index = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4 z-20">
-                    <span className="text-[10px] font-sans uppercase tracking-widest text-accent">{sub.category}</span>
                     <h3 className="text-primary-foreground font-serif font-semibold text-lg drop-shadow">{sub.name}</h3>
                   </div>
                 </div>
