@@ -1,12 +1,12 @@
 import { Building2, Heart, Stethoscope, Users, FileText, BookOpen, GraduationCap, Newspaper, Bell, TrendingUp } from "lucide-react";
-import iwosanLogo from "@/assets/iwosan-logo.png";
-import lagoonLogo from "@/assets/logos/lagoon-logo.png";
-import paelonLogo from "@/assets/logos/paelon-logo.png";
-import iasoLogo from "@/assets/logos/iaso-logo.png";
+import iwosanLogo from "@/assets/iwosan-logo.webp";
+import lagoonLogo from "@/assets/logos/lagoon-logo.webp";
+import paelonLogo from "@/assets/logos/paelon-logo.webp";
+import iasoLogo from "@/assets/logos/iaso-logo.webp";
 import euracareLogo from "@/assets/logos/euracare-logo.svg";
-import adebiyiImg from "@/assets/adebiyi.jpg";
-import mukoroImg from "@/assets/mukoro.jpg";
-import iwosanAlaroImg from "@/assets/iwosan_alaro.jpg";
+import adebiyiImg from "@/assets/adebiyi.webp";
+import mukoroImg from "@/assets/mukoro.webp";
+import iwosanAlaroImg from "@/assets/iwosan_alaro.webp";
 
 export const coreValues = [
   {

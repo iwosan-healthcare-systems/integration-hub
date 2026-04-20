@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import iwosanLogo from "@/assets/iwosan-logo.png";
+import iwosanLogo from "@/assets/iwosan-logo.webp";
 
 export function PageLoader() {
   const [loaded, setLoaded] = useState(false);

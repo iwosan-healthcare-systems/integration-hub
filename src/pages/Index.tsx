@@ -2,11 +2,11 @@ import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { ArrowRight, Heart, Stethoscope, BookOpen, Building2, Users, Newspaper, MapPin, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroBannerImg from "@/assets/hero-hub-v2.jpg";
-import teamImg from "@/assets/team-photo.jpg";
-import innovationImg from "@/assets/innovation-bg.jpg";
+import heroBannerImg from "@/assets/hero-hub-v2.webp";
+import teamImg from "@/assets/team-photo.webp";
+import innovationImg from "@/assets/innovation-bg.webp";
 import { newsItems, subsidiaries, quickLinks } from "@/data/hub-data";
-import iwosanLogo from "@/assets/iwosan_logo.jpg";
+import iwosanLogo from "@/assets/iwosan_logo.webp";
 import { Headphones, Calendar, CreditCard, GraduationCap } from "lucide-react";
 
 const latestNews = [...newsItems].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -19,7 +19,7 @@ const Index = () => {
       {/* Hero */}
       <section className="relative min-h-[75vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBannerImg} alt="" className="w-full h-full object-cover" />
+          <img src={heroBannerImg} alt="" className="w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
           <div className="absolute inset-0 bg-primary/75" />
         </div>
         <div className="relative z-10 px-8 lg:px-16 py-20 max-w-3xl">

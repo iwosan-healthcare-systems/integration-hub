@@ -1,37 +1,54 @@
-import { useEffect, useRef, useState, ReactNode } from "react";
+import { useEffect, useRef, ReactNode } from "react";
+
+// Single shared observer for all AnimateOnScroll instances
+const callbacks = new Map<Element, () => void>();
+
+const sharedObserver =
+  typeof window !== "undefined"
+    ? new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const cb = callbacks.get(entry.target);
+              if (cb) {
+                cb();
+                sharedObserver.unobserve(entry.target);
+                callbacks.delete(entry.target);
+              }
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: "0px 0px -30px 0px" }
+      )
+    : null;
 
 export function useScrollAnimation() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
-    );
-
     const el = ref.current;
-    if (el) {
-      const children = el.querySelectorAll(
-        ".animate-on-scroll, .animate-on-scroll-left, .animate-on-scroll-right"
-      );
-      children.forEach((child) => observer.observe(child));
-      // Also observe the element itself
-      if (
-        el.classList.contains("animate-on-scroll") ||
-        el.classList.contains("animate-on-scroll-left") ||
-        el.classList.contains("animate-on-scroll-right")
-      ) {
-        observer.observe(el);
-      }
-    }
+    if (!el || !sharedObserver) return;
 
-    return () => observer.disconnect();
+    const targets = [
+      ...Array.from(el.querySelectorAll(".animate-on-scroll, .animate-on-scroll-left, .animate-on-scroll-right")),
+      ...(el.classList.contains("animate-on-scroll") ||
+      el.classList.contains("animate-on-scroll-left") ||
+      el.classList.contains("animate-on-scroll-right")
+        ? [el]
+        : []),
+    ];
+
+    targets.forEach((t) => {
+      callbacks.set(t, () => t.classList.add("visible"));
+      sharedObserver.observe(t);
+    });
+
+    return () => {
+      targets.forEach((t) => {
+        sharedObserver.unobserve(t);
+        callbacks.delete(t);
+      });
+    };
   }, []);
 
   return ref;
@@ -51,19 +68,16 @@ export function AnimateOnScroll({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -30px 0px" }
-    );
+    const el = ref.current;
+    if (!el || !sharedObserver) return;
 
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
+    callbacks.set(el, () => el.classList.add("visible"));
+    sharedObserver.observe(el);
+
+    return () => {
+      sharedObserver.unobserve(el);
+      callbacks.delete(el);
+    };
   }, []);
 
   const animClass =
@@ -77,7 +91,7 @@ export function AnimateOnScroll({
     <div
       ref={ref}
       className={`${animClass} ${className}`}
-      style={{ transitionDelay: `${delay}s` }}
+      style={delay ? { transitionDelay: `${delay}s` } : undefined}
     >
       {children}
     </div>

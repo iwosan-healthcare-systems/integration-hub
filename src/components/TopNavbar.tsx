@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { newsItems } from "@/data/hub-data";
-import iwosanIcon from "@/assets/iwosan_icon.png";
+import iwosanIcon from "@/assets/iwosan_icon.webp";
 
 const navItems = [
   { title: "Home", url: "/" },

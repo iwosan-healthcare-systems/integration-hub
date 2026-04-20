@@ -3,7 +3,7 @@ import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { subsidiaries } from "@/data/hub-data";
 import { ExternalLink, ArrowUpRight } from "lucide-react";
 import { useState } from "react";
-import innovationImg from "@/assets/innovation-bg.jpg";
+import innovationImg from "@/assets/innovation-bg.webp";
 
 const categories = ["All", ...Array.from(new Set(subsidiaries.map((s) => s.category)))];
 
@@ -16,7 +16,7 @@ const SubsidiariesPage = () => {
       {/* Hero */}
       <section className="relative h-[40vh] min-h-[300px] flex items-end overflow-hidden">
         <div className="absolute inset-0">
-          <img src={innovationImg} alt="" className="w-full h-full object-cover" />
+          <img src={innovationImg} alt="" className="w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
           <div className="overlay-gradient absolute inset-0" />
         </div>
         <div className="relative z-10 px-8 lg:px-16 pb-12">

@@ -2,7 +2,7 @@ import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { coreValues, milestones } from "@/data/hub-data";
 import { Heart, Shield, BookOpen, Lightbulb, Globe, Target, Eye, Compass } from "lucide-react";
-import hospitalImg from "@/assets/hospital-interior.jpg";
+import hospitalImg from "@/assets/hospital-interior.webp";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const valueIcons: Record<string, any> = { Heart, Shield, BookOpen, Lightbulb, Globe };
