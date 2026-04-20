@@ -2,10 +2,9 @@ import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { ArrowRight, Heart, Stethoscope, BookOpen, Building2, Users, Newspaper, MapPin, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
-import hospitalImg from "@/assets/hospital-interior.jpg";
+import heroBannerImg from "@/assets/hero-banner.jpg";
 import teamImg from "@/assets/team-photo.jpg";
 import innovationImg from "@/assets/innovation-bg.jpg";
-import diagnosticsImg from "@/assets/diagnostics.jpg";
 import { newsItems, subsidiaries, quickLinks } from "@/data/hub-data";
 import iwosanLogo from "@/assets/iwosan_logo.jpg";
 import { Headphones, Calendar, CreditCard, GraduationCap } from "lucide-react";
@@ -19,7 +18,10 @@ const Index = () => {
     <HubLayout>
       {/* Hero */}
       <section className="relative min-h-[75vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 bg-hero-innovation" />
+        <div className="absolute inset-0">
+          <img src={heroBannerImg} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-primary/75" />
+        </div>
         <div className="relative z-10 px-8 lg:px-16 py-20 max-w-3xl">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs mb-4 font-medium">
@@ -170,17 +172,18 @@ const Index = () => {
                 rel="noopener noreferrer"
                 className="group block hover-lift"
               >
-                <div className="h-48 rounded-xl bg-primary overflow-hidden relative mb-4">
+                <div className="h-48 rounded-xl bg-primary overflow-hidden relative mb-4 flex items-center justify-center">
+                  <div className={`absolute inset-0 ${sub.logoBg ?? "bg-white"}`} />
                   <img
-                    src={i === 0 ? hospitalImg : i === 1 ? diagnosticsImg : innovationImg}
+                    src={sub.logo}
                     alt={sub.name}
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500"
+                    className="relative z-10 max-h-24 max-w-[70%] object-contain group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/90 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4 z-20">
                     <span className="text-[10px] font-sans uppercase tracking-widest text-accent">{sub.category}</span>
-                    <h3 className="text-primary-foreground font-serif font-semibold text-lg">{sub.name}</h3>
+                    <h3 className="text-primary-foreground font-serif font-semibold text-lg drop-shadow">{sub.name}</h3>
                   </div>
                 </div>
                 <p className="text-sm font-sans text-muted-foreground leading-relaxed">{sub.description}</p>

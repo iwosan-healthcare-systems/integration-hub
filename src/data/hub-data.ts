@@ -44,6 +44,7 @@ export const subsidiaries = [
     url: "https://www.iwosanhealth.com",
     color: "primary",
     logo: iwosanLogo,
+    logoBg: "bg-black",
   },
   {
     name: "Iwosan Lagoon Hospitals Limited",
@@ -52,6 +53,7 @@ export const subsidiaries = [
     url: "https://www.lagoonhospitals.com",
     color: "accent",
     logo: lagoonLogo,
+    logoBg: "bg-white",
   },
   {
     name: "Eurapharma Care Services Nigeria Limited",
@@ -60,6 +62,7 @@ export const subsidiaries = [
     url: "https://www.euracarehealth.com",
     color: "primary",
     logo: euracareLogo,
+    logoBg: "bg-white",
   },
   {
     name: "Paelon Memorial Hospital Limited",
@@ -68,6 +71,7 @@ export const subsidiaries = [
     url: "https://www.paelonhospital.com",
     color: "accent",
     logo: paelonLogo,
+    logoBg: "bg-white",
   },
   {
     name: "IASO Medipark Limited",
@@ -76,6 +80,7 @@ export const subsidiaries = [
     url: "https://www.iasomedipark.com",
     color: "primary",
     logo: iasoLogo,
+    logoBg: "bg-white",
   },
 ];
 
