@@ -1,9 +1,9 @@
-import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { leadershipTeam } from "@/data/hub-data";
 const LeadershipPage = () => {
   return (
-    <HubLayout>
+    <>
+
       <section className="relative h-[40vh] min-h-[300px] flex items-end overflow-hidden">
         <div className="absolute inset-0 bg-leadership-header" />
         <div className="relative z-10 px-8 lg:px-16 pb-12">
@@ -51,7 +51,8 @@ const LeadershipPage = () => {
           ))}
         </div>
       </section>
-    </HubLayout>
+
+    </>
   );
 };
 

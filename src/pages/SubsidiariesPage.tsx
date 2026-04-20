@@ -1,4 +1,3 @@
-import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { subsidiaries } from "@/data/hub-data";
 import { ExternalLink, ArrowUpRight } from "lucide-react";
@@ -12,7 +11,8 @@ const SubsidiariesPage = () => {
   const filtered = filter === "All" ? subsidiaries : subsidiaries.filter((s) => s.category === filter);
 
   return (
-    <HubLayout>
+    <>
+
       {/* Hero */}
       <section className="relative h-[40vh] min-h-[300px] flex items-end overflow-hidden">
         <div className="absolute inset-0">
@@ -88,7 +88,8 @@ const SubsidiariesPage = () => {
           ))}
         </div>
       </section>
-    </HubLayout>
+
+    </>
   );
 };
 

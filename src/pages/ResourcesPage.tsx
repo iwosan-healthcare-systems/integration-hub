@@ -1,4 +1,3 @@
-import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { resources } from "@/data/hub-data";
 import { FileText, Shield, TrendingUp, GraduationCap, Search, Download, ArrowRight } from "lucide-react";
@@ -19,7 +18,8 @@ const ResourcesPage = () => {
   });
 
   return (
-    <HubLayout>
+    <>
+
       {/* Header */}
       <section className="bg-resources-header py-16 px-8 lg:px-16 relative overflow-hidden">
         <div className="max-w-4xl mx-auto">
@@ -86,7 +86,8 @@ const ResourcesPage = () => {
           )}
         </div>
       </section>
-    </HubLayout>
+
+    </>
   );
 };
 

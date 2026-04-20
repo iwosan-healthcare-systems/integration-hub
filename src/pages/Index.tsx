@@ -1,4 +1,3 @@
-import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { ArrowRight, Heart, Stethoscope, BookOpen, Building2, Users, Newspaper, MapPin, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -15,7 +14,8 @@ const iconMap: Record<string, any> = { Mail, Users, Headphones, Calendar, Credit
 
 const Index = () => {
   return (
-    <HubLayout>
+    <>
+
       {/* Hero */}
       <section className="relative min-h-[75vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
@@ -351,7 +351,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </HubLayout>
+
+    </>
   );
 };
 

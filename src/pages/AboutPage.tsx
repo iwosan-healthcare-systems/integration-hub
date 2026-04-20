@@ -1,4 +1,3 @@
-import { HubLayout } from "@/layouts/HubLayout";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { coreValues, milestones } from "@/data/hub-data";
 import { Heart, Shield, BookOpen, Lightbulb, Globe, Target, Eye, Compass } from "lucide-react";
@@ -9,7 +8,8 @@ const valueIcons: Record<string, any> = { Heart, Shield, BookOpen, Lightbulb, Gl
 
 const AboutPage = () => {
   return (
-    <HubLayout>
+    <>
+
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] flex items-end overflow-hidden">
         <div className="absolute inset-0 bg-about-header" />
@@ -124,7 +124,8 @@ const AboutPage = () => {
           </div>
         </div>
       </section>
-    </HubLayout>
+
+    </>
   );
 };
 
