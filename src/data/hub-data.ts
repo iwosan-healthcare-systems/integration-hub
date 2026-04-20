@@ -185,7 +185,7 @@ export const newsItems = [
     category: "Expansion",
     featured: true,
     image: iwosanAlaroImg,
-    url: "https://www.lagoonhospitals.com/updates/",
+    url: "https://www.linkedin.com/posts/alarocity_alarocity-healthcare-partnerships-activity-7442267816017162242-TkvF/",
   },
   {
     title: "Iwosan Acquires Paelon Memorial Hospital",
@@ -302,7 +302,7 @@ export const milestones = [
 ];
 
 export const quickLinks = [
-  { title: "Email Portal", url: "mailto:m.info@iwosanhealth.com", icon: "Mail" },
+  { title: "Email Portal", url: "mailto:info@iwosanhealth.com", icon: "Mail" },
   { title: "HR System", url: "https://hrportal.lagoonhospitals.com/", icon: "Users" },
-  { title: "IT Support", url: "mailto:m.info@iwosanhealth.com", icon: "Headphones" },
+  { title: "IT Support", url: "mailto:info@iwosanhealth.com", icon: "Headphones" },
 ];
