@@ -86,7 +86,7 @@ const Index = () => {
           <h2 className="text-3xl font-bold mb-2">Quick Access</h2>
           <div className="section-divider mb-10" />
         </AnimateOnScroll>
-        <div className="grid grid-cols-3 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
           {quickLinks.map((link, i) => {
             const Icon = iconMap[link.icon];
             return (

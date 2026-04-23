@@ -19,10 +19,10 @@ const SubsidiariesPage = () => {
           <img src={innovationImg} alt="" className="w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
           <div className="overlay-gradient absolute inset-0" />
         </div>
-        <div className="relative z-10 px-8 lg:px-16 pb-12">
+        <div className="relative z-10 px-6 sm:px-8 lg:px-16 pb-10 md:pb-12">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Network</p>
-            <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary-foreground">
               Subsidiaries & Platforms
             </h1>
           </AnimateOnScroll>
@@ -61,8 +61,8 @@ const SubsidiariesPage = () => {
                 rel="noopener noreferrer"
                 className="group block hover-lift"
               >
-                <div className="flex gap-5 items-start">
-                  <div className={`w-36 h-20 rounded-xl overflow-hidden shrink-0 relative ${sub.logoBg ?? "bg-muted"}`}>
+                <div className="flex gap-3 sm:gap-5 items-start">
+                  <div className={`w-24 h-16 sm:w-32 sm:h-20 md:w-36 md:h-20 rounded-xl overflow-hidden shrink-0 relative ${sub.logoBg ?? "bg-muted"}`}>
                     {sub.logo ? (
                       <img
                         src={sub.logo}

@@ -13,10 +13,10 @@ const AboutPage = () => {
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] flex items-end overflow-hidden">
         <div className="absolute inset-0 bg-about-header" />
-        <div className="relative z-10 px-8 lg:px-16 pb-12 max-w-4xl">
+        <div className="relative z-10 px-6 sm:px-8 md:px-10 lg:px-16 pb-10 md:pb-12 w-full max-w-4xl">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">About Us</p>
-            <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-3">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary-foreground mb-3">
               Our Story
             </h1>
             <p className="text-primary-foreground/60 font-sans text-lg max-w-2xl">
@@ -28,7 +28,7 @@ const AboutPage = () => {
 
       {/* Mission / Vision / Purpose */}
       <section className="py-20 px-8 lg:px-16 max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-3 gap-12">
+        <div className="grid md:grid-cols-3 gap-8 md:gap-12">
           {[
             { icon: Target, title: "Mission", text: "To provide world-class healthcare services that are accessible, affordable, and delivered with compassion to every Nigerian." },
             { icon: Eye, title: "Vision", text: "To transform Nigeria into a global healthcare frontier through innovation, excellence, and sustainable healthcare delivery." },
@@ -80,7 +80,7 @@ const AboutPage = () => {
           <h2 className="text-3xl font-bold mb-2">Our Core Values</h2>
           <div className="section-divider mb-12" />
         </AnimateOnScroll>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 md:gap-x-12 gap-y-8 md:gap-y-10">
           {coreValues.map((value, i) => {
             const Icon = valueIcons[value.icon] || Heart;
             return (

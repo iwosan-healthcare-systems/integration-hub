@@ -11,11 +11,11 @@ const NewsPage = () => {
   return (
     <>
 
-      <section className="bg-news-header py-16 px-8 lg:px-16 relative overflow-hidden">
+      <section className="bg-news-header py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Stay Updated</p>
-            <h1 className="text-4xl font-bold text-primary-foreground mb-3">News & Announcements</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">News & Announcements</h1>
             <p className="font-sans text-primary-foreground/60 max-w-xl">
               Internal updates, industry news, and organizational highlights.
             </p>
@@ -23,7 +23,7 @@ const NewsPage = () => {
         </div>
       </section>
 
-      <section className="py-12 px-8 lg:px-16 max-w-6xl mx-auto">
+      <section className="py-12 px-6 sm:px-8 lg:px-16 max-w-6xl mx-auto">
         <div className="flex flex-wrap gap-2 mb-10">
           {categories.map((cat) => (
             <button

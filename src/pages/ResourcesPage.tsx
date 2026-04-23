@@ -21,17 +21,17 @@ const ResourcesPage = () => {
     <>
 
       {/* Header */}
-      <section className="bg-resources-header py-16 px-8 lg:px-16 relative overflow-hidden">
+      <section className="bg-resources-header py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
         <div className="max-w-4xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Knowledge Base</p>
-            <h1 className="text-4xl font-bold text-primary-foreground mb-4">Resources & Documents</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Resources & Documents</h1>
             <p className="font-sans text-primary-foreground/60 mb-8 max-w-xl">
               Access policies, training materials, and organizational documents.
             </p>
           </AnimateOnScroll>
           <AnimateOnScroll delay={0.15}>
-            <div className="relative max-w-md">
+            <div className="relative w-full max-w-md">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/40" />
               <Input
                 placeholder="Search resources..."
@@ -44,7 +44,7 @@ const ResourcesPage = () => {
         </div>
       </section>
 
-      <section className="py-12 px-8 lg:px-16 max-w-4xl mx-auto">
+      <section className="py-12 px-6 sm:px-8 lg:px-16 max-w-4xl mx-auto">
         <div className="flex flex-wrap gap-2 mb-10">
           {categories.map((cat) => (
             <button

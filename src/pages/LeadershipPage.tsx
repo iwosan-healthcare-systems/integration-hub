@@ -6,15 +6,15 @@ const LeadershipPage = () => {
 
       <section className="relative h-[40vh] min-h-[300px] flex items-end overflow-hidden">
         <div className="absolute inset-0 bg-leadership-header" />
-        <div className="relative z-10 px-8 lg:px-16 pb-12">
+        <div className="relative z-10 px-6 sm:px-8 lg:px-16 pb-10 md:pb-12">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Our Team</p>
-            <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground">Leadership</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary-foreground">Leadership</h1>
           </AnimateOnScroll>
         </div>
       </section>
 
-      <section className="py-20 px-8 lg:px-16 max-w-5xl mx-auto">
+      <section className="py-16 sm:py-20 px-6 sm:px-8 lg:px-16 max-w-5xl mx-auto">
         <AnimateOnScroll>
           <p className="font-sans text-muted-foreground max-w-2xl mb-12 leading-relaxed">
             Meet the people driving Iwosan's mission to transform healthcare delivery in Nigeria
