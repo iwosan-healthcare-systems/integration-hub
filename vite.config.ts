@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => ({
           icons: ["lucide-react"],
         },
         chunkFileNames: "assets/js/[name]-[hash].js",
-        entryFileNames: "assets/js/[entry]-[hash].js",
+        entryFileNames: "assets/js/[name]-[hash].js",
         assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
       },
     },
