@@ -17,44 +17,46 @@ const Index = () => {
     <>
 
       {/* Hero */}
-      <section className="relative min-h-[75vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[88vh] sm:min-h-[82vh] md:min-h-[75vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBannerImg} alt="" className="w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
+          <img src={heroBannerImg} alt="" className="w-full h-full object-cover object-center sm:object-[center_30%]" fetchPriority="high" loading="eager" decoding="async" />
           <div className="absolute inset-0 bg-primary/75" />
         </div>
-        <div className="relative z-10 px-8 lg:px-16 py-20 max-w-3xl">
-          <AnimateOnScroll>
-            <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs mb-4 font-medium">
-              Welcome to the Hub
-            </p>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={0.1}>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-[1.1] mb-6">
-              Iwosan Innovation Hub
-            </h1>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={0.2}>
-            <p className="text-primary-foreground/70 text-lg md:text-xl max-w-xl mb-8 font-sans leading-relaxed">
-              Transforming Nigeria into a global healthcare frontier. Your centralized
-              platform for tools, resources, and collaboration.
-            </p>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={0.3}>
-            <div className="flex flex-wrap gap-4">
-              <Link
-                to="/about"
-                className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-accent text-accent-foreground font-sans font-medium text-sm hover:opacity-90 transition-opacity"
-              >
-                Explore <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                to="/subsidiaries"
-                className="inline-flex items-center gap-2 px-7 py-3 rounded-full border border-primary-foreground/30 text-primary-foreground font-sans font-medium text-sm hover:bg-primary-foreground/10 transition-colors"
-              >
-                Our Platforms
-              </Link>
-            </div>
-          </AnimateOnScroll>
+        <div className="relative z-10 w-full px-6 sm:px-8 md:px-10 lg:px-16 py-16 md:py-20">
+          <div className="max-w-3xl">
+            <AnimateOnScroll>
+              <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs mb-4 font-medium">
+                Welcome to the Hub
+              </p>
+            </AnimateOnScroll>
+            <AnimateOnScroll delay={0.1}>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-[1.1] mb-5 md:mb-6">
+                Iwosan Innovation Hub
+              </h1>
+            </AnimateOnScroll>
+            <AnimateOnScroll delay={0.2}>
+              <p className="text-primary-foreground/70 text-base sm:text-lg md:text-xl max-w-xl mb-7 md:mb-8 font-sans leading-relaxed">
+                Transforming Nigeria into a global healthcare frontier. Your centralized
+                platform for tools, resources, and collaboration.
+              </p>
+            </AnimateOnScroll>
+            <AnimateOnScroll delay={0.3}>
+              <div className="flex flex-wrap gap-3 sm:gap-4">
+                <Link
+                  to="/about"
+                  className="inline-flex items-center gap-2 px-6 sm:px-7 py-3 rounded-full bg-accent text-accent-foreground font-sans font-medium text-sm hover:opacity-90 transition-opacity"
+                >
+                  Explore <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/subsidiaries"
+                  className="inline-flex items-center gap-2 px-6 sm:px-7 py-3 rounded-full border border-primary-foreground/30 text-primary-foreground font-sans font-medium text-sm hover:bg-primary-foreground/10 transition-colors"
+                >
+                  Our Platforms
+                </Link>
+              </div>
+            </AnimateOnScroll>
+          </div>
         </div>
       </section>
 
