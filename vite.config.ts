@@ -24,6 +24,11 @@ export default defineConfig(({ mode }) => ({
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
   build: {
+    target: "es2015",
+    sourcemap: false,
+    minify: "esbuild",
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -31,6 +36,9 @@ export default defineConfig(({ mode }) => ({
           ui: ["@radix-ui/react-dialog", "@radix-ui/react-navigation-menu", "@radix-ui/react-tooltip"],
           icons: ["lucide-react"],
         },
+        chunkFileNames: "assets/js/[name]-[hash].js",
+        entryFileNames: "assets/js/[entry]-[hash].js",
+        assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
       },
     },
     chunkSizeWarningLimit: 600,
