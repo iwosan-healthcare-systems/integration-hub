@@ -18,7 +18,7 @@ const Index = () => {
     <>
 
       {/* Hero */}
-      <section className="relative min-h-[88vh] sm:min-h-[82vh] md:min-h-[75vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[88svh] sm:min-h-[82svh] md:min-h-[75vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img src={heroBannerMobileImg} alt="" className="md:hidden w-full h-full object-cover object-center" fetchPriority="high" loading="eager" decoding="async" />
           <img src={heroBannerDesktopImg} alt="" className="hidden md:block w-full h-full object-cover object-center" fetchPriority="high" loading="eager" decoding="async" />
