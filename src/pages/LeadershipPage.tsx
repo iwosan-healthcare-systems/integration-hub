@@ -22,7 +22,7 @@ const LeadershipPage = () => {
           </p>
         </AnimateOnScroll>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {leadershipTeam.map((member, i) => (
             <AnimateOnScroll key={member.name} delay={i * 0.1}>
               <div className="group text-center">

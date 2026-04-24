@@ -1,11 +1,12 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { ArrowRight, Heart, Stethoscope, BookOpen, Building2, Users, Newspaper, MapPin, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroBannerImg from "@/assets/hero-hub-v2.webp";
+import heroBannerMobileImg from "@/assets/hero-hub-mobile.webp";
+import heroBannerDesktopImg from "@/assets/hero-hub-desktop.webp";
 import teamImg from "@/assets/team-photo.webp";
 import innovationImg from "@/assets/innovation-bg.webp";
 import { newsItems, subsidiaries, quickLinks } from "@/data/hub-data";
-import iwosanLogo from "@/assets/iwosan_logo.webp";
+import iwosanIcon from "@/assets/iwosan_icon.webp";
 import { Headphones, Calendar, CreditCard, GraduationCap } from "lucide-react";
 
 const latestNews = [...newsItems].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -19,7 +20,8 @@ const Index = () => {
       {/* Hero */}
       <section className="relative min-h-[88vh] sm:min-h-[82vh] md:min-h-[75vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBannerImg} alt="" className="w-full h-full object-cover object-center sm:object-[center_30%]" fetchPriority="high" loading="eager" decoding="async" />
+          <img src={heroBannerMobileImg} alt="" className="md:hidden w-full h-full object-cover object-center" fetchPriority="high" loading="eager" decoding="async" />
+          <img src={heroBannerDesktopImg} alt="" className="hidden md:block w-full h-full object-cover object-center" fetchPriority="high" loading="eager" decoding="async" />
           <div className="absolute inset-0 bg-primary/75" />
         </div>
         <div className="relative z-10 w-full px-6 sm:px-8 md:px-10 lg:px-16 py-16 md:py-20">
@@ -192,6 +194,11 @@ const Index = () => {
             </AnimateOnScroll>
           ))}
         </div>
+        <div className="md:hidden mt-8 text-center">
+          <Link to="/subsidiaries" className="inline-flex items-center gap-1 font-sans text-sm text-accent link-underline">
+            View all <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
       </section>
 
       {/* Innovation banner */}
@@ -258,6 +265,11 @@ const Index = () => {
             </AnimateOnScroll>
           ))}
         </div>
+        <div className="md:hidden mt-8 text-center">
+          <Link to="/news" className="inline-flex items-center gap-1 font-sans text-sm text-accent link-underline">
+            All news <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
       </section>
 
       {/* Footer */}
@@ -267,7 +279,7 @@ const Index = () => {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <img src={iwosanLogo} alt="Iwosan" className="h-9 w-auto rounded-lg" />
+              <img src={iwosanIcon} alt="Iwosan" className="h-9 w-9 rounded-lg object-contain" />
               <span className="font-serif font-semibold text-primary-foreground text-base leading-tight">
                 Iwosan<br />
                 <span className="text-accent font-sans font-normal text-xs tracking-widest uppercase">Innovation Hub</span>

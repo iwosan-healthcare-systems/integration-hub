@@ -184,6 +184,24 @@ export const resources = [
 
 export const newsItems = [
   {
+    title: "Iwosan Lagoon Hospitals Partners with WASI to Transform Stroke Care",
+    excerpt: "Iwosan Lagoon Hospitals has entered a strategic partnership with the West African Stroke Initiative (WASI) to expand access to advanced neurointerventional treatments and revolutionize regional stroke response across Nigeria and West Africa.",
+    date: "April 23, 2026",
+    category: "Partnership",
+    featured: true,
+    image: "https://www.lagoonhospitals.com/wp-content/uploads/2026/04/Lagoon-x-WASI-02-1024x819.webp",
+    url: "https://www.lagoonhospitals.com/updates/iwosan-lagoon-hospitals-partners-with-the-west-african-stroke-initiative-wasi-to-transform-stroke-care-in-nigeria/",
+  },
+  {
+    title: "Iwosan Lagoon Hospitals: Celebrating 3 Years of Impact and Excellence",
+    excerpt: "Over the past three years, Iwosan Lagoon Hospitals Victoria Island has recorded over 111,000 outpatient consultations — a testament to the unwavering trust patients place in the hospital every day.",
+    date: "April 18, 2026",
+    category: "Milestone",
+    featured: false,
+    image: "https://media.licdn.com/dms/image/v2/D4E22AQEpqMYuc5O2Pw/feedshare-shrink_2048_1536/B4EZ2afFfnIgAg-/0/1776413334033?e=1778716800&v=beta&t=GUK2_BOyopiCASQ3l5hJrWLaFxukBvGqvv8K7rd_PpI",
+    url: "https://www.linkedin.com/posts/lagoon-hospitals_iwosanlagoon-3yearsofimpact-healthcareexcellence-activity-7450817794658693120-hZ7X",
+  },
+  {
     title: "Iwosan Expands Healthcare Services into Alaro City",
     excerpt: "The group announces it is now part of the Alaro City community. Residents and businesses can now benefit from closer access to quality healthcare services within the integrated city.",
     date: "March 30, 2026",
