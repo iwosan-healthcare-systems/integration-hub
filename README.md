@@ -158,7 +158,7 @@ The hub represents five platforms in the Iwosan network:
 | Iwosan Healthcare Systems Limited         | Corporate     | iwosanhealth.com     |
 | Iwosan Lagoon Hospitals Limited           | Hospital      | lagoonhospitals.com  |
 | Eurapharma Care Services Nigeria Limited  | Hospital      | euracarehealth.com   |
-| Paelon Memorial Hospital Limited          | Hospital      | paelonhospital.com   |
+| Paelon Memorial Hospital Limited          | Hospital      | paelonmemorial.com   |
 | IASO Medipark Limited                     | Medical Campus| iasomedipark.com     |
 
 ---

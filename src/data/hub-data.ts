@@ -68,7 +68,7 @@ export const subsidiaries = [
     name: "Paelon Memorial Hospital Limited",
     description: "Specialist hospital focused on emergency care, maternal health, diagnostics, and patient-centered clinical services.",
     category: "Hospital",
-    url: "https://www.paelonhospital.com",
+    url: "https://www.paelonmemorial.com",
     color: "accent",
     logo: paelonLogo,
     logoBg: "bg-white",
