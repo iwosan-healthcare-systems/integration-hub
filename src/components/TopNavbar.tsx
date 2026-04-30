@@ -11,6 +11,7 @@ const navItems = [
   { title: "Home", url: "/" },
   { title: "About Iwosan", url: "/about" },
   { title: "Subsidiaries", url: "/subsidiaries" },
+  { title: "Email Portal", url: "/email-portal" },
   { title: "Resources", url: "/resources" },
   { title: "News & Updates", url: "/news" },
   { title: "Leadership", url: "/leadership" },

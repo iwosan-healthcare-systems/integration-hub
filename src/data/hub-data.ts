@@ -325,7 +325,7 @@ export const milestones = [
 ];
 
 export const quickLinks = [
-  { title: "Email Portal", url: "mailto:info@iwosanhealth.com", icon: "Mail" },
+  { title: "Email Portal", url: "/email-portal", icon: "Mail" },
   { title: "HR System", url: "https://hrportal.lagoonhospitals.com/", icon: "Users" },
-  { title: "IT Support", url: "mailto:info@iwosanhealth.com", icon: "Headphones" },
+  { title: "IT Support", url: "##", icon: "Headphones" },
 ];

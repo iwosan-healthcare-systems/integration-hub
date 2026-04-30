@@ -91,19 +91,34 @@ const Index = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
           {quickLinks.map((link, i) => {
             const Icon = iconMap[link.icon];
+            const isExternal = link.url.startsWith("http");
+            const isInternal = link.url.startsWith("/");
+            const className = "flex flex-col items-center gap-3 group py-4";
+            const content = (
+              <>
+                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-accent/10 transition-colors duration-300">
+                  {Icon && <Icon className="h-6 w-6 text-muted-foreground group-hover:text-accent transition-colors" />}
+                </div>
+                <span className="text-xs font-sans font-medium text-foreground text-center">{link.title}</span>
+              </>
+            );
+
             return (
               <AnimateOnScroll key={link.title} delay={i * 0.08}>
-                <a
-                  href={link.url}
-                  target={link.url.startsWith("http") ? "_blank" : undefined}
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-3 group py-4"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-accent/10 transition-colors duration-300">
-                    {Icon && <Icon className="h-6 w-6 text-muted-foreground group-hover:text-accent transition-colors" />}
-                  </div>
-                  <span className="text-xs font-sans font-medium text-foreground text-center">{link.title}</span>
-                </a>
+                {isInternal ? (
+                  <Link to={link.url} className={className}>
+                    {content}
+                  </Link>
+                ) : (
+                  <a
+                    href={link.url}
+                    target={isExternal ? "_blank" : undefined}
+                    rel={isExternal ? "noopener noreferrer" : undefined}
+                    className={className}
+                  >
+                    {content}
+                  </a>
+                )}
               </AnimateOnScroll>
             );
           })}
