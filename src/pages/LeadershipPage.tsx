@@ -4,12 +4,12 @@ const LeadershipPage = () => {
   return (
     <>
 
-      <section className="relative h-[40vh] min-h-[300px] flex items-end overflow-hidden">
+      <section className="relative bg-leadership-header min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 overflow-hidden">
         <div className="absolute inset-0 bg-leadership-header" />
-        <div className="relative z-10 px-6 sm:px-8 lg:px-16 pb-10 md:pb-12">
+        <div className="relative z-10 w-full max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Our Team</p>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary-foreground">Leadership</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground">Leadership</h1>
           </AnimateOnScroll>
         </div>
       </section>

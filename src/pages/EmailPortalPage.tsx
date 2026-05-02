@@ -56,15 +56,15 @@ const EmailPortalPage = () => {
   return (
     <>
       {/* Header */}
-      <section className="relative h-[40vh] min-h-[300px] flex items-end overflow-hidden">
+      <section className="relative min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 overflow-hidden">
         <div className="absolute inset-0">
           <img src={innovationImg} alt="" className="w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
           <div className="overlay-gradient absolute inset-0" />
         </div>
-        <div className="relative z-10 px-6 sm:px-8 lg:px-16 pb-10 md:pb-12">
+        <div className="relative z-10 w-full max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Tools</p>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary-foreground">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground">
               Email Portal
             </h1>
           </AnimateOnScroll>

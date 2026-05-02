@@ -11,8 +11,8 @@ const NewsPage = () => {
   return (
     <>
 
-      <section className="bg-news-header py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
-        <div className="max-w-6xl mx-auto">
+      <section className="bg-news-header min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
+        <div className="w-full max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Stay Updated</p>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">News & Announcements</h1>
