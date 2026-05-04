@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
-    port: 8080,
+    port: 5000,
     hmr: {
       overlay: false,
     },

@@ -2,7 +2,7 @@ import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { subsidiaries } from "@/data/hub-data";
 import { ArrowRight, Building2, FileText, Shield, Users } from "lucide-react";
 
-const sopFolderUrl = "https://iwosan.sharepoint.com/sites/SOPFolder/Shared%20Documents/Forms/AllItems.aspx";
+const sopFolderUrl = "https://iwosan.sharepoint.com/sites/IWOSAN-HEALTHCARE-SYSTEMS/Shared%20Documents/Forms/AllItems.aspx";
 
 const sopFocusAreas = [
   {

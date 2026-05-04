@@ -137,51 +137,6 @@ export const leadershipTeam = [
   }
 ];
 
-export const resources = [
-  {
-    title: "Employee Handbook 2024",
-    category: "Policies",
-    type: "PDF",
-    date: "Jan 2024",
-    icon: "FileText",
-  },
-  {
-    title: "Clinical Protocols Guide",
-    category: "Guidelines",
-    type: "PDF",
-    date: "Mar 2024",
-    icon: "FileText",
-  },
-  {
-    title: "Patient Safety Standards",
-    category: "Policies",
-    type: "PDF",
-    date: "Feb 2024",
-    icon: "Shield",
-  },
-  {
-    title: "Healthcare Financing in Nigeria",
-    category: "Research",
-    type: "PDF",
-    date: "2023",
-    icon: "TrendingUp",
-  },
-  {
-    title: "Infection Control Training",
-    category: "Training",
-    type: "Video",
-    date: "Apr 2024",
-    icon: "GraduationCap",
-  },
-  {
-    title: "IT Security Awareness",
-    category: "Training",
-    type: "Slides",
-    date: "Mar 2024",
-    icon: "Shield",
-  },
-];
-
 export const newsItems = [
   {
     title: "Iwosan Lagoon Hospitals Partners with WASI to Transform Stroke Care",
