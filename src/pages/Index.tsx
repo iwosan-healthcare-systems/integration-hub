@@ -320,7 +320,7 @@ const Index = () => {
                 { label: "About Iwosan", url: "/about" },
                 { label: "Our Platforms", url: "/subsidiaries" },
                 { label: "Leadership", url: "/leadership" },
-                { label: "Resources", url: "/resources" },
+                { label: "Resources & Knowledge", url: "/resources" },
                 { label: "News & Updates", url: "/news" },
               ].map(({ label, url }) => (
                 <Link
