@@ -54,14 +54,14 @@ const ResourcesPage = () => {
             </div>
           </AnimateOnScroll>
 
-          <div className="grid gap-5 md:grid-cols-3 mb-14">
+          <div className="grid gap-8 md:grid-cols-3 md:gap-12 mb-14">
             {sopFocusAreas.map((area, i) => (
-              <AnimateOnScroll key={area.title} delay={i * 0.08}>
-                <div className="h-full rounded-lg border border-border/60 bg-background p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/50 hover:shadow-lg">
-                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10">
+              <AnimateOnScroll key={area.title} delay={i * 0.15}>
+                <div className="text-center">
+                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
                     <area.icon className="h-6 w-6 text-accent" />
                   </div>
-                  <h3 className="font-serif text-lg font-semibold text-foreground mb-2">{area.title}</h3>
+                  <h3 className="font-serif text-xl font-semibold text-foreground mb-3">{area.title}</h3>
                   <p className="font-sans text-sm text-muted-foreground leading-relaxed">{area.description}</p>
                 </div>
               </AnimateOnScroll>

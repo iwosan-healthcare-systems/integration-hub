@@ -21,7 +21,7 @@ const mainNav = [
   { title: "About Iwosan", url: "/about", icon: Building2 },
   { title: "Subsidiaries", url: "/subsidiaries", icon: Link },
   { title: "Email Portal", url: "/email-portal", icon: Mail },
-  { title: "Resources", url: "/resources", icon: FolderOpen },
+  { title: "Resources & Knowledge", url: "/resources", icon: FolderOpen },
   { title: "News & Updates", url: "/news", icon: Newspaper },
   { title: "Leadership", url: "/leadership", icon: Users },
 ];
