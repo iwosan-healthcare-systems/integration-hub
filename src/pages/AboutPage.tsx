@@ -3,9 +3,9 @@ import { useState } from "react";
 import { coreValues, milestones } from "@/data/hub-data";
 import { Heart, Shield, BookOpen, Lightbulb, Globe } from "lucide-react";
 import hospitalImg from "@/assets/hospital-interior.webp";
-import visionIcon1 from "@/assets/vision-icon-1.svg";
-import visionIcon2 from "@/assets/vision-icon-2.svg";
-import visionIcon3 from "@/assets/vision-icon-3.svg";
+import visionIcon1 from "@/assets/vision-icon-1.png";
+import visionIcon2 from "@/assets/vision-icon-2.png";
+import visionIcon3 from "@/assets/vision-icon-3.png";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const valueIcons: Record<string, any> = { Heart, Shield, BookOpen, Lightbulb, Globe };
@@ -17,17 +17,20 @@ const AboutPage = () => {
     {
       image: visionIcon1,
       text: "We are a consistently patient-first, world-class healthcare services provider.",
-      accent: "border-emerald-300/60",
+      textColor: "text-emerald-600",
+      iconRing: "ring-4 ring-emerald-400/20",
     },
     {
       image: visionIcon2,
       text: "We are empathetic, ethical, knowledge-driven, innovative and accessible.",
-      accent: "border-sky-300/60",
+      textColor: "text-cyan-600",
+      iconRing: "ring-4 ring-cyan-400/20",
     },
     {
       image: visionIcon3,
-      text: "We will look after you, ensuring confident care for every patient and community we serve.",
-      accent: "border-slate-500/40",
+      text: "We will look after you.",
+      textColor: "text-slate-900",
+      iconRing: "ring-4 ring-slate-900/15",
     },
   ];
 
@@ -62,19 +65,16 @@ const AboutPage = () => {
         <AnimateOnScroll>
           <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-2">Principles</p>
           <h2 className="text-3xl font-bold mb-4">Our Vision and Values</h2>
-          <p className="max-w-3xl text-muted-foreground leading-relaxed">
-            Our purpose is to deliver a patient-first healthcare experience built on empathy, integrity, and innovation. These are the beliefs that guide every service, every team member, and every decision at Iwosan.
-          </p>
         </AnimateOnScroll>
 
         <div className="mt-14 grid gap-8 lg:grid-cols-3">
           {visionItems.map((item, i) => (
             <AnimateOnScroll key={i} delay={i * 0.12}>
-              <div className={`group flex flex-col items-center gap-6 rounded-[2rem] border ${item.accent} bg-white/80 p-8 text-center shadow-[0_30px_80px_-50px_rgba(15,23,42,0.2)] transition duration-500 hover:-translate-y-1 hover:bg-white`}>
-                <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-slate-50 border border-slate-200 shadow-lg p-3 transition-transform duration-500 group-hover:scale-105 group-hover:animate-pulse">
+              <div className={`group relative flex h-full min-h-[24rem] flex-col items-center justify-between gap-6 rounded-[2.5rem] bg-slate-50/70 p-8 text-center transition duration-500 hover:-translate-y-1 hover:bg-slate-100`}>
+                <div className={`relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-white shadow-xl p-4 transition-transform duration-500 group-hover:scale-105 ${item.iconRing}`}>
                   <img src={item.image} alt="Vision icon" className="h-full w-full object-contain" loading="lazy" />
                 </div>
-                <p className="text-sm sm:text-base font-sans text-muted-foreground leading-7">
+                <p className={`min-h-[5.5rem] text-sm sm:text-base font-sans leading-8 ${item.textColor}`}>
                   {item.text}
                 </p>
               </div>
@@ -125,7 +125,7 @@ const AboutPage = () => {
 
             return (
               <AnimateOnScroll key={value.title} delay={i * 0.1}>
-                <div className="flex flex-col gap-4 rounded-[2rem] border border-slate-200/70 bg-white/95 p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg md:flex-row md:items-start">
+                                <div className="flex flex-col gap-4 rounded-[2rem] border border-slate-200/70 bg-white/95 p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg md:flex-row md:items-start">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/10 transition-transform duration-500 hover:scale-105">
                     <Icon className="h-6 w-6 text-accent" />
                   </div>
