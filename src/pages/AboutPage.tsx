@@ -70,7 +70,7 @@ const AboutPage = () => {
         <div className="mt-10 sm:mt-12 lg:mt-14 grid gap-4 sm:gap-5 md:grid-cols-3 lg:gap-8">
           {visionItems.map((item, i) => (
             <AnimateOnScroll key={i} delay={i * 0.12} className="h-full">
-              <div className={`group relative flex h-full min-h-[9rem] flex-row items-center gap-4 rounded-3xl bg-slate-50/70 p-5 text-left transition duration-500 hover:-translate-y-1 hover:bg-slate-100 sm:min-h-[10rem] sm:p-6 md:min-h-[19rem] md:flex-col md:justify-center md:text-center lg:min-h-[24rem] lg:gap-6 lg:rounded-[2.5rem] lg:p-8`}>
+              <div className={`group relative flex h-full min-h-[9rem] flex-row items-center gap-4 rounded-3xl bg-slate-50/70 p-5 text-left transition duration-500 hover:-translate-y-1 hover:bg-slate-100 sm:min-h-[10rem] sm:p-6 md:min-h-[19rem] md:flex-col md:justify-start md:gap-8 md:pt-14 md:text-center lg:min-h-[24rem] lg:gap-9 lg:rounded-[2.5rem] lg:p-8 lg:pt-20`}>
                 <div className={`relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-50 shadow-xl transition-transform duration-500 group-hover:scale-105 md:h-24 md:w-24 lg:h-28 lg:w-28 ${item.iconRing}`}>
                   <img src={item.image} alt="Vision icon" className="h-full w-full rounded-full object-cover" loading="lazy" />
                 </div>
