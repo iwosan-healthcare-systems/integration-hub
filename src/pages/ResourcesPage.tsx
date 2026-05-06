@@ -57,8 +57,8 @@ const ResourcesPage = () => {
           <div className="grid gap-8 md:grid-cols-3 md:gap-12 mb-14">
             {sopFocusAreas.map((area, i) => (
               <AnimateOnScroll key={area.title} delay={i * 0.15}>
-                <div className="text-center">
-                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
+                <div className="text-center md:text-left">
+                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 md:mx-0">
                     <area.icon className="h-6 w-6 text-accent" />
                   </div>
                   <h3 className="font-serif text-xl font-semibold text-foreground mb-3">{area.title}</h3>
@@ -116,7 +116,7 @@ const ResourcesPage = () => {
                   href={sopFolderUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex w-full items-center justify-between rounded-full bg-accent px-5 py-3 text-sm font-sans font-semibold text-accent-foreground transition-opacity hover:opacity-90 sm:w-auto sm:min-w-56"
+                  className="group inline-flex w-full items-center justify-between rounded-full bg-accent px-5 py-3 text-sm font-sans font-semibold text-accent-foreground transition-opacity hover:opacity-90 sm:w-auto"
                 >
                   See SOP files
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

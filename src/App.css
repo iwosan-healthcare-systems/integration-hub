@@ -33,6 +33,25 @@
   }
 }
 
+.section-divider {
+  width: 4.5rem;
+  height: 0.35rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(16,185,129,1), rgba(59,130,246,1));
+}
+
+.circle-panel {
+  min-height: 22rem;
+}
+
+.img-zoom img {
+  transition: transform 0.4s ease;
+}
+
+.img-zoom:hover img {
+  transform: scale(1.03);
+}
+
 .card {
   padding: 2em;
 }

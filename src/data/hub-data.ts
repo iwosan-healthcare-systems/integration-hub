@@ -7,6 +7,21 @@ import euracareLogo from "@/assets/logos/euracare-logo.svg";
 import adebiyiImg from "@/assets/adebiyi.webp";
 import mukoroImg from "@/assets/mukoro.webp";
 import iwosanAlaroImg from "@/assets/iwosan_alaro.webp";
+import folaAdeolaImg from "@/assets/team/fola-adeola.jpg";
+import folaLaoyeImg from "@/assets/team/fola-laoye.jpg";
+import oladapoOshinusiImg from "@/assets/team/oladapo-oshinusi.jpg";
+import profNelsonOyesikuImg from "@/assets/team/prof-nelson-oyesiku.jpg";
+import mrsIbukunAwosikaImg from "@/assets/team/mrs-ibukun-awosika.jpg";
+import rotimiAkindeImg from "@/assets/team/rotimi-akinde.png";
+import ademolaAdeyemiBeroImg from "@/assets/team/ademola-ademola-ade-yemi-bero.png";
+import otunbaBimboAshiruImg from "@/assets/team/otunba-bimbo-ashiru.jpg";
+import adetomiOlaobajuImg from "@/assets/team/adetomi-olaobaju.jpg";
+import drAjibikeOyewumiImg from "@/assets/team/dr-ajibike-oyewumi.jpg";
+import drOluboredeOlawumiImg from "@/assets/team/dr-oluborede-olawumi.jpg";
+import mrOluwafemiOluwajimiImg from "@/assets/team/mr-oluwafemi-oluwajimi.jpg";
+import profFolasadeOgunsolaImg from "@/assets/team/prof-folasade-ogunsola.jpg";
+import drKemiBabagbemiImg from "@/assets/team/dr-kemi-babagbemi.jpg";
+import LigaliImg from "@/assets/ligImg.jpg";
 
 export const coreValues = [
   {
@@ -75,58 +90,109 @@ export const subsidiaries = [
   },
 ];
 
-export const leadershipTeam = [
-  {
-    name: "Fola Adeola",
-    role: "Co-Founder & Chairman",
-    image: "https://iwosanhealth.com/static/media/Fola%20Adeola.f05861b789f487b498bc.jpg",
-  },
-  {
-    name: "Fola Laoye",
-    role: "Group Managing Director / CEO",
-    image: "https://iwosanhealth.com/static/media/Fola%20Laoye.a6fdfdb7871120a1c227.jpg",
-  },
-  {
-    name: "Oladapo Oshinusi",
-    role: "Co-Founder & Board Member",
-    image: "https://iwosanhealth.com/static/media/Dapo%20Oshinusi.860159dcc709ae26f33d.jpg",
-  },
-  {
-    name: "Prof. Nelson Oyesiku",
-    role: "Board Member",
-    image: "https://iwosanhealth.com/static/media/Prof%20Nelson%20Oyesiku.a87ef734170a3102e1ec.jpg",
-  },
-  {
-    name: "Mrs Ibukun Awosika",
-    role: "Board Member",
-    image: "https://iwosanhealth.com/static/media/ibukun.df8dd87704b7db13b38d.jpg",
-  },
+export const leadership = {
+  boardMembers: [
     {
-    name: "Rotimi Akinde",
-    role: "Board Member",
-    image: "https://iwosanhealth.com/static/media/rotimi-akinde.ef08efb9c90a2f35c7f5.png",
-  },
-  {
-    name: "Ademola Adeyemi-Bero",
-    role: "Board Member",
-    image: "https://iwosanhealth.com/static/media/adeyemi.148dc6cd3723c1a368b0.png",
-  },
-  {
-    name: "Otunba Bimbo Ashiru",
-    role: "Board Member",
-    image: "https://iwosanhealth.com/static/media/bimbo-ashiru.17d308e3a4de10cd13c9.jpg",
-  },
-  {
-    name: "Idowu Adebiyi",
-    role: "Group Head, Strategic Projects",
-    image: adebiyiImg,
-  },
-  {
-    name: "Isaiah Mukoro",
-    role: "Group Head, Finance",
-    image: mukoroImg,
-  }
-];
+      name: "Fola Adeola",
+      role: "Co-Founder & Chairman",
+      image: folaAdeolaImg,
+    },
+    {
+      name: "Fola Laoye",
+      role: "Co-Founder & CEO",
+      image: folaLaoyeImg,
+    },
+    {
+      name: "Oladapo Oshinusi",
+      role: "Co-Founder & Board Member",
+      image: oladapoOshinusiImg,
+    },
+    {
+      name: "Prof. Nelson Oyesiku",
+      role: "Board Member",
+      image: profNelsonOyesikuImg,
+    },
+    {
+      name: "Mrs Ibukun Awosika",
+      role: "Board Member",
+      image: mrsIbukunAwosikaImg,
+    },
+    {
+      name: "Rotimi Akinde",
+      role: "Board Member",
+      image: rotimiAkindeImg,
+    },
+    {
+      name: "Ademola Adeyemi-Bero",
+      role: "Board Member",
+      image: ademolaAdeyemiBeroImg,
+    },
+    {
+      name: "Otunba Bimbo Ashiru",
+      role: "Board Member",
+      image: otunbaBimboAshiruImg,
+    },
+  ],
+  management: [
+    {
+      name: "Fola Laoye",
+      role: "Co-Founder & CEO",
+      image: folaLaoyeImg,
+    },
+    {
+      name: "Idowu Adebiyi",
+      role: "Group Head, Strategic Projects",
+      image: adebiyiImg,
+    },
+    {
+      name: "Isaiah Mukoro",
+      role: "Group Head, Finance",
+      image: mukoroImg,
+    },
+    {
+      name: "Adetomi Olaobaju",
+      role: "Group Head, Legal, Risk and Compliance",
+      image: adetomiOlaobajuImg,
+    },
+    {
+      name: "Dr. Oluborede Olawumi",
+      role: "Group Head, Quality and Sustainability",
+      image: drOluboredeOlawumiImg,
+    },
+    {
+      name: "Mr. Oluwafemi Oluwajimi",
+      role: "Group Head, HR & Culture",
+      image: mrOluwafemiOluwajimiImg,
+    },
+  ],
+  medicalAdvisoryCouncil: [
+    {
+      name: "Prof. Nelson Oyesiku",
+      role: "Chairman",
+      image: profNelsonOyesikuImg,
+    },
+    {
+      name: "Dr. Ajibike Oyewumi",
+      role: "Member",
+      image: drAjibikeOyewumiImg,
+    },
+    {
+      name: "Prof. Folasade Ogunsola",
+      role: "Member",
+      image: profFolasadeOgunsolaImg,
+    },
+    {
+      name: "Fola Laoye",
+      role: "Member",
+      image: folaLaoyeImg,
+    },
+    {
+      name: "Dr. Kemi Babagbemi",
+      role: "Member",
+      image: drKemiBabagbemiImg,
+    },
+  ],
+};
 
 export const newsItems = [
   {
@@ -144,7 +210,7 @@ export const newsItems = [
     date: "April 18, 2026",
     category: "Milestone",
     featured: false,
-    image: "https://media.licdn.com/dms/image/v2/D4E22AQEpqMYuc5O2Pw/feedshare-shrink_2048_1536/B4EZ2afFfnIgAg-/0/1776413334033?e=1778716800&v=beta&t=GUK2_BOyopiCASQ3l5hJrWLaFxukBvGqvv8K7rd_PpI",
+    image: LigaliImg,
     url: "https://www.linkedin.com/posts/lagoon-hospitals_iwosanlagoon-3yearsofimpact-healthcareexcellence-activity-7450817794658693120-hZ7X",
   },
   {

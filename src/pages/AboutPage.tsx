@@ -1,12 +1,43 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
+import { useState } from "react";
 import { coreValues, milestones } from "@/data/hub-data";
-import { Heart, Shield, BookOpen, Lightbulb, Globe, Target, Eye, Compass } from "lucide-react";
+import { Heart, Shield, BookOpen, Lightbulb, Globe } from "lucide-react";
 import hospitalImg from "@/assets/hospital-interior.webp";
+import visionIcon1 from "@/assets/vision-icon-1.svg";
+import visionIcon2 from "@/assets/vision-icon-2.svg";
+import visionIcon3 from "@/assets/vision-icon-3.svg";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const valueIcons: Record<string, any> = { Heart, Shield, BookOpen, Lightbulb, Globe };
 
 const AboutPage = () => {
+  const [expandedValues, setExpandedValues] = useState<Record<string, boolean>>({});
+
+  const visionItems = [
+    {
+      image: visionIcon1,
+      text: "We are a consistently patient-first, world-class healthcare services provider.",
+      accent: "border-emerald-300/60",
+    },
+    {
+      image: visionIcon2,
+      text: "We are empathetic, ethical, knowledge-driven, innovative and accessible.",
+      accent: "border-sky-300/60",
+    },
+    {
+      image: visionIcon3,
+      text: "We will look after you, ensuring confident care for every patient and community we serve.",
+      accent: "border-slate-500/40",
+    },
+  ];
+
+  const toggleReadMore = (title: string) => {
+    setExpandedValues((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
+
   return (
     <>
 
@@ -26,21 +57,26 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* Mission / Vision / Purpose */}
+      {/* Vision & Values */}
       <section className="py-20 px-8 lg:px-16 max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-3 gap-8 md:gap-12">
-          {[
-            { icon: Target, title: "Mission", text: "To provide world-class healthcare services that are accessible, affordable, and delivered with compassion to every Nigerian." },
-            { icon: Eye, title: "Vision", text: "To transform Nigeria into a global healthcare frontier through innovation, excellence, and sustainable healthcare delivery." },
-            { icon: Compass, title: "Purpose", text: "To build an integrated healthcare ecosystem that improves health outcomes and sets new standards across Africa." },
-          ].map((item, i) => (
-            <AnimateOnScroll key={item.title} delay={i * 0.15}>
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-5">
-                  <item.icon className="h-6 w-6 text-accent" />
+        <AnimateOnScroll>
+          <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-2">Principles</p>
+          <h2 className="text-3xl font-bold mb-4">Our Vision and Values</h2>
+          <p className="max-w-3xl text-muted-foreground leading-relaxed">
+            Our purpose is to deliver a patient-first healthcare experience built on empathy, integrity, and innovation. These are the beliefs that guide every service, every team member, and every decision at Iwosan.
+          </p>
+        </AnimateOnScroll>
+
+        <div className="mt-14 grid gap-8 lg:grid-cols-3">
+          {visionItems.map((item, i) => (
+            <AnimateOnScroll key={i} delay={i * 0.12}>
+              <div className={`group flex flex-col items-center gap-6 rounded-[2rem] border ${item.accent} bg-white/80 p-8 text-center shadow-[0_30px_80px_-50px_rgba(15,23,42,0.2)] transition duration-500 hover:-translate-y-1 hover:bg-white`}>
+                <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-slate-50 border border-slate-200 shadow-lg p-3 transition-transform duration-500 group-hover:scale-105 group-hover:animate-pulse">
+                  <img src={item.image} alt="Vision icon" className="h-full w-full object-contain" loading="lazy" />
                 </div>
-                <h3 className="font-serif font-semibold text-xl mb-3">{item.title}</h3>
-                <p className="text-sm font-sans text-muted-foreground leading-relaxed">{item.text}</p>
+                <p className="text-sm sm:text-base font-sans text-muted-foreground leading-7">
+                  {item.text}
+                </p>
               </div>
             </AnimateOnScroll>
           ))}
@@ -80,18 +116,35 @@ const AboutPage = () => {
           <h2 className="text-3xl font-bold mb-2">Our Core Values</h2>
           <div className="section-divider mb-12" />
         </AnimateOnScroll>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 md:gap-x-12 gap-y-8 md:gap-y-10">
+        <div className="space-y-6">
           {coreValues.map((value, i) => {
             const Icon = valueIcons[value.icon] || Heart;
+            const isExpanded = expandedValues[value.title];
+            const shouldTruncate = value.description.length > 170;
+            const preview = shouldTruncate && !isExpanded ? `${value.description.slice(0, 170).trim()}...` : value.description;
+
             return (
               <AnimateOnScroll key={value.title} delay={i * 0.1}>
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 mt-1">
-                    <Icon className="h-5 w-5 text-accent" />
+                <div className="flex flex-col gap-4 rounded-[2rem] border border-slate-200/70 bg-white/95 p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg md:flex-row md:items-start">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/10 transition-transform duration-500 hover:scale-105">
+                    <Icon className="h-6 w-6 text-accent" />
                   </div>
-                  <div>
-                    <h3 className="font-sans font-semibold text-foreground mb-1">{value.title}</h3>
-                    <p className="text-sm font-sans text-muted-foreground leading-relaxed">{value.description}</p>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="font-sans font-semibold text-lg text-foreground">{value.title}</p>
+                      {shouldTruncate ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleReadMore(value.title)}
+                          className="text-sm font-semibold text-accent underline-offset-4 transition hover:text-accent-foreground"
+                        >
+                          {isExpanded ? "Read less" : "Read more"}
+                        </button>
+                      ) : null}
+                    </div>
+                    <p className="text-sm sm:text-base text-muted-foreground leading-7">
+                      {preview}
+                    </p>
                   </div>
                 </div>
               </AnimateOnScroll>
