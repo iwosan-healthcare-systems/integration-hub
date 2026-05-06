@@ -67,7 +67,7 @@ const Index = () => {
         <div className="max-w-6xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
             { value: "40+", label: "Years of Excellence" },
-            { value: "5", label: "Locations" },
+            { value: "4", label: "Locations" },
             { value: "1M+", label: "Patients Served" },
             { value: "2000+", label: "Healthcare Staff" },
           ].map((stat, i) => (

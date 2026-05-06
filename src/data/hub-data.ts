@@ -11,41 +11,32 @@ import iwosanAlaroImg from "@/assets/iwosan_alaro.webp";
 export const coreValues = [
   {
     title: "Empathetic",
-    description: "We take great care to understand the needs, pains, thoughts and feelings of our patients and put ourselves in their shoes to deliver appropriate care.",
+    description: "We take great care to understand the needs, pains, thoughts and feelings of our patients and we put ourselves in their shoes to enable us to appreciate the situation better and deliver appropriate care that will bring succor to them. We are with our patients at every step of their way to recovery.",
     icon: "Heart",
   },
   {
     title: "Ethical",
-    description: "We are committed to the tenets of moral and professional principles — Beneficence, Non-Maleficence, Autonomy, and Justice guide our medical practice.",
+    description: "We are committed to the tenets of moral and professional principles, and this guide our behaviors. We uphold the four pillars of ethics, and this guides our medical practice. We have a commitment of “Beneficence” to our patients and clients, and this means that we must always do good to them. Our second commitment to our patients is “non-Maleficence” which means that we must not harm our patients. Our third commitment is “Autonomy” which means that the opinion of our patients or clients matter, and we must carry them along at every step of the way as we manage their care. Our fourth commitment is “Justice”, which means that we treat everybody equally and fairly.",
     icon: "Shield",
   },
   {
     title: "Knowledge-driven",
-    description: "We keep up to date with recent trends in healthcare, enabling our team of highly skilled professionals to provide excellent healthcare services.",
+    description: "We keep up to date with recent trends in healthcare and this enables our team of highly skilled professionals to provide excellent healthcare services to our clients. Continuous improvement and learning help us maintain the standard of excellence in patient care at all times.",
     icon: "BookOpen",
   },
   {
     title: "Innovative",
-    description: "We consistently stay ahead of the curve by offering world-class healthcare services, adopting new technology, and rewarding ingenuity.",
+    description: "The hallmark of every invention in the world today is creative thinking, generation of ideas, and coming up with new ways of doing things. We consistently stay ahead of the curve by offering world-class healthcare services to our esteemed customers, coming up with new ways of improving our services, adopting new technology in our delivery of healthcare, and rewarding ingenuity as a way of creating an environment where employees innovate. These are the values that make our employees stand out and enable them to deliver best in class care to our patients.",
     icon: "Lightbulb",
   },
   {
     title: "Accessible",
-    description: "We are friendly, welcoming, approachable, and reachable. Our customers can reach us at any time and receive top quality healthcare services.",
+    description: "We are friendly, welcoming, approachable, and reachable. Our customers can reach us at any time and receive top quality healthcare services from us. We ensure that we follow through on all the promises we make to our patients and clients.",
     icon: "Globe",
   },
 ];
 
 export const subsidiaries = [
-  {
-    name: "Iwosan Healthcare Systems Limited",
-    description: "Parent company and lead promoter of the Iwosan network, delivering integrated healthcare operations, digital health platforms, and strategic Nigerian partnerships.",
-    category: "Corporate",
-    url: "https://www.iwosanhealth.com",
-    color: "primary",
-    logo: iwosanLogo,
-    logoBg: "bg-black",
-  },
   {
     name: "Iwosan Lagoon Hospitals Limited",
     description: "Premier multi-specialty hospital in Lagos offering world-class inpatient, outpatient, emergency, and specialist care.",
@@ -132,7 +123,7 @@ export const leadershipTeam = [
   },
   {
     name: "Isaiah Mukoro",
-    role: "Group Head, Financial",
+    role: "Group Head, Finance",
     image: mukoroImg,
   }
 ];
@@ -269,13 +260,16 @@ export const newsItems = [
 export const milestones = [
   { year: "1986", event: "Lagoon Hospitals founded in Apapa, Lagos, under the Hygeia Group, providing primary and tertiary healthcare services." },
   { year: "2000", event: "Lagoon Hospitals expanded to Ikeja, growing its footprint across Lagos State." },
-  { year: "2002", event: "Lagoon Hospitals opened its Victoria Island branch, broadening access to specialist care." },
+  { year: "2002", event: "Lagoon Hospitals opened its Victoria Island branch in Idejo, broadening access to specialist care." },
+  { year: "2011", event: "Lagoon Hospitals opens specialist care centre in Victoria Island known as Lagoon Specialists Suites (LSS)" },
   { year: "2011", event: "Lagoon Hospitals became the first hospital in Sub-Saharan Africa to earn the JCI Gold Seal of Approval." },
   { year: "2014", event: "Performed the first open heart surgery in Nigeria and achieved JCI re-accreditation." },
   { year: "2019", event: "Iwosan Investments Limited co-founded by Fola Laoye and Fola Adeola with a mission to transform Nigerian healthcare through long-term investment." },
   { year: "2021", event: "Iwosan acquired Lagoon Hospitals, rebranding it as Iwosan Lagoon Hospitals and beginning major facility upgrades." },
+  { year: "2023", event: "Iwosan Investments Limited expands by opening a new health centre in Victoria Island, known as Iwosan Wellness Centre. " },
   { year: "2024", event: "Launched a cutting-edge 27-bed Centre of Excellence for Cardiology; achieved historic fifth JCI Gold Seal of Approval." },
   { year: "2025", event: "Acquired Euracare Multi-Specialist Hospital (March) and Paelon Memorial Hospital (November), deepening its leadership in Nigeria's healthcare sector." },
+  { year: "2026", event: "Iwosan Investments Limited re-brands as Iwosan Healthcare Systems Limited." },
   { year: "2026", event: "Expanded into Alaro City, bringing quality healthcare services closer to residents and businesses within the integrated city community." },
 ];
 
