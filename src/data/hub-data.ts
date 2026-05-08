@@ -93,7 +93,7 @@ export const subsidiaries = [
 export const leadership = {
   boardMembers: [
     {
-      name: "Fola Adeola",
+      name: "Fola Adeola, OFR, MNI",
       role: "Co-Founder & Chairman",
       image: folaAdeolaImg,
     },
@@ -140,7 +140,7 @@ export const leadership = {
       image: folaLaoyeImg,
     },
     {
-      name: "Idowu Adebiyi",
+      name: "Dr. Idowu Adebiyi",
       role: "Group Head, Strategic Projects",
       image: adebiyiImg,
     },
@@ -155,12 +155,12 @@ export const leadership = {
       image: adetomiOlaobajuImg,
     },
     {
-      name: "Dr. Oluborede Olawumi",
+      name: "Dr. Oluborode Olawumi",
       role: "Group Head, Quality and Sustainability",
       image: drOluboredeOlawumiImg,
     },
     {
-      name: "Mr. Oluwafemi Oluwajimi",
+      name: "Oluwafemi Oluwajimi",
       role: "Group Head, HR & Culture",
       image: mrOluwafemiOluwajimiImg,
     },
