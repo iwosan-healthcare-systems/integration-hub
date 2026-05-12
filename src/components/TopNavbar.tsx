@@ -1,11 +1,20 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Search, X, FileText, Newspaper, Building2 } from "lucide-react";
+import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, User } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { newsItems, subsidiaries } from "@/data/hub-data";
 import iwosanIcon from "@/assets/iwosan_icon.webp";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { title: "Home", url: "/" },
@@ -31,6 +40,12 @@ export function TopNavbar() {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const { user, loading, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   const searchableItems = useMemo<SearchItem[]>(
     () => [
@@ -123,6 +138,53 @@ export function TopNavbar() {
           >
             <Search className="h-4 w-4" />
           </Button>
+
+          {/* Auth: user menu or sign-in button */}
+          {!loading && (
+            user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full h-9 w-9 border-accent/40 text-accent font-semibold text-sm hover:bg-accent/10"
+                    title={user.name}
+                  >
+                    {user.name.charAt(0).toUpperCase()}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuLabel className="flex items-center gap-2 py-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/10 text-accent text-xs font-bold shrink-0">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{user.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-accent/40 text-accent hover:bg-accent/10 hover:text-accent"
+                onClick={() => navigate("/login")}
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Sign In</span>
+              </Button>
+            )
+          )}
 
           <div className="hidden md:flex items-center gap-2 rounded-full border border-border/60 bg-muted px-3 py-2">
             <img src={iwosanIcon} alt="Iwosan Healthcare" className="h-7 w-auto" />

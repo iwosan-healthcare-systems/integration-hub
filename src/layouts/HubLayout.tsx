@@ -3,11 +3,13 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TopNavbar } from "@/components/TopNavbar";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 
 export function HubLayout() {
   return (
     <SidebarProvider>
       <ScrollToTop />
+      <ChangePasswordModal />
       <div className="h-screen flex w-full overflow-hidden">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">

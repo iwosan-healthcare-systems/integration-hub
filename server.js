@@ -1,0 +1,356 @@
+/**
+ * Iwosan Innovation Hub — Express API Server
+ * Runs on CPanel Node.js App at api.iwosaninnovationhub.com
+ *
+ * Local dev:  node server.js  (set PORT=3001 in .env.local)
+ * Production: started automatically by CPanel Phusion Passenger
+ */
+
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import { Pool } from 'pg';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { randomBytes } from 'crypto';
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// ── Environment ───────────────────────────────────────────────────────────
+// Load .env (CPanel) or .env.local (local dev) if present
+for (const name of ['.env', '.env.local']) {
+  try {
+    const content = readFileSync(resolve(__dirname, name), 'utf-8');
+    for (const line of content.split('\n')) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const eq = t.indexOf('=');
+      if (eq > 0) {
+        const key = t.slice(0, eq).trim();
+        const val = t.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
+        if (!process.env[key]) process.env[key] = val;
+      }
+    }
+  } catch { /* file not found — skip */ }
+}
+
+// ── Database ──────────────────────────────────────────────────────────────
+let pool = null;
+
+function getPool() {
+  if (!pool) {
+    pool = new Pool({
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+    pool.on('error', (err) => {
+      console.error('Idle DB client error:', err);
+      pool = null;
+    });
+  }
+  return pool;
+}
+
+async function db(text, params) {
+  const client = await getPool().connect();
+  try {
+    return (await client.query(text, params)).rows;
+  } finally {
+    client.release();
+  }
+}
+
+// ── Auth helpers ──────────────────────────────────────────────────────────
+const COOKIE_NAME = 'iwosan_token';
+const COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+function signToken(payload) {
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
+}
+
+function verifyToken(token) {
+  try { return jwt.verify(token, process.env.JWT_SECRET); }
+  catch { return null; }
+}
+
+function getAuthUser(req) {
+  const token =
+    req.cookies?.[COOKIE_NAME] ||
+    (req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.slice(7)
+      : null);
+  return token ? verifyToken(token) : null;
+}
+
+const cookieOpts = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  // Shared across iwosaninnovationhub.com and api.iwosaninnovationhub.com
+  domain: process.env.COOKIE_DOMAIN || undefined,
+  path: '/',
+};
+
+function setAuthCookie(res, token) {
+  res.cookie(COOKIE_NAME, token, { ...cookieOpts, maxAge: COOKIE_MAX_AGE_MS });
+}
+
+function clearAuthCookie(res) {
+  res.clearCookie(COOKIE_NAME, cookieOpts);
+}
+
+// ── Password generator ────────────────────────────────────────────────────
+function generatePassword() {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghjkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const special = '@#$%!';
+  const chars = upper + lower + digits + special;
+  const bytes = randomBytes(16);
+  let pwd =
+    upper[bytes[0] % upper.length] +
+    lower[bytes[1] % lower.length] +
+    digits[bytes[2] % digits.length] +
+    special[bytes[3] % special.length];
+  for (let i = 4; i < 12; i++) pwd += chars[bytes[i] % chars.length];
+  const arr = pwd.split('');
+  const sb = randomBytes(arr.length);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = sb[i] % (i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.join('');
+}
+
+// ── Rate limiter (login brute-force protection) ───────────────────────────
+// In-memory store: max 10 attempts per IP per 15-minute window
+const loginAttempts = new Map();
+
+function rateLimitLogin(req, res, next) {
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
+  const WINDOW_MS = 15 * 60 * 1000;
+  const MAX = 10;
+
+  let record = loginAttempts.get(ip);
+  if (!record || now > record.resetAt) {
+    record = { count: 0, resetAt: now + WINDOW_MS };
+  }
+  record.count++;
+  loginAttempts.set(ip, record);
+
+  if (record.count > MAX) {
+    const retryAfter = Math.ceil((record.resetAt - now) / 1000);
+    res.set('Retry-After', String(retryAfter));
+    return res.status(429).json({
+      error: 'Too many login attempts. Please try again in 15 minutes.',
+    });
+  }
+  next();
+}
+
+// Purge expired rate-limit entries every 15 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of loginAttempts) {
+    if (now > record.resetAt) loginAttempts.delete(ip);
+  }
+}, 15 * 60 * 1000);
+
+// ── App setup ─────────────────────────────────────────────────────────────
+const app = express();
+
+// Trust CPanel's reverse proxy (Passenger/Apache) so req.ip is the real client IP
+app.set('trust proxy', 1);
+
+// Remove the X-Powered-By: Express header
+app.disable('x-powered-by');
+
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://iwosaninnovationhub.com')
+  .split(',')
+  .map((o) => o.trim());
+
+app.use(
+  cors({
+    origin(origin, cb) {
+      // Allow requests with no origin (curl, Postman, server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      cb(new Error(`CORS: origin "${origin}" not allowed`));
+    },
+    credentials: true, // Required for cross-origin cookies
+  })
+);
+
+app.use(express.json());
+app.use(cookieParser());
+
+// ── Routes ────────────────────────────────────────────────────────────────
+// All routes are prefixed with /api to match the frontend authService paths:
+//   https://api.iwosaninnovationhub.com/api/auth/login
+//   https://api.iwosaninnovationhub.com/api/auth/me  ... etc.
+
+const router = express.Router();
+
+// POST /api/auth/login
+router.post('/auth/login', rateLimitLogin, async (req, res) => {
+  const { email, password } = req.body ?? {};
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+  try {
+    const rows = await db(
+      'SELECT id, email, password_hash, name, role, is_first_login FROM users WHERE email = $1',
+      [String(email).toLowerCase().trim()]
+    );
+    const user = rows[0];
+    const valid = user && (await bcrypt.compare(String(password), user.password_hash));
+    if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
+
+    const token = signToken({ userId: user.id, email: user.email, role: user.role });
+    setAuthCookie(res, token);
+    return res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        isFirstLogin: user.is_first_login,
+      },
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/logout
+router.post('/auth/logout', (req, res) => {
+  clearAuthCookie(res);
+  return res.json({ message: 'Logged out successfully' });
+});
+
+// GET /api/auth/me
+router.get('/auth/me', async (req, res) => {
+  const authUser = getAuthUser(req);
+  if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const rows = await db(
+      'SELECT id, email, name, role, is_first_login FROM users WHERE id = $1',
+      [authUser.userId]
+    );
+    const u = rows[0];
+    if (!u) return res.status(401).json({ error: 'User not found' });
+    return res.json({
+      user: {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+        isFirstLogin: u.is_first_login,
+      },
+    });
+  } catch (err) {
+    console.error('Me error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/change-password
+router.post('/auth/change-password', async (req, res) => {
+  const authUser = getAuthUser(req);
+  if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { newPassword, confirmPassword } = req.body ?? {};
+  if (!newPassword || !confirmPassword) {
+    return res.status(400).json({ error: 'New password and confirmation are required' });
+  }
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ error: 'Passwords do not match' });
+  }
+  if (String(newPassword).length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  }
+  try {
+    const hash = await bcrypt.hash(String(newPassword), 12);
+    await db(
+      'UPDATE users SET password_hash = $1, is_first_login = false, updated_at = NOW() WHERE id = $2',
+      [hash, authUser.userId]
+    );
+    return res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/create-user  (admin only)
+router.post('/admin/create-user', async (req, res) => {
+  const authUser = getAuthUser(req);
+  if (!authUser || authUser.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+
+  const { email, name, role = 'user' } = req.body ?? {};
+  if (!email || !name) {
+    return res.status(400).json({ error: 'Email and name are required' });
+  }
+  const validRoles = ['admin', 'user', 'manager'];
+  if (!validRoles.includes(String(role))) {
+    return res.status(400).json({ error: 'Role must be: admin, user, or manager' });
+  }
+
+  try {
+    const existing = await db('SELECT id FROM users WHERE email = $1', [
+      String(email).toLowerCase().trim(),
+    ]);
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'A user with this email already exists' });
+    }
+
+    const plainPassword = generatePassword();
+    const hash = await bcrypt.hash(plainPassword, 12);
+
+    const rows = await db(
+      `INSERT INTO users (email, name, password_hash, role, is_first_login)
+       VALUES ($1, $2, $3, $4, true) RETURNING id, email`,
+      [String(email).toLowerCase().trim(), String(name).trim(), hash, String(role)]
+    );
+
+    return res.status(201).json({
+      message: 'User created successfully',
+      user: { id: rows[0].id, email: rows[0].email, name: String(name).trim(), role: String(role) },
+      temporaryPassword: plainPassword,
+      note: 'Share this password securely. It will not be shown again.',
+    });
+  } catch (err) {
+    console.error('Create user error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /health  — ping to confirm the server is alive
+router.get('/health', (_, res) =>
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+);
+
+app.use('/api', router);
+
+// ── Start ─────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`✓ Iwosan API server running on port ${PORT}`);
+  console.log(`  NODE_ENV      : ${process.env.NODE_ENV || 'development'}`);
+  console.log(`  DB_HOST       : ${process.env.DB_HOST || 'localhost'}`);
+  console.log(`  COOKIE_DOMAIN : ${process.env.COOKIE_DOMAIN || '(none — local)'}`);
+  console.log(`  Allowed origins: ${allowedOrigins.join(', ')}`);
+});
