@@ -19,7 +19,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { loginUser, loginWithAzure } from '@/services/authService';
 import { AZURE_ORGS } from '@/lib/msalConfig';
-import iwosanIcon from '@/assets/iwosan_icon.webp';
+import iwosanLogo from '@/assets/iwosan_logo.webp';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -103,10 +103,10 @@ export default function LoginPage() {
         {/* Branding */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 mb-4">
-            <img src={iwosanIcon} alt="Iwosan" className="h-10 w-auto" />
+            <img src={iwosanLogo} alt="Iwosan" className="h-10 w-auto" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Iwosan Innovation Hub
+            Innovation Hub
           </h1>
           <p className="text-sm text-muted-foreground mt-1 uppercase tracking-widest">
             Staff Portal
