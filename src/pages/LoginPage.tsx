@@ -102,7 +102,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-96 h-16 rounded-2xl bg-primary/10 border border-primary/20 mb-4">
+          <div className="inline-flex items-center justify-center w-96 h-16 rounded-2xl bg-primary border border-primary/20 mb-4">
             <img src={iwosanLogo} alt="Iwosan" className="h-10 w-auto" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
