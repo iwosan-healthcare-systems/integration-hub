@@ -6,6 +6,22 @@
   NODE_VERSION = "20"
   VITE_API_BASE_URL = "https://api.iwosaninnovationhub.com"
 
+  # ── Azure AD — Microsoft Sign-In ──────────────────────────────────────────
+  # Set the real values in Netlify dashboard → Site Settings → Environment
+  # Variables. Dashboard values override these and stay out of git.
+
+  # Iwosan Lagoon Hospitals
+  VITE_AZURE_ORG1_CLIENT_ID = ""
+  VITE_AZURE_ORG1_TENANT_ID = ""
+
+  # Eurapharma Care Services
+  VITE_AZURE_ORG2_CLIENT_ID = ""
+  VITE_AZURE_ORG2_TENANT_ID = ""
+
+  # Iwosan Healthcare Systems
+  VITE_AZURE_ORG3_CLIENT_ID = ""
+  VITE_AZURE_ORG3_TENANT_ID = ""
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -12,7 +12,7 @@ import cookieParser from 'cookie-parser';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { randomBytes } from 'crypto';
+import { randomBytes, createPublicKey } from 'crypto';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -234,6 +234,110 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Azure AD org registry — keyed by the orgId the frontend sends
+const AZURE_ORGS = {
+  'iwosan-lagoon': {
+    clientId: process.env.AZURE_ORG1_CLIENT_ID,
+    tenantId: process.env.AZURE_ORG1_TENANT_ID,
+  },
+  'eurapharma': {
+    clientId: process.env.AZURE_ORG2_CLIENT_ID,
+    tenantId: process.env.AZURE_ORG2_TENANT_ID,
+  },
+  'iwosan-healthcare': {
+    clientId: process.env.AZURE_ORG3_CLIENT_ID,
+    tenantId: process.env.AZURE_ORG3_TENANT_ID,
+  },
+};
+
+// POST /api/auth/azure  — validate Microsoft ID token and issue session
+router.post('/auth/azure', async (req, res) => {
+  const { idToken, orgId } = req.body ?? {};
+  if (!idToken || typeof idToken !== 'string') {
+    return res.status(400).json({ error: 'ID token is required' });
+  }
+  if (!orgId || !(orgId in AZURE_ORGS)) {
+    return res.status(400).json({ error: 'Unknown organisation' });
+  }
+
+  const { clientId, tenantId } = AZURE_ORGS[orgId];
+  if (!clientId || !tenantId) {
+    console.error(`Azure: org "${orgId}" is missing CLIENT_ID or TENANT_ID env vars`);
+    return res.status(500).json({ error: 'Organisation is not configured for Microsoft sign-in' });
+  }
+
+  try {
+    // 1. Decode the token header to get the signing key ID
+    const parts = idToken.split('.');
+    if (parts.length !== 3) return res.status(401).json({ error: 'Invalid token format' });
+    const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+
+    // 2. Fetch Microsoft's public signing keys for this tenant
+    const jwksRes = await fetch(
+      `https://login.microsoftonline.com/${tenantId}/discovery/v2.0/keys`
+    );
+    if (!jwksRes.ok) throw new Error('Failed to fetch Microsoft signing keys');
+    const { keys } = await jwksRes.json();
+    const jwk = keys.find((k) => k.kid === header.kid && k.use === 'sig');
+    if (!jwk) return res.status(401).json({ error: 'Token signing key not recognized' });
+
+    // 3. Convert JWK → Node KeyObject and verify signature + standard claims
+    const publicKey = createPublicKey({ key: jwk, format: 'jwk' });
+    const payload = jwt.verify(idToken, publicKey, {
+      algorithms: ['RS256'],
+      audience: clientId,
+      issuer: `https://login.microsoftonline.com/${tenantId}/v2.0`,
+    });
+
+    // 4. Extract identity — preferred_username is the UPN (email) in Azure AD tokens
+    const email = (payload.preferred_username || payload.email || '').toLowerCase().trim();
+    const name = payload.name || email.split('@')[0];
+    if (!email) return res.status(401).json({ error: 'Could not read email from Microsoft token' });
+
+    // 5. Find or auto-create the user
+    let rows = await db(
+      'SELECT id, email, name, role, is_first_login, is_active FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (rows.length === 0) {
+      const unusableHash = await bcrypt.hash(randomBytes(32).toString('hex'), 10);
+      rows = await db(
+        `INSERT INTO users (email, name, password_hash, role, is_first_login, is_active)
+         VALUES ($1, $2, $3, 'user', false, true)
+         RETURNING id, email, name, role, is_first_login, is_active`,
+        [email, name, unusableHash]
+      );
+      console.log(`Azure [${orgId}]: auto-created user ${email}`);
+    }
+
+    const user = rows[0];
+    if (!user.is_active) {
+      return res.status(403).json({ error: 'Your account has been deactivated. Contact an administrator.' });
+    }
+
+    // 6. Issue our standard JWT session cookie
+    const token = signToken({ userId: user.id, email: user.email, role: user.role });
+    setAuthCookie(res, token);
+    return res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        isFirstLogin: user.is_first_login,
+        isActive: user.is_active,
+      },
+    });
+  } catch (err) {
+    if (err?.name === 'JsonWebTokenError' || err?.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Microsoft token is invalid or expired. Please sign in again.' });
+    }
+    console.error(`Azure login error [${orgId}]:`, err);
+    return res.status(500).json({ error: 'Microsoft sign-in failed. Please try again.' });
   }
 });
 

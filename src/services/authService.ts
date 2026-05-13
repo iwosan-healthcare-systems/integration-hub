@@ -1,3 +1,5 @@
+import { getMsalInstance } from '@/lib/msalConfig';
+
 export interface User {
   id: number;
   email: string;
@@ -63,6 +65,32 @@ export async function changePassword(
     body: JSON.stringify({ newPassword, confirmPassword }),
   });
   return { error };
+}
+
+export async function loginWithAzure(orgId: string): Promise<{ user: User | null; error: string | null }> {
+  try {
+    const msal = await getMsalInstance(orgId);
+    const result = await msal.loginPopup({
+      scopes: ['openid', 'profile', 'email'],
+    });
+    if (!result.idToken) throw new Error('No ID token received from Microsoft');
+
+    const { data, error } = await apiFetch<{ user: User }>('/auth/azure', {
+      method: 'POST',
+      body: JSON.stringify({ idToken: result.idToken, orgId }),
+    });
+    return { user: data?.user ?? null, error };
+  } catch (err) {
+    if (err instanceof Error) {
+      if (err.message.includes('user_cancelled') || err.message.includes('access_denied')) {
+        return { user: null, error: null };
+      }
+      if (err.message.includes('popup_window_error')) {
+        return { user: null, error: 'Popup was blocked. Please allow popups for this site and try again.' };
+      }
+    }
+    return { user: null, error: 'Microsoft sign-in failed. Please try again.' };
+  }
 }
 
 // ── Admin ─────────────────────────────────────────────────────────────────

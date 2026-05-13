@@ -3,13 +3,22 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Lock, LogIn } from 'lucide-react';
+import { ChevronDown, Eye, EyeOff, Lock, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { loginUser } from '@/services/authService';
+import { loginUser, loginWithAzure } from '@/services/authService';
+import { AZURE_ORGS } from '@/lib/msalConfig';
 import iwosanIcon from '@/assets/iwosan_icon.webp';
 
 const loginSchema = z.object({
@@ -18,6 +27,15 @@ const loginSchema = z.object({
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
+
+const MicrosoftLogo = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" width="18" height="18" aria-hidden="true" className="shrink-0">
+    <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+    <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+    <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+    <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+  </svg>
+);
 
 export default function LoginPage() {
   const { user, loading, setUser } = useAuth();
@@ -28,6 +46,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [azureLoadingOrg, setAzureLoadingOrg] = useState<string | null>(null);
 
   const {
     register,
@@ -56,6 +75,27 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   };
+
+  const handleAzureLogin = async (orgId: string) => {
+    setServerError('');
+    setAzureLoadingOrg(orgId);
+    try {
+      const { user: loggedInUser, error } = await loginWithAzure(orgId);
+      if (error) {
+        setServerError(error);
+        return;
+      }
+      if (!loggedInUser) return; // user cancelled popup
+      setUser(loggedInUser);
+      const dest = loggedInUser.role === 'admin' ? '/admin' : (from === '/admin' ? '/' : from);
+      navigate(dest, { replace: true });
+    } finally {
+      setAzureLoadingOrg(null);
+    }
+  };
+
+  const isAzureLoading = azureLoadingOrg !== null;
+  const isBusy = isSubmitting || isAzureLoading;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
@@ -134,7 +174,7 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
+              <Button type="submit" className="w-full mt-2" disabled={isBusy}>
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -147,6 +187,58 @@ export default function LoginPage() {
                   </span>
                 )}
               </Button>
+
+              {/* Divider */}
+              <div className="relative my-2">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border/60" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-card px-2 text-muted-foreground">or continue with Microsoft</span>
+                </div>
+              </div>
+
+              {/* Microsoft / Azure AD — org dropdown */}
+              {isAzureLoading ? (
+                <div className="w-full flex items-center justify-center gap-3 rounded-md border border-border/60 bg-white px-4 py-2.5 text-sm font-medium text-gray-500">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                  Connecting to Microsoft…
+                </div>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      className="w-full flex items-center justify-between gap-3 rounded-md border border-border/60 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      <span className="flex items-center gap-3">
+                        <MicrosoftLogo />
+                        Sign in with Microsoft
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="center"
+                    className="w-[var(--radix-dropdown-menu-trigger-width)]"
+                  >
+                    <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+                      Select your organisation
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {AZURE_ORGS.map((org) => (
+                      <DropdownMenuItem
+                        key={org.id}
+                        onSelect={() => handleAzureLogin(org.id)}
+                        className="cursor-pointer"
+                      >
+                        {org.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </form>
           </CardContent>
         </Card>
