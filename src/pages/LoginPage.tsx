@@ -102,7 +102,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-96 h-16 rounded-2xl bg-accent/10 border border-accent/20 mb-4">
+          <div className="inline-flex items-center justify-center w-96 h-16 rounded-2xl bg-primary/10 border border-primary/20 mb-4">
             <img src={iwosanLogo} alt="Iwosan" className="h-10 w-auto" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
@@ -174,7 +174,7 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <Button type="submit" variant="outline" className="w-full mt-2 border-accent/20 bg-accent/10 text-foreground hover:bg-accent/20 hover:text-foreground" disabled={isBusy}>
+              <Button type="submit" className="w-full mt-2" disabled={isBusy}>
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
