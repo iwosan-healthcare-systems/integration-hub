@@ -1,23 +1,28 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PageLoader } from "@/components/PageLoader";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+
+// Layouts — small, load eagerly so route wrappers are ready immediately
 import { HubLayout } from "@/layouts/HubLayout";
 import { AdminLayout } from "@/layouts/AdminLayout";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
-import AboutPage from "./pages/AboutPage";
-import SubsidiariesPage from "./pages/SubsidiariesPage";
-import ResourcesPage from "./pages/ResourcesPage";
-import NewsPage from "./pages/NewsPage";
-import LeadershipPage from "./pages/LeadershipPage";
-import EmailPortalPage from "./pages/EmailPortalPage";
-import LoginPage from "./pages/LoginPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import UsersPage from "./pages/admin/UsersPage";
-import NotFound from "./pages/NotFound";
+
+// Pages — lazy-loaded so each route is a separate chunk
+const LoginPage        = lazy(() => import("./pages/LoginPage"));
+const Index            = lazy(() => import("./pages/Index"));
+const AboutPage        = lazy(() => import("./pages/AboutPage"));
+const SubsidiariesPage = lazy(() => import("./pages/SubsidiariesPage"));
+const ResourcesPage    = lazy(() => import("./pages/ResourcesPage"));
+const NewsPage         = lazy(() => import("./pages/NewsPage"));
+const LeadershipPage   = lazy(() => import("./pages/LeadershipPage"));
+const EmailPortalPage  = lazy(() => import("./pages/EmailPortalPage"));
+const AdminDashboard   = lazy(() => import("./pages/admin/AdminDashboard"));
+const UsersPage        = lazy(() => import("./pages/admin/UsersPage"));
+const NotFound         = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -57,41 +62,43 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            {/* Public */}
-            <Route path="/login" element={<LoginPage />} />
+          <Suspense fallback={<Spinner />}>
+            <Routes>
+              {/* Public */}
+              <Route path="/login" element={<LoginPage />} />
 
-            {/* Admin-only section */}
-            <Route
-              element={
-                <AdminRoute>
-                  <AdminLayout />
-                </AdminRoute>
-              }
-            >
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<UsersPage />} />
-            </Route>
+              {/* Admin-only section */}
+              <Route
+                element={
+                  <AdminRoute>
+                    <AdminLayout />
+                  </AdminRoute>
+                }
+              >
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<UsersPage />} />
+              </Route>
 
-            {/* Hub — authenticated non-admin users */}
-            <Route
-              element={
-                <HubRoute>
-                  <HubLayout />
-                </HubRoute>
-              }
-            >
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/subsidiaries" element={<SubsidiariesPage />} />
-              <Route path="/news" element={<NewsPage />} />
-              <Route path="/leadership" element={<LeadershipPage />} />
-              <Route path="/resources" element={<ResourcesPage />} />
-              <Route path="/email-portal" element={<EmailPortalPage />} />
-            </Route>
+              {/* Hub — authenticated non-admin users */}
+              <Route
+                element={
+                  <HubRoute>
+                    <HubLayout />
+                  </HubRoute>
+                }
+              >
+                <Route path="/" element={<Index />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/subsidiaries" element={<SubsidiariesPage />} />
+                <Route path="/news" element={<NewsPage />} />
+                <Route path="/leadership" element={<LeadershipPage />} />
+                <Route path="/resources" element={<ResourcesPage />} />
+                <Route path="/email-portal" element={<EmailPortalPage />} />
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
