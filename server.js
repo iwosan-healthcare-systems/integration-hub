@@ -209,12 +209,15 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
   }
   try {
     const rows = await db(
-      'SELECT id, email, password_hash, name, role, is_first_login FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, name, role, is_first_login, is_active FROM users WHERE email = $1',
       [String(email).toLowerCase().trim()]
     );
     const user = rows[0];
     const valid = user && (await bcrypt.compare(String(password), user.password_hash));
     if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
+    if (!user.is_active) {
+      return res.status(403).json({ error: 'Your account has been deactivated. Please contact an administrator.' });
+    }
 
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
     setAuthCookie(res, token);
@@ -225,6 +228,7 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
         name: user.name,
         role: user.role,
         isFirstLogin: user.is_first_login,
+        isActive: user.is_active,
       },
     });
   } catch (err) {
@@ -245,11 +249,12 @@ router.get('/auth/me', async (req, res) => {
   if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const rows = await db(
-      'SELECT id, email, name, role, is_first_login FROM users WHERE id = $1',
+      'SELECT id, email, name, role, is_first_login, is_active FROM users WHERE id = $1',
       [authUser.userId]
     );
     const u = rows[0];
     if (!u) return res.status(401).json({ error: 'User not found' });
+    if (!u.is_active) return res.status(403).json({ error: 'Account deactivated' });
     return res.json({
       user: {
         id: u.id,
@@ -257,6 +262,7 @@ router.get('/auth/me', async (req, res) => {
         name: u.name,
         role: u.role,
         isFirstLogin: u.is_first_login,
+        isActive: u.is_active,
       },
     });
   } catch (err) {
@@ -334,6 +340,120 @@ router.post('/admin/create-user', async (req, res) => {
     });
   } catch (err) {
     console.error('Create user error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/users  (admin only)
+router.get('/admin/users', async (req, res) => {
+  const authUser = getAuthUser(req);
+  if (!authUser || authUser.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  try {
+    const rows = await db(
+      `SELECT id, email, name, role, is_first_login, is_active, created_at, updated_at
+       FROM users ORDER BY created_at DESC`,
+      []
+    );
+    return res.json({
+      users: rows.map((u) => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+        isFirstLogin: u.is_first_login,
+        isActive: u.is_active,
+        createdAt: u.created_at,
+        updatedAt: u.updated_at,
+      })),
+    });
+  } catch (err) {
+    console.error('List users error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/admin/users/:id  (admin only) — update name, role, or isActive
+router.patch('/admin/users/:id', async (req, res) => {
+  const authUser = getAuthUser(req);
+  if (!authUser || authUser.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+  if (userId === authUser.userId) {
+    return res.status(400).json({ error: 'Cannot modify your own account via the admin panel' });
+  }
+
+  const { name, role, isActive } = req.body ?? {};
+  const setClauses = [];
+  const params = [];
+  let idx = 1;
+
+  if (name !== undefined) {
+    setClauses.push(`name = $${idx++}`);
+    params.push(String(name).trim());
+  }
+  if (role !== undefined) {
+    const validRoles = ['admin', 'user', 'manager'];
+    if (!validRoles.includes(String(role))) {
+      return res.status(400).json({ error: 'Role must be: admin, user, or manager' });
+    }
+    setClauses.push(`role = $${idx++}`);
+    params.push(String(role));
+  }
+  if (isActive !== undefined) {
+    setClauses.push(`is_active = $${idx++}`);
+    params.push(Boolean(isActive));
+  }
+  if (setClauses.length === 0) {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
+  setClauses.push('updated_at = NOW()');
+  params.push(userId);
+
+  try {
+    const rows = await db(
+      `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${idx}
+       RETURNING id, email, name, role, is_first_login, is_active`,
+      params
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    const u = rows[0];
+    return res.json({
+      user: {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+        isFirstLogin: u.is_first_login,
+        isActive: u.is_active,
+      },
+    });
+  } catch (err) {
+    console.error('Update user error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/users/:id  (admin only)
+router.delete('/admin/users/:id', async (req, res) => {
+  const authUser = getAuthUser(req);
+  if (!authUser || authUser.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+  if (userId === authUser.userId) {
+    return res.status(400).json({ error: 'Cannot delete your own account' });
+  }
+  try {
+    const rows = await db('DELETE FROM users WHERE id = $1 RETURNING id', [userId]);
+    if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    return res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error('Delete user error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

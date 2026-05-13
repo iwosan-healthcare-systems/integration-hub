@@ -35,7 +35,10 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
 
-  if (!loading && user) return <Navigate to={from} replace />;
+  if (!loading && user) {
+    const dest = user.role === 'admin' ? '/admin' : (from === '/admin' ? '/' : from);
+    return <Navigate to={dest} replace />;
+  }
 
   const onSubmit = async (data: LoginForm) => {
     setServerError('');
@@ -47,7 +50,8 @@ export default function LoginPage() {
         return;
       }
       setUser(loggedInUser);
-      navigate(from, { replace: true });
+      const dest = loggedInUser.role === 'admin' ? '/admin' : (from === '/admin' ? '/' : from);
+      navigate(dest, { replace: true });
     } finally {
       setIsSubmitting(false);
     }

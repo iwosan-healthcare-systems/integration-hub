@@ -4,9 +4,14 @@ export interface User {
   name: string;
   role: string;
   isFirstLogin: boolean;
+  isActive: boolean;
 }
 
-// Points to the CPanel Express server in production, empty string for same-origin (Vercel/Netlify Functions)
+export interface AdminUser extends User {
+  createdAt: string;
+  updatedAt: string;
+}
+
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
 async function apiFetch<T>(
@@ -16,7 +21,6 @@ async function apiFetch<T>(
   try {
     const res = await fetch(`${API_BASE}/api${path}`, {
       headers: { 'Content-Type': 'application/json' },
-      // 'include' sends cookies even to a different subdomain (api.iwosaninnovationhub.com)
       credentials: 'include',
       ...options,
     });
@@ -27,6 +31,8 @@ async function apiFetch<T>(
     return { data: null, error: 'Network error. Please try again.' };
   }
 }
+
+// ── Auth ──────────────────────────────────────────────────────────────────
 
 export async function loginUser(
   email: string,
@@ -56,6 +62,29 @@ export async function changePassword(
     method: 'POST',
     body: JSON.stringify({ newPassword, confirmPassword }),
   });
+  return { error };
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────
+
+export async function listUsers(): Promise<{ users: AdminUser[] | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ users: AdminUser[] }>('/admin/users');
+  return { users: data?.users ?? null, error };
+}
+
+export async function updateUser(
+  id: number,
+  fields: { name?: string; role?: string; isActive?: boolean }
+): Promise<{ user: User | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ user: User }>(`/admin/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(fields),
+  });
+  return { user: data?.user ?? null, error };
+}
+
+export async function deleteUser(id: number): Promise<{ error: string | null }> {
+  const { error } = await apiFetch(`/admin/users/${id}`, { method: 'DELETE' });
   return { error };
 }
 
