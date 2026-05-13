@@ -102,7 +102,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 mb-4">
+          <div className="inline-flex items-center justify-center w-64 h-16 rounded-2xl bg-accent/10 border border-accent/20 mb-4">
             <img src={iwosanLogo} alt="Iwosan" className="h-10 w-auto" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
@@ -200,8 +200,8 @@ export default function LoginPage() {
 
               {/* Microsoft / Azure AD — org dropdown */}
               {isAzureLoading ? (
-                <div className="w-full flex items-center justify-center gap-3 rounded-md border border-border/60 bg-white px-4 py-2.5 text-sm font-medium text-gray-500">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                <div className="w-full flex items-center justify-center gap-3 rounded-md border border-accent/20 bg-accent/10 px-4 py-2.5 text-sm font-medium text-muted-foreground">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent/40 border-t-transparent" />
                   Connecting to Microsoft…
                 </div>
               ) : (
@@ -210,13 +210,13 @@ export default function LoginPage() {
                     <button
                       type="button"
                       disabled={isBusy}
-                      className="w-full flex items-center justify-between gap-3 rounded-md border border-border/60 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                      className="w-full flex items-center justify-between gap-3 rounded-md border border-accent/20 bg-accent/10 px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                     >
                       <span className="flex items-center gap-3">
                         <MicrosoftLogo />
                         Sign in with Microsoft
                       </span>
-                      <ChevronDown className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
