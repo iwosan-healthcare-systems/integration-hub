@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PageLoader } from "@/components/PageLoader";
+import { NavigationProgress } from "@/components/NavigationProgress";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 // Layouts — small, load eagerly so route wrappers are ready immediately
@@ -61,6 +62,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <NavigationProgress />
         <AuthProvider>
           <Suspense fallback={<Spinner />}>
             <Routes>
