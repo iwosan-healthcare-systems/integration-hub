@@ -431,8 +431,8 @@ router.post('/admin/create-user', async (req, res) => {
     const hash = await bcrypt.hash(plainPassword, 12);
 
     const rows = await db(
-      `INSERT INTO users (email, name, password_hash, role, is_first_login)
-       VALUES ($1, $2, $3, $4, true) RETURNING id, email`,
+      `INSERT INTO users (email, name, password_hash, role, is_first_login, is_active)
+       VALUES ($1, $2, $3, $4, true, true) RETURNING id, email`,
       [String(email).toLowerCase().trim(), String(name).trim(), hash, String(role)]
     );
 
