@@ -301,7 +301,9 @@ export default function UsersPage() {
       {globalError && (
         <div className="flex items-center justify-between rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {globalError}
-          <button onClick={() => setGlobalError('')}><X className="h-3.5 w-3.5" /></button>
+          <button type="button" onClick={() => setGlobalError('')} aria-label="Dismiss error">
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
 
