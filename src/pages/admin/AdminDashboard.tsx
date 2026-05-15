@@ -47,7 +47,7 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-foreground">Overview</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Iwosan Innovation Hub user statistics</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Iwosan Innovation Hub User Statistics</p>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={loading} className="gap-2">
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
