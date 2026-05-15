@@ -444,7 +444,7 @@ router.post('/admin/create-user', async (req, res) => {
     });
   } catch (err) {
     console.error('Create user error:', err);
-    return res.status(500).json({ error: 'Internal server error', detail: err?.message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
