@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { loginUser, loginWithAzure } from '@/services/authService';
 import { AZURE_ORGS } from '@/lib/msalConfig';
 import iwosanVideo from '@/assets/iwosan_vision_values_1080p.webm';
+import iwosanLogo from '@/assets/iwosan_logo.webp';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -125,13 +126,15 @@ export default function LoginPage() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12">
 
         {/* Branding above card */}
-        <div className="text-center mb-7">
-          <p className="text-[10px] uppercase tracking-[0.4em] text-white/50 font-medium">
-            Iwosan Innovation Hub
+        <div className="text-center mb-7 flex flex-col items-center gap-3">
+          <img
+            src={iwosanLogo}
+            alt="Iwosan"
+            className="h-10 w-auto drop-shadow-lg"
+          />
+          <p className="text-[20px] uppercase tracking-[0.4em] text-white/50 font-medium">
+            Innovation Hub
           </p>
-          <h1 className="text-white text-xl font-bold mt-1 tracking-tight drop-shadow-md">
-            Staff Portal
-          </h1>
         </div>
 
         {/* ── Glass form card ── */}
