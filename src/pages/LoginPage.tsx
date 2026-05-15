@@ -103,61 +103,49 @@ export default function LoginPage() {
   const isBusy = isSubmitting || isAzureLoading;
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+    <div className="relative min-h-screen overflow-hidden bg-black">
 
-      {/* ── Left: video panel (hidden on mobile, visible lg+) ── */}
-      <div className="hidden lg:flex relative lg:w-[58%] xl:w-[62%] overflow-hidden bg-black">
-        <video
-          ref={videoRef}
-          src={iwosanVideo}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+      {/* ── Full-screen background video ── */}
+      <video
+        ref={videoRef}
+        src={iwosanVideo}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
 
-        {/* Gradient overlay — darkens edges so text is legible */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/60 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+      {/* Layered overlays for depth and readability */}
+      <div className="absolute inset-0 bg-black/55 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
 
-        {/* Branding overlay at bottom-left */}
-        <div className="absolute bottom-10 left-10 right-10 text-white">
-          <p className="text-[11px] uppercase tracking-[0.35em] text-white/60 mb-2 font-medium">
+      {/* ── Page content (sits above video) ── */}
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12">
+
+        {/* Branding above card */}
+        <div className="text-center mb-7">
+          <p className="text-[10px] uppercase tracking-[0.4em] text-white/50 font-medium">
             Iwosan Innovation Hub
           </p>
-          <h2 className="text-3xl xl:text-4xl font-bold leading-tight tracking-tight drop-shadow-lg">
-            Advancing Healthcare<br />Innovation in Africa
-          </h2>
-          <p className="text-sm text-white/60 mt-3 leading-relaxed max-w-sm">
-            A collaborative platform for Iwosan Group staff and partners.
-          </p>
-        </div>
-      </div>
-
-      {/* ── Right: form panel ── */}
-      <div className="flex-1 flex flex-col items-center justify-center bg-background px-6 py-12 sm:px-10 lg:px-12 xl:px-16 min-h-screen lg:min-h-0">
-
-        {/* Mobile-only: subtle brand line above form */}
-        <div className="lg:hidden text-center mb-10">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground font-medium">
-            Iwosan Innovation Hub
-          </p>
-          <h1 className="text-2xl font-bold text-foreground mt-1 tracking-tight">Staff Portal</h1>
+          <h1 className="text-white text-xl font-bold mt-1 tracking-tight drop-shadow-md">
+            Staff Portal
+          </h1>
         </div>
 
-        <div className="w-full max-w-sm">
-          {/* Heading */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground tracking-tight">Welcome back</h2>
-            <p className="text-sm text-muted-foreground mt-1">Sign in to access your portal</p>
+        {/* ── Glass form card ── */}
+        <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-white/[0.09] backdrop-blur-2xl shadow-2xl shadow-black/40 px-7 py-8">
+
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-white tracking-tight">Welcome back</h2>
+            <p className="text-sm text-white/55 mt-1">Sign in to access your account</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             {/* Email */}
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-white/80">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -165,16 +153,16 @@ export default function LoginPage() {
                 autoComplete="email"
                 autoFocus
                 {...register('email')}
-                className={`h-11 ${errors.email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                className={`h-11 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus-visible:border-white/50 focus-visible:ring-white/20 ${errors.email ? 'border-red-400/60' : ''}`}
               />
               {errors.email && (
-                <p className="text-xs text-destructive">{errors.email.message}</p>
+                <p className="text-xs text-red-300">{errors.email.message}</p>
               )}
             </div>
 
             {/* Password */}
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-white/80">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -182,27 +170,27 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   {...register('password')}
-                  className={`h-11 pr-10 ${errors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  className={`h-11 pr-10 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus-visible:border-white/50 focus-visible:ring-white/20 ${errors.password ? 'border-red-400/60' : ''}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   tabIndex={-1}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-xs text-destructive">{errors.password.message}</p>
+                <p className="text-xs text-red-300">{errors.password.message}</p>
               )}
             </div>
 
             {/* Server error */}
             {serverError && (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2.5">
-                <p className="text-sm text-destructive">{serverError}</p>
+              <div className="rounded-lg bg-red-500/15 border border-red-400/30 px-3 py-2.5">
+                <p className="text-sm text-red-300">{serverError}</p>
               </div>
             )}
 
@@ -224,17 +212,17 @@ export default function LoginPage() {
             {/* Divider */}
             <div className="relative py-1">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border/60" />
+                <span className="w-full border-t border-white/15" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-background px-2 text-muted-foreground">or continue with Microsoft</span>
+                <span className="bg-transparent px-2 text-white/40">or continue with Microsoft</span>
               </div>
             </div>
 
             {/* Azure AD org dropdown */}
             {isAzureLoading ? (
-              <div className="w-full h-11 flex items-center justify-center gap-3 rounded-md border border-border bg-muted/40 text-sm text-muted-foreground">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent/50 border-t-transparent" />
+              <div className="w-full h-11 flex items-center justify-center gap-3 rounded-md border border-white/15 bg-white/10 text-sm text-white/60">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-transparent" />
                 Connecting to Microsoft…
               </div>
             ) : (
@@ -243,13 +231,13 @@ export default function LoginPage() {
                   <button
                     type="button"
                     disabled={isBusy}
-                    className="w-full h-11 flex items-center justify-between gap-3 rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                    className="w-full h-11 flex items-center justify-between gap-3 rounded-md border border-white/15 bg-white/10 px-4 text-sm font-medium text-white/80 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:pointer-events-none disabled:opacity-40"
                   >
                     <span className="flex items-center gap-2.5">
                       <MicrosoftLogo />
                       Sign in with Microsoft
                     </span>
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <ChevronDown className="h-3.5 w-3.5 text-white/40 shrink-0" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="center" className="w-[var(--radix-dropdown-menu-trigger-width)]">
@@ -270,11 +258,12 @@ export default function LoginPage() {
               </DropdownMenu>
             )}
           </form>
-
-          <p className="text-center text-xs text-muted-foreground mt-10">
-            © {new Date().getFullYear()} Iwosan Innovation Hub · All rights reserved
-          </p>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-white/30 mt-8">
+          © {new Date().getFullYear()} Iwosan Innovation Hub · All rights reserved
+        </p>
       </div>
     </div>
   );
