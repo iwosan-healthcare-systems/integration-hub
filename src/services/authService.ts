@@ -116,6 +116,16 @@ export async function deleteUser(id: number): Promise<{ error: string | null }> 
   return { error };
 }
 
+export async function resetUserPassword(
+  id: number
+): Promise<{ temporaryPassword: string | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ temporaryPassword: string }>(
+    `/admin/users/${id}/reset-password`,
+    { method: 'POST' }
+  );
+  return { temporaryPassword: data?.temporaryPassword ?? null, error };
+}
+
 export async function createUser(
   email: string,
   name: string,

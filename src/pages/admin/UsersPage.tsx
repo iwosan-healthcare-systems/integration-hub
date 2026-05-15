@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import {
   Search, Plus, MoreHorizontal, RefreshCw, UserCheck, UserX,
-  Trash2, Pencil, X, Copy, Check
+  Trash2, Pencil, X, Copy, Check, KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -22,7 +22,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { listUsers, updateUser, deleteUser, createUser, type AdminUser } from '@/services/authService';
+import { listUsers, updateUser, deleteUser, createUser, resetUserPassword, type AdminUser } from '@/services/authService';
 
 function roleBadge(role: string) {
   if (role === 'admin') return <Badge className="bg-accent/20 text-accent border-accent/30 text-[10px]">Admin</Badge>;
@@ -261,6 +261,14 @@ export default function UsersPage() {
     setDeleteTarget(null);
   };
 
+  const handleResetPassword = async (u: AdminUser) => {
+    setActionLoading(u.id);
+    const { temporaryPassword, error } = await resetUserPassword(u.id);
+    setActionLoading(null);
+    if (error) { setGlobalError(error); return; }
+    if (temporaryPassword) setNewPassword({ password: temporaryPassword, name: u.name });
+  };
+
   const handleCreated = (user: AdminUser, tempPassword: string) => {
     setUsers((prev) => [user, ...prev]);
     setNewPassword({ password: tempPassword, name: user.name });
@@ -310,11 +318,25 @@ export default function UsersPage() {
 
       {/* Table */}
       <Card className="border-border/60">
-        <CardHeader className="py-3 px-5 border-b border-border/60">
-          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            {loading ? 'Loading…' : `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`}
-          </CardTitle>
-        </CardHeader>
+        {/* Column headings */}
+        <div className="flex items-center gap-4 px-5 py-2.5 border-b border-border/60 bg-muted/50">
+          {/* Avatar spacer */}
+          <div className="h-4 w-8 shrink-0" />
+          {/* User */}
+          <div className="flex-1 min-w-0">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">User</span>
+          </div>
+          {/* Role & Status */}
+          <div className="hidden sm:block shrink-0 w-36">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Role & Status</span>
+          </div>
+          {/* Joined */}
+          <div className="hidden md:block w-24 shrink-0 text-right">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Joined</span>
+          </div>
+          {/* Actions spacer */}
+          <div className="w-7 shrink-0" />
+        </div>
         <CardContent className="p-0">
           {loading ? (
             <div className="space-y-0">
@@ -386,6 +408,9 @@ export default function UsersPage() {
                         {u.isActive
                           ? <><UserX className="h-3.5 w-3.5 mr-2" /> Deactivate</>
                           : <><UserCheck className="h-3.5 w-3.5 mr-2" /> Activate</>}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleResetPassword(u)}>
+                        <KeyRound className="h-3.5 w-3.5 mr-2" /> Reset password
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem

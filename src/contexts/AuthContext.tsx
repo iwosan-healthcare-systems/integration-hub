@@ -12,7 +12,7 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   setUser: (user: User | null) => void;
-  logout: () => Promise<void>;
+  logout: () => void;
   refreshUser: () => Promise<void>;
 }
 
@@ -59,10 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser();
   }, [refreshUser]);
 
-  const logout = useCallback(async () => {
-    await logoutUser();
+  const logout = useCallback(() => {
+    // Clear state immediately so the UI responds instantly
     localStorage.removeItem(SESSION_HINT);
     setUserState(null);
+    // Fire-and-forget: clears the httpOnly cookie server-side
+    logoutUser().catch(() => {});
   }, []);
 
   return (

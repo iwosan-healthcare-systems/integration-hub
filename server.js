@@ -448,6 +448,37 @@ router.post('/admin/create-user', async (req, res) => {
   }
 });
 
+// POST /api/admin/users/:id/reset-password  (admin only)
+router.post('/admin/users/:id/reset-password', async (req, res) => {
+  const authUser = getAuthUser(req);
+  if (!authUser || authUser.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+
+  try {
+    const existing = await db('SELECT id, name, email FROM users WHERE id = $1', [userId]);
+    if (existing.length === 0) return res.status(404).json({ error: 'User not found' });
+
+    const plainPassword = generatePassword();
+    const hash = await bcrypt.hash(plainPassword, 12);
+    await db(
+      'UPDATE users SET password_hash = $1, is_first_login = true, updated_at = NOW() WHERE id = $2',
+      [hash, userId]
+    );
+
+    return res.json({
+      message: 'Password reset successfully',
+      temporaryPassword: plainPassword,
+      note: 'Share this password securely. The user will be prompted to change it on next login.',
+    });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/admin/users  (admin only)
 router.get('/admin/users', async (req, res) => {
   const authUser = getAuthUser(req);

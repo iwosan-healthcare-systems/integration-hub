@@ -42,8 +42,8 @@ export function TopNavbar() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { user, loading, logout } = useAuth();
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    logout();
     navigate("/login");
   };
 
