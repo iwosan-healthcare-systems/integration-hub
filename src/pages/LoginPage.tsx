@@ -18,7 +18,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { loginUser, loginWithAzure } from '@/services/authService';
 import { AZURE_ORGS } from '@/lib/msalConfig';
-import iwosanVideo from '@/assets/iwosan_motion_video.mp4';
+import iwosanVideo from '@/assets/iwosan_vision_values_1080p.webm';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
