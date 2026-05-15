@@ -50,10 +50,11 @@ export default function LoginPage() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Ensure video plays as soon as it's ready — no waiting on user gesture
+  // Ensure video is muted and plays immediately — React doesn't reliably sync the muted prop to the DOM
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+    v.muted = true;
     v.play().catch(() => {});
   }, []);
 
