@@ -10,6 +10,7 @@ export interface User {
 }
 
 export interface AdminUser extends User {
+  authProvider: string;
   createdAt: string;
   updatedAt: string;
 }

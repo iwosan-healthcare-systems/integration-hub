@@ -378,7 +378,10 @@ export default function UsersPage() {
                   <div className="hidden sm:flex items-center gap-2 shrink-0">
                     {roleBadge(u.role)}
                     <StatusBadge active={u.isActive} />
-                    {u.isFirstLogin && (
+                    {u.authProvider === 'azure' && (
+                      <Badge variant="outline" className="text-[10px] text-blue-500 border-blue-400/40">Microsoft</Badge>
+                    )}
+                  {u.isFirstLogin && u.authProvider !== 'azure' && (
                       <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-400/40">First Login</Badge>
                     )}
                   </div>
@@ -411,9 +414,11 @@ export default function UsersPage() {
                           ? <><UserX className="h-3.5 w-3.5 mr-2" /> Deactivate</>
                           : <><UserCheck className="h-3.5 w-3.5 mr-2" /> Activate</>}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleResetPassword(u)}>
-                        <KeyRound className="h-3.5 w-3.5 mr-2" /> Reset password
-                      </DropdownMenuItem>
+                      {u.authProvider !== 'azure' && (
+                        <DropdownMenuItem onClick={() => handleResetPassword(u)}>
+                          <KeyRound className="h-3.5 w-3.5 mr-2" /> Reset password
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"

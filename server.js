@@ -212,12 +212,15 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
   }
   try {
     const rows = await db(
-      'SELECT id, email, password_hash, name, role, is_first_login, is_active FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, name, role, is_first_login, is_active, auth_provider FROM users WHERE email = $1',
       [String(email).toLowerCase().trim()]
     );
     const user = rows[0];
     const valid = user && (await bcrypt.compare(String(password), user.password_hash));
     if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
+    if (user.auth_provider === 'azure') {
+      return res.status(403).json({ error: 'This account uses Microsoft sign-in. Please use the "Sign in with Microsoft" button.' });
+    }
     if (!user.is_active) {
       return res.status(403).json({ error: 'Your account has been deactivated. Please contact an administrator.' });
     }
@@ -294,16 +297,16 @@ router.post('/auth/azure', async (req, res) => {
 
     // 5. Find or auto-create the user
     let rows = await db(
-      'SELECT id, email, name, role, is_first_login, is_active FROM users WHERE email = $1',
+      'SELECT id, email, name, role, is_first_login, is_active, auth_provider FROM users WHERE email = $1',
       [email]
     );
 
     if (rows.length === 0) {
       const unusableHash = await bcrypt.hash(randomBytes(32).toString('hex'), 10);
       rows = await db(
-        `INSERT INTO users (email, name, password_hash, role, is_first_login, is_active)
-         VALUES ($1, $2, $3, 'user', false, true)
-         RETURNING id, email, name, role, is_first_login, is_active`,
+        `INSERT INTO users (email, name, password_hash, role, is_first_login, is_active, auth_provider)
+         VALUES ($1, $2, $3, 'user', false, true, 'azure')
+         RETURNING id, email, name, role, is_first_login, is_active, auth_provider`,
         [email, name, unusableHash]
       );
       console.log(`Azure [${orgId}]: auto-created user ${email}`);
@@ -453,10 +456,13 @@ router.post('/admin/users/:id/reset-password', async (req, res) => {
   if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
 
   try {
-    const existing = await db('SELECT id, name, email, role FROM users WHERE id = $1', [userId]);
+    const existing = await db('SELECT id, name, email, role, auth_provider FROM users WHERE id = $1', [userId]);
     if (existing.length === 0) return res.status(404).json({ error: 'User not found' });
     if (!isAdmin(authUser) && existing[0].role === 'admin') {
       return res.status(403).json({ error: 'Managers cannot reset admin passwords' });
+    }
+    if (existing[0].auth_provider === 'azure') {
+      return res.status(400).json({ error: 'This account uses Microsoft sign-in and does not have a password to reset.' });
     }
 
     const plainPassword = generatePassword();
@@ -485,7 +491,7 @@ router.get('/admin/users', async (req, res) => {
   }
   try {
     const rows = await db(
-      `SELECT id, email, name, role, is_first_login, is_active, created_at, updated_at
+      `SELECT id, email, name, role, is_first_login, is_active, auth_provider, created_at, updated_at
        FROM users ORDER BY created_at DESC`,
       []
     );
@@ -497,6 +503,7 @@ router.get('/admin/users', async (req, res) => {
         role: u.role,
         isFirstLogin: u.is_first_login,
         isActive: u.is_active,
+        authProvider: u.auth_provider,
         createdAt: u.created_at,
         updatedAt: u.updated_at,
       })),
