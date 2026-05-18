@@ -235,6 +235,7 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
         role: user.role,
         isFirstLogin: user.is_first_login,
         isActive: user.is_active,
+        authProvider: user.auth_provider,
       },
     });
   } catch (err) {
@@ -328,6 +329,7 @@ router.post('/auth/azure', async (req, res) => {
         role: user.role,
         isFirstLogin: user.is_first_login,
         isActive: user.is_active,
+        authProvider: user.auth_provider,
       },
     });
   } catch (err) {
@@ -351,7 +353,7 @@ router.get('/auth/me', async (req, res) => {
   if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const rows = await db(
-      'SELECT id, email, name, role, is_first_login, is_active FROM users WHERE id = $1',
+      'SELECT id, email, name, role, is_first_login, is_active, auth_provider FROM users WHERE id = $1',
       [authUser.userId]
     );
     const u = rows[0];
@@ -365,6 +367,7 @@ router.get('/auth/me', async (req, res) => {
         role: u.role,
         isFirstLogin: u.is_first_login,
         isActive: u.is_active,
+        authProvider: u.auth_provider,
       },
     });
   } catch (err) {

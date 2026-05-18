@@ -329,7 +329,7 @@ export default function UsersPage() {
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">User</span>
           </div>
           {/* Role & Status */}
-          <div className="hidden sm:block shrink-0 w-36">
+          <div className="hidden sm:block shrink-0 w-32">
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Role & Status</span>
           </div>
           {/* Auth */}
@@ -376,18 +376,15 @@ export default function UsersPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{u.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                    {u.isFirstLogin && u.authProvider !== 'azure' && (
+                      <p className="text-[10px] text-amber-600 font-medium mt-0.5">Pending first login</p>
+                    )}
                   </div>
 
                   {/* Badges */}
-                  <div className="hidden sm:flex items-center gap-2 shrink-0 w-36">
+                  <div className="hidden sm:flex items-center gap-2 shrink-0 w-32">
                     {roleBadge(u.role)}
                     <StatusBadge active={u.isActive} />
-                    {u.authProvider === 'azure' && (
-                      <Badge variant="outline" className="text-[10px] text-blue-500 border-blue-400/40">Microsoft</Badge>
-                    )}
-                    {u.isFirstLogin && u.authProvider !== 'azure' && (
-                      <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-400/40">First Login</Badge>
-                    )}
                   </div>
 
                   {/* Auth provider */}

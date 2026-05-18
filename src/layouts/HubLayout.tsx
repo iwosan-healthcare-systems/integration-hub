@@ -1,11 +1,28 @@
-import { Outlet } from "react-router-dom";
+import { useCallback } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TopNavbar } from "@/components/TopNavbar";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { ChangePasswordModal } from "@/components/ChangePasswordModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { clearAzureSession } from "@/services/authService";
+import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 
 export function HubLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleInactivityTimeout = useCallback(async () => {
+    if (user?.authProvider === 'azure') await clearAzureSession();
+    logout();
+    navigate('/login');
+    toast.info('You were logged out after 1 hour of inactivity.');
+  }, [user, logout, navigate]);
+
+  useInactivityLogout(handleInactivityTimeout, user?.authProvider === 'azure');
+
   return (
     <SidebarProvider>
       <ScrollToTop />

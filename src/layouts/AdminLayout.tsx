@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { LayoutDashboard, Users, LogOut, Shield, Menu, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { clearAzureSession } from '@/services/authService';
+import { useInactivityLogout } from '@/hooks/useInactivityLogout';
 import iwosanIcon from '@/assets/iwosan_icon.webp';
 
 const navItems = [
@@ -91,9 +94,18 @@ function SidebarContent({
 }
 
 export function AdminLayout() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleInactivityTimeout = useCallback(async () => {
+    if (user?.authProvider === 'azure') await clearAzureSession();
+    logout();
+    navigate('/login');
+    toast.info('You were logged out after 1 hour of inactivity.');
+  }, [user, logout, navigate]);
+
+  useInactivityLogout(handleInactivityTimeout, user?.authProvider === 'azure');
 
   const handleLogout = () => {
     logout();

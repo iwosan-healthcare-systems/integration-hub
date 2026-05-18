@@ -7,6 +7,7 @@ export interface User {
   role: string;
   isFirstLogin: boolean;
   isActive: boolean;
+  authProvider: string;
 }
 
 export interface AdminUser extends User {
@@ -68,11 +69,19 @@ export async function changePassword(
   return { error };
 }
 
+export async function clearAzureSession(): Promise<void> {
+  try {
+    const msal = await getMsalInstance();
+    await msal.clearCache();
+  } catch { /* ignore */ }
+}
+
 export async function loginWithAzure(): Promise<{ user: User | null; error: string | null }> {
   try {
     const msal = await getMsalInstance();
     const result = await msal.loginPopup({
       scopes: ['openid', 'profile', 'email'],
+      prompt: 'login', // always force credential entry — no silent SSO
     });
     if (!result.idToken) throw new Error('No ID token received from Microsoft');
 
