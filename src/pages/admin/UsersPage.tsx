@@ -332,6 +332,10 @@ export default function UsersPage() {
           <div className="hidden sm:block shrink-0 w-36">
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Role & Status</span>
           </div>
+          {/* Auth */}
+          <div className="hidden lg:block shrink-0 w-24">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Auth</span>
+          </div>
           {/* Joined */}
           <div className="hidden md:block w-24 shrink-0 text-right">
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Joined</span>
@@ -375,14 +379,33 @@ export default function UsersPage() {
                   </div>
 
                   {/* Badges */}
-                  <div className="hidden sm:flex items-center gap-2 shrink-0">
+                  <div className="hidden sm:flex items-center gap-2 shrink-0 w-36">
                     {roleBadge(u.role)}
                     <StatusBadge active={u.isActive} />
                     {u.authProvider === 'azure' && (
                       <Badge variant="outline" className="text-[10px] text-blue-500 border-blue-400/40">Microsoft</Badge>
                     )}
-                  {u.isFirstLogin && u.authProvider !== 'azure' && (
+                    {u.isFirstLogin && u.authProvider !== 'azure' && (
                       <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-400/40">First Login</Badge>
+                    )}
+                  </div>
+
+                  {/* Auth provider */}
+                  <div className="hidden lg:block shrink-0 w-24">
+                    {u.authProvider === 'azure' ? (
+                      <Badge variant="outline" className="text-[10px] text-blue-500 border-blue-400/40 gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" width="9" height="9" className="shrink-0">
+                          <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                          <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+                          <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+                          <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+                        </svg>
+                        Microsoft
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/60">
+                        Local
+                      </Badge>
                     )}
                   </div>
 
