@@ -95,6 +95,26 @@ function getAuthUser(req) {
   return token ? verifyToken(token) : null;
 }
 
+// Middleware: decodes JWT then re-reads role + is_active from DB so stale tokens
+// can't carry a promoted/deactivated state beyond what the DB says.
+async function requireAuth(req, res, next) {
+  const decoded = getAuthUser(req);
+  if (!decoded) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const rows = await db(
+      'SELECT id, role, is_active FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+    if (!rows[0] || !rows[0].is_active)
+      return res.status(403).json({ error: 'Account deactivated' });
+    req.authUser = { ...decoded, role: rows[0].role };
+    next();
+  } catch (err) {
+    console.error('requireAuth error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 const cookieOpts = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
@@ -310,7 +330,7 @@ router.post('/auth/azure', async (req, res) => {
          RETURNING id, email, name, role, is_first_login, is_active, auth_provider`,
         [email, name, unusableHash]
       );
-      console.log(`Azure [${orgId}]: auto-created user ${email}`);
+      console.log(`Azure [${orgId}]: auto-created user id=${rows[0].id}`);
     }
 
     const user = rows[0];
@@ -377,9 +397,8 @@ router.get('/auth/me', async (req, res) => {
 });
 
 // POST /api/auth/change-password
-router.post('/auth/change-password', async (req, res) => {
-  const authUser = getAuthUser(req);
-  if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
+router.post('/auth/change-password', requireAuth, async (req, res) => {
+  const authUser = req.authUser;
 
   const { newPassword, confirmPassword } = req.body ?? {};
   if (!newPassword || !confirmPassword) {
@@ -405,9 +424,9 @@ router.post('/auth/change-password', async (req, res) => {
 });
 
 // POST /api/admin/create-user  (admin + manager)
-router.post('/admin/create-user', async (req, res) => {
-  const authUser = getAuthUser(req);
-  if (!authUser || !isAdminOrManager(authUser)) {
+router.post('/admin/create-user', requireAuth, async (req, res) => {
+  const authUser = req.authUser;
+  if (!isAdminOrManager(authUser)) {
     return res.status(403).json({ error: 'Access required' });
   }
 
@@ -450,9 +469,9 @@ router.post('/admin/create-user', async (req, res) => {
 });
 
 // POST /api/admin/users/:id/reset-password  (admin + manager)
-router.post('/admin/users/:id/reset-password', async (req, res) => {
-  const authUser = getAuthUser(req);
-  if (!authUser || !isAdminOrManager(authUser)) {
+router.post('/admin/users/:id/reset-password', requireAuth, async (req, res) => {
+  const authUser = req.authUser;
+  if (!isAdminOrManager(authUser)) {
     return res.status(403).json({ error: 'Access required' });
   }
   const userId = parseInt(req.params.id, 10);
@@ -487,9 +506,9 @@ router.post('/admin/users/:id/reset-password', async (req, res) => {
 });
 
 // GET /api/admin/users  (admin + manager)
-router.get('/admin/users', async (req, res) => {
-  const authUser = getAuthUser(req);
-  if (!authUser || !isAdminOrManager(authUser)) {
+router.get('/admin/users', requireAuth, async (req, res) => {
+  const authUser = req.authUser;
+  if (!isAdminOrManager(authUser)) {
     return res.status(403).json({ error: 'Access required' });
   }
   try {
@@ -518,9 +537,9 @@ router.get('/admin/users', async (req, res) => {
 });
 
 // PATCH /api/admin/users/:id  (admin + manager) — update name, role, or isActive
-router.patch('/admin/users/:id', async (req, res) => {
-  const authUser = getAuthUser(req);
-  if (!authUser || !isAdminOrManager(authUser)) {
+router.patch('/admin/users/:id', requireAuth, async (req, res) => {
+  const authUser = req.authUser;
+  if (!isAdminOrManager(authUser)) {
     return res.status(403).json({ error: 'Access required' });
   }
   const userId = parseInt(req.params.id, 10);
@@ -592,9 +611,9 @@ router.patch('/admin/users/:id', async (req, res) => {
 });
 
 // DELETE /api/admin/users/:id  (admin only)
-router.delete('/admin/users/:id', async (req, res) => {
-  const authUser = getAuthUser(req);
-  if (!authUser || authUser.role !== 'admin') {
+router.delete('/admin/users/:id', requireAuth, async (req, res) => {
+  const authUser = req.authUser;
+  if (!isAdmin(authUser)) {
     return res.status(403).json({ error: 'Admin access required' });
   }
   const userId = parseInt(req.params.id, 10);
