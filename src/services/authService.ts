@@ -67,9 +67,9 @@ export async function changePassword(
   return { error };
 }
 
-export async function loginWithAzure(orgId: string): Promise<{ user: User | null; error: string | null }> {
+export async function loginWithAzure(): Promise<{ user: User | null; error: string | null }> {
   try {
-    const msal = await getMsalInstance(orgId);
+    const msal = await getMsalInstance();
     const result = await msal.loginPopup({
       scopes: ['openid', 'profile', 'email'],
     });
@@ -77,7 +77,7 @@ export async function loginWithAzure(orgId: string): Promise<{ user: User | null
 
     const { data, error } = await apiFetch<{ user: User }>('/auth/azure', {
       method: 'POST',
-      body: JSON.stringify({ idToken: result.idToken, orgId }),
+      body: JSON.stringify({ idToken: result.idToken, orgId: 'iwosan-lagoon' }),
     });
     return { user: data?.user ?? null, error };
   } catch (err) {

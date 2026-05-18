@@ -3,21 +3,12 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ChevronDown, Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { loginUser, loginWithAzure } from '@/services/authService';
-import { AZURE_ORGS } from '@/lib/msalConfig';
 import iwosanVideo from '@/assets/iwosan_vision_values_1080p.webm';
 import iwosanLogo from '@/assets/iwosan_logo.webp';
 
@@ -46,7 +37,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [azureLoadingOrg, setAzureLoadingOrg] = useState<string | null>(null);
+  const [azureLoading, setAzureLoading] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -86,23 +77,22 @@ export default function LoginPage() {
     }
   };
 
-  const handleAzureLogin = async (orgId: string) => {
+  const handleAzureLogin = async () => {
     setServerError('');
-    setAzureLoadingOrg(orgId);
+    setAzureLoading(true);
     try {
-      const { user: loggedInUser, error } = await loginWithAzure(orgId);
+      const { user: loggedInUser, error } = await loginWithAzure();
       if (error) { setServerError(error); return; }
       if (!loggedInUser) return;
       setUser(loggedInUser);
       const dest = loggedInUser.role === 'admin' ? '/admin' : (from === '/admin' ? '/' : from);
       navigate(dest, { replace: true });
     } finally {
-      setAzureLoadingOrg(null);
+      setAzureLoading(false);
     }
   };
 
-  const isAzureLoading = azureLoadingOrg !== null;
-  const isBusy = isSubmitting || isAzureLoading;
+  const isBusy = isSubmitting || azureLoading;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black">
@@ -223,43 +213,22 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Azure AD org dropdown */}
-            {isAzureLoading ? (
+            {/* Microsoft sign-in button */}
+            {azureLoading ? (
               <div className="w-full h-11 flex items-center justify-center gap-3 rounded-md border border-white/15 bg-white/10 text-sm text-white/60">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-transparent" />
                 Connecting to Microsoft…
               </div>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    disabled={isBusy}
-                    className="w-full h-11 flex items-center justify-between gap-3 rounded-md border border-white/15 bg-white/10 px-4 text-sm font-medium text-white/80 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:pointer-events-none disabled:opacity-40"
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <MicrosoftLogo />
-                      Sign in with Microsoft
-                    </span>
-                    <ChevronDown className="h-3.5 w-3.5 text-white/40 shrink-0" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-[var(--radix-dropdown-menu-trigger-width)]">
-                  <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
-                    Select your organisation
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {AZURE_ORGS.map((org) => (
-                    <DropdownMenuItem
-                      key={org.id}
-                      onSelect={() => handleAzureLogin(org.id)}
-                      className="cursor-pointer"
-                    >
-                      {org.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <button
+                type="button"
+                onClick={handleAzureLogin}
+                disabled={isBusy}
+                className="w-full h-11 flex items-center justify-center gap-2.5 rounded-md border border-white/15 bg-white/10 px-4 text-sm font-medium text-white/80 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:pointer-events-none disabled:opacity-40"
+              >
+                <MicrosoftLogo />
+                Sign in with Microsoft
+              </button>
             )}
           </form>
         </div>

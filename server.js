@@ -243,16 +243,8 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
 // Azure AD org registry — keyed by the orgId the frontend sends
 const AZURE_ORGS = {
   'iwosan-lagoon': {
-    clientId: process.env.AZURE_ORG1_CLIENT_ID,
-    tenantId: process.env.AZURE_ORG1_TENANT_ID,
-  },
-  'eurapharma': {
-    clientId: process.env.AZURE_ORG2_CLIENT_ID,
-    tenantId: process.env.AZURE_ORG2_TENANT_ID,
-  },
-  'iwosan-healthcare': {
-    clientId: process.env.AZURE_ORG3_CLIENT_ID,
-    tenantId: process.env.AZURE_ORG3_TENANT_ID,
+    clientId: process.env.AZURE_CLIENT_ID,
+    tenantId: process.env.AZURE_TENANT_ID,
   },
 };
 
