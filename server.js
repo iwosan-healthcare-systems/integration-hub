@@ -72,6 +72,9 @@ async function db(text, params) {
 
 // ── Auth helpers ──────────────────────────────────────────────────────────
 const COOKIE_NAME = 'iwosan_token';
+
+const isAdmin = (u) => u?.role === 'admin';
+const isAdminOrManager = (u) => u?.role === 'admin' || u?.role === 'manager';
 const COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function signToken(payload) {
@@ -403,20 +406,20 @@ router.post('/auth/change-password', async (req, res) => {
   }
 });
 
-// POST /api/admin/create-user  (admin only)
+// POST /api/admin/create-user  (admin + manager)
 router.post('/admin/create-user', async (req, res) => {
   const authUser = getAuthUser(req);
-  if (!authUser || authUser.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
+  if (!authUser || !isAdminOrManager(authUser)) {
+    return res.status(403).json({ error: 'Access required' });
   }
 
   const { email, name, role = 'user' } = req.body ?? {};
   if (!email || !name) {
     return res.status(400).json({ error: 'Email and name are required' });
   }
-  const validRoles = ['admin', 'user', 'manager'];
+  const validRoles = isAdmin(authUser) ? ['admin', 'user', 'manager'] : ['user', 'manager'];
   if (!validRoles.includes(String(role))) {
-    return res.status(400).json({ error: 'Role must be: admin, user, or manager' });
+    return res.status(400).json({ error: isAdmin(authUser) ? 'Role must be: admin, user, or manager' : 'Managers can only create user or manager accounts' });
   }
 
   try {
@@ -448,18 +451,21 @@ router.post('/admin/create-user', async (req, res) => {
   }
 });
 
-// POST /api/admin/users/:id/reset-password  (admin only)
+// POST /api/admin/users/:id/reset-password  (admin + manager)
 router.post('/admin/users/:id/reset-password', async (req, res) => {
   const authUser = getAuthUser(req);
-  if (!authUser || authUser.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
+  if (!authUser || !isAdminOrManager(authUser)) {
+    return res.status(403).json({ error: 'Access required' });
   }
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
 
   try {
-    const existing = await db('SELECT id, name, email FROM users WHERE id = $1', [userId]);
+    const existing = await db('SELECT id, name, email, role FROM users WHERE id = $1', [userId]);
     if (existing.length === 0) return res.status(404).json({ error: 'User not found' });
+    if (!isAdmin(authUser) && existing[0].role === 'admin') {
+      return res.status(403).json({ error: 'Managers cannot reset admin passwords' });
+    }
 
     const plainPassword = generatePassword();
     const hash = await bcrypt.hash(plainPassword, 12);
@@ -479,11 +485,11 @@ router.post('/admin/users/:id/reset-password', async (req, res) => {
   }
 });
 
-// GET /api/admin/users  (admin only)
+// GET /api/admin/users  (admin + manager)
 router.get('/admin/users', async (req, res) => {
   const authUser = getAuthUser(req);
-  if (!authUser || authUser.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
+  if (!authUser || !isAdminOrManager(authUser)) {
+    return res.status(403).json({ error: 'Access required' });
   }
   try {
     const rows = await db(
@@ -509,11 +515,11 @@ router.get('/admin/users', async (req, res) => {
   }
 });
 
-// PATCH /api/admin/users/:id  (admin only) — update name, role, or isActive
+// PATCH /api/admin/users/:id  (admin + manager) — update name, role, or isActive
 router.patch('/admin/users/:id', async (req, res) => {
   const authUser = getAuthUser(req);
-  if (!authUser || authUser.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
+  if (!authUser || !isAdminOrManager(authUser)) {
+    return res.status(403).json({ error: 'Access required' });
   }
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
@@ -522,6 +528,17 @@ router.patch('/admin/users/:id', async (req, res) => {
   }
 
   const { name, role, isActive } = req.body ?? {};
+
+  // Managers cannot touch admin accounts or promote anyone to admin
+  if (!isAdmin(authUser)) {
+    const target = await db('SELECT role FROM users WHERE id = $1', [userId]);
+    if (target.length > 0 && target[0].role === 'admin') {
+      return res.status(403).json({ error: 'Managers cannot modify admin accounts' });
+    }
+    if (role === 'admin') {
+      return res.status(403).json({ error: 'Managers cannot assign the admin role' });
+    }
+  }
   const setClauses = [];
   const params = [];
   let idx = 1;

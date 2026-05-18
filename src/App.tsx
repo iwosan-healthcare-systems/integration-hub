@@ -35,13 +35,13 @@ function Spinner() {
   );
 }
 
-/** Admin-only guard — redirects unauthenticated users to /login, non-admins to / */
+/** Admin/Manager guard — redirects unauthenticated users to /login, regular users to / */
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
-  if (user.role !== "admin") return <Navigate to="/" replace />;
+  if (user.role !== "admin" && user.role !== "manager") return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 

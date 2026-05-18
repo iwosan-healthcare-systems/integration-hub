@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, LogOut, Shield, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Shield, Menu, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import iwosanIcon from '@/assets/iwosan_icon.webp';
@@ -11,14 +11,15 @@ const navItems = [
 ];
 
 function SidebarContent({
-  user,
   onNavClick,
   onLogout,
 }: {
-  user: { name: string; email: string } | null;
   onNavClick: () => void;
   onLogout: () => void;
 }) {
+  const { user } = useAuth();
+  const isManager = user?.role === 'manager';
+
   return (
     <>
       {/* Brand */}
@@ -26,7 +27,9 @@ function SidebarContent({
         <img src={iwosanIcon} alt="Iwosan" className="h-7 w-auto" />
         <div className="min-w-0">
           <p className="text-xs font-bold text-foreground leading-tight truncate">Iwosan Innovation Hub</p>
-          <p className="text-[10px] text-accent font-semibold uppercase tracking-widest">Admin Panel</p>
+          <p className="text-[10px] text-accent font-semibold uppercase tracking-widest">
+            {isManager ? 'Manager Panel' : 'Admin Panel'}
+          </p>
         </div>
       </div>
 
@@ -50,6 +53,16 @@ function SidebarContent({
             {label}
           </NavLink>
         ))}
+        {isManager && (
+          <NavLink
+            to="/"
+            onClick={onNavClick}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted"
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            Back to Hub
+          </NavLink>
+        )}
       </nav>
 
       {/* User info + logout */}
@@ -78,7 +91,7 @@ function SidebarContent({
 }
 
 export function AdminLayout() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -94,7 +107,7 @@ export function AdminLayout() {
 
       {/* ── Desktop sidebar (md+) ── */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-border/60 bg-muted/30">
-        <SidebarContent user={user} onNavClick={() => {}} onLogout={handleLogout} />
+        <SidebarContent onNavClick={() => {}} onLogout={handleLogout} />
       </aside>
 
       {/* ── Mobile sidebar overlay ── */}
@@ -118,7 +131,7 @@ export function AdminLayout() {
         >
           <X className="h-4 w-4" />
         </button>
-        <SidebarContent user={user} onNavClick={closeSidebar} onLogout={handleLogout} />
+        <SidebarContent onNavClick={closeSidebar} onLogout={handleLogout} />
       </aside>
 
       {/* ── Main content ── */}
@@ -134,7 +147,7 @@ export function AdminLayout() {
               className="md:hidden h-9 w-9 text-muted-foreground hover:text-foreground"
               onClick={() => setSidebarOpen(true)}
               aria-label="Open menu"
-            >
+            > 
               <Menu className="h-5 w-5" />
             </Button>
           </div>

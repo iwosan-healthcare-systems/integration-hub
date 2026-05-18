@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, User } from "lucide-react";
+import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, LayoutDashboard } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -164,6 +164,15 @@ export function TopNavbar() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  {user.role === 'manager' && (
+                    <DropdownMenuItem
+                      onClick={() => navigate('/admin')}
+                      className="cursor-pointer"
+                    >
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Admin Panel
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onClick={handleLogout}
                     className="text-destructive focus:text-destructive cursor-pointer"
