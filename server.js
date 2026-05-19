@@ -270,6 +270,10 @@ const AZURE_ORGS = {
     clientId: process.env.AZURE_CLIENT_ID,
     tenantId: process.env.AZURE_TENANT_ID,
   },
+  'iwosan-healthcare': {
+    clientId: process.env.AZURE_HEALTHCARE_CLIENT_ID,
+    tenantId: process.env.AZURE_HEALTHCARE_TENANT_ID,
+  },
 };
 
 // POST /api/auth/azure  — validate Microsoft ID token and issue session

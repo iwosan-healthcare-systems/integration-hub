@@ -1,4 +1,4 @@
-import { getMsalInstance } from '@/lib/msalConfig';
+import { getMsalInstance, clearAllMsalCaches } from '@/lib/msalConfig';
 
 export interface User {
   id: number;
@@ -71,14 +71,15 @@ export async function changePassword(
 
 export async function clearAzureSession(): Promise<void> {
   try {
-    const msal = await getMsalInstance();
-    await msal.clearCache();
+    await clearAllMsalCaches();
   } catch { /* ignore */ }
 }
 
-export async function loginWithAzure(): Promise<{ user: User | null; error: string | null }> {
+export async function loginWithAzure(
+  orgId: string
+): Promise<{ user: User | null; error: string | null }> {
   try {
-    const msal = await getMsalInstance();
+    const msal = await getMsalInstance(orgId);
     const result = await msal.loginPopup({
       scopes: ['openid', 'profile', 'email'],
       prompt: 'login', // always force credential entry — no silent SSO
@@ -87,7 +88,7 @@ export async function loginWithAzure(): Promise<{ user: User | null; error: stri
 
     const { data, error } = await apiFetch<{ user: User }>('/auth/azure', {
       method: 'POST',
-      body: JSON.stringify({ idToken: result.idToken, orgId: 'iwosan-lagoon' }),
+      body: JSON.stringify({ idToken: result.idToken, orgId }),
     });
     return { user: data?.user ?? null, error };
   } catch (err) {
