@@ -1,6 +1,7 @@
 import { PublicClientApplication, type Configuration } from '@azure/msal-browser';
 import lagoonLogo from '@/assets/iwosan_logo.webp';
 import healthcareIcon from '@/assets/iwosan_icon.webp';
+import euracareIcon from '@/assets/logos/euracare-logo.svg';
 
 export interface AzureOrg {
   id: string;
@@ -24,6 +25,13 @@ export const AZURE_ORGS: AzureOrg[] = [
     clientId: import.meta.env.VITE_AZURE_HEALTHCARE_CLIENT_ID as string,
     tenantId: import.meta.env.VITE_AZURE_HEALTHCARE_TENANT_ID as string,
     logo: healthcareIcon,
+  },
+  {
+    id: 'euracare',
+    name: 'Euracare',
+    clientId: import.meta.env.VITE_AZURE_EURACARE_CLIENT_ID as string,
+    tenantId: import.meta.env.VITE_AZURE_EURACARE_TENANT_ID as string,
+    logo: euracareIcon,
   },
 ];
 

@@ -274,6 +274,10 @@ const AZURE_ORGS = {
     clientId: process.env.AZURE_HEALTHCARE_CLIENT_ID,
     tenantId: process.env.AZURE_HEALTHCARE_TENANT_ID,
   },
+  'euracare': {
+    clientId: process.env.AZURE_EURACARE_CLIENT_ID,
+    tenantId: process.env.AZURE_EURACARE_TENANT_ID,
+  },
 };
 
 // POST /api/auth/azure  — validate Microsoft ID token and issue session
