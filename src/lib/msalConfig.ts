@@ -56,6 +56,10 @@ export async function getMsalInstance(orgId: string): Promise<PublicClientApplic
   const entry = _instances.get(orgId)!;
   if (!entry.ready) {
     await entry.instance.initialize();
+    // Clear any stale interaction state left in sessionStorage from a previous
+    // page load — without this, the first loginPopup() call throws
+    // interaction_in_progress and the user has to click a second time.
+    await entry.instance.handleRedirectPromise().catch(() => {});
     entry.ready = true;
   }
 

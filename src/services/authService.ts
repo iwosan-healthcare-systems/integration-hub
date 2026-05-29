@@ -1,3 +1,4 @@
+import type { AuthenticationResult } from '@azure/msal-browser';
 import { getMsalInstance, clearAllMsalCaches } from '@/lib/msalConfig';
 
 export interface User {
@@ -80,10 +81,22 @@ export async function loginWithAzure(
 ): Promise<{ user: User | null; error: string | null }> {
   try {
     const msal = await getMsalInstance(orgId);
-    const result = await msal.loginPopup({
-      scopes: ['openid', 'profile', 'email'],
-      prompt: 'login', // always force credential entry — no silent SSO
-    });
+    const popupRequest = { scopes: ['openid', 'profile', 'email'], prompt: 'login' as const };
+
+    let result: AuthenticationResult;
+    try {
+      result = await msal.loginPopup(popupRequest);
+    } catch (firstErr) {
+      // interaction_in_progress means stale sessionStorage state — clear it and
+      // retry once transparently so the user never has to click a second time.
+      if (firstErr instanceof Error && firstErr.message.includes('interaction_in_progress')) {
+        await msal.handleRedirectPromise().catch(() => {});
+        result = await msal.loginPopup(popupRequest);
+      } else {
+        throw firstErr;
+      }
+    }
+
     if (!result.idToken) throw new Error('No ID token received from Microsoft');
 
     const { data, error } = await apiFetch<{ user: User }>('/auth/azure', {
