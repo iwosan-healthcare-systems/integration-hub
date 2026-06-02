@@ -341,7 +341,7 @@ export default function UsersPage() {
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Joined</span>
           </div>
           {/* Last Sign In */}
-          <div className="hidden xl:block w-28 shrink-0 text-right">
+          <div className="hidden lg:block w-36 shrink-0 text-right">
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Last Sign In</span>
           </div>
           {/* Actions spacer */}
@@ -416,11 +416,20 @@ export default function UsersPage() {
                   </span>
 
                   {/* Last Sign In */}
-                  <span className="hidden xl:block text-xs text-muted-foreground w-28 shrink-0 text-right">
-                    {u.lastSignInAt
-                      ? new Date(u.lastSignInAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
-                      : <span className="text-muted-foreground/50 italic">Never</span>}
-                  </span>
+                  <div className="hidden lg:flex flex-col items-end w-36 shrink-0">
+                    {u.lastSignInAt ? (
+                      <>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(u.lastSignInAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground/60">
+                          {new Date(u.lastSignInAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground/50 italic">Never</span>
+                    )}
+                  </div>
 
                   {/* Actions menu */}
                   <DropdownMenu>
