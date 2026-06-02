@@ -340,6 +340,10 @@ export default function UsersPage() {
           <div className="hidden md:block w-24 shrink-0 text-right">
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Joined</span>
           </div>
+          {/* Last Sign In */}
+          <div className="hidden xl:block w-28 shrink-0 text-right">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Last Sign In</span>
+          </div>
           {/* Actions spacer */}
           <div className="w-7 shrink-0" />
         </div>
@@ -409,6 +413,13 @@ export default function UsersPage() {
                   {/* Joined */}
                   <span className="hidden md:block text-xs text-muted-foreground w-24 shrink-0 text-right">
                     {new Date(u.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                  </span>
+
+                  {/* Last Sign In */}
+                  <span className="hidden xl:block text-xs text-muted-foreground w-28 shrink-0 text-right">
+                    {u.lastSignInAt
+                      ? new Date(u.lastSignInAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
+                      : <span className="text-muted-foreground/50 italic">Never</span>}
                   </span>
 
                   {/* Actions menu */}

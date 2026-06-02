@@ -245,6 +245,7 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
       return res.status(403).json({ error: 'Your account has been deactivated. Please contact an administrator.' });
     }
 
+    await db('UPDATE users SET last_sign_in_at = NOW() WHERE id = $1', [user.id]);
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
     setAuthCookie(res, token);
     return res.json({
@@ -345,6 +346,8 @@ router.post('/auth/azure', async (req, res) => {
     if (!user.is_active) {
       return res.status(403).json({ error: 'Your account has been deactivated. Contact an administrator.' });
     }
+
+    await db('UPDATE users SET last_sign_in_at = NOW() WHERE id = $1', [user.id]);
 
     // 6. Issue our standard JWT session cookie
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
@@ -521,7 +524,7 @@ router.get('/admin/users', requireAuth, async (req, res) => {
   }
   try {
     const rows = await db(
-      `SELECT id, email, name, role, is_first_login, is_active, auth_provider, created_at, updated_at
+      `SELECT id, email, name, role, is_first_login, is_active, auth_provider, last_sign_in_at, created_at, updated_at
        FROM users ORDER BY created_at DESC`,
       []
     );
@@ -534,6 +537,7 @@ router.get('/admin/users', requireAuth, async (req, res) => {
         isFirstLogin: u.is_first_login,
         isActive: u.is_active,
         authProvider: u.auth_provider,
+        lastSignInAt: u.last_sign_in_at,
         createdAt: u.created_at,
         updatedAt: u.updated_at,
       })),

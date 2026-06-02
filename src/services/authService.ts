@@ -13,6 +13,7 @@ export interface User {
 
 export interface AdminUser extends User {
   authProvider: string;
+  lastSignInAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
