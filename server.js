@@ -761,7 +761,7 @@ Centralized digital platform for the Iwosan network providing: unified space con
 - Never fabricate information, staff details, or medical advice
 - You can suggest relevant hub pages: About, Our Platforms, Leadership, Resources, News`;
 
-// POST /api/chat — streaming SSE endpoint for the Iwo AI assistant (Google Gemini)
+// POST /api/chat — streaming SSE endpoint for the Iwo AI assistant (Groq)
 router.post('/chat', requireAuth, async (req, res) => {
   const { messages } = req.body;
 
@@ -769,10 +769,10 @@ router.post('/chat', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'messages array required' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    console.error('[chat] GEMINI_API_KEY is not set');
-    return res.status(503).json({ error: 'AI assistant is not configured yet' });
+    console.error('[chat] GROQ_API_KEY is not set');
+    return res.status(503).json({ error: 'AI assistant is not configured on this server' });
   }
 
   const validMessages = messages
@@ -784,50 +784,42 @@ router.post('/chat', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Last message must be from the user' });
   }
 
-  // Gemini uses "model" instead of "assistant" and requires the conversation to start with "user"
-  const geminiContents = validMessages
-    .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }))
-    .filter((_, i, arr) => !(i === 0 && arr[0].role === 'model'));
-
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
   try {
-    console.log('[chat] calling Gemini for user:', req.authUser?.userId);
+    console.log('[chat] calling Groq for user:', req.authUser?.userId);
 
-    // Support both key formats: legacy AIza... (query param) and newer AQ.... (Bearer header)
-    const isLegacyKey = apiKey.startsWith('AIza');
-    const geminiUrl = isLegacyKey
-      ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`
-      : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse`;
-
-    const geminiRes = await fetch(geminiUrl, {
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${apiKey}`,
         'content-type': 'application/json',
-        ...(!isLegacyKey && { 'Authorization': `Bearer ${apiKey}` }),
       },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: CHAT_SYSTEM_PROMPT }] },
-        contents: geminiContents,
-        generationConfig: { maxOutputTokens: 1024 },
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 1024,
+        stream: true,
+        messages: [
+          { role: 'system', content: CHAT_SYSTEM_PROMPT },
+          ...validMessages,
+        ],
       }),
     });
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error('[chat] Gemini API error:', geminiRes.status, errText);
+    if (!groqRes.ok) {
+      const errText = await groqRes.text();
+      console.error('[chat] Groq API error:', groqRes.status, errText);
       res.write(`data: ${JSON.stringify({ error: 'AI service error' })}\n\n`);
       return res.end();
     }
 
-    console.log('[chat] Gemini stream started');
-    const reader = geminiRes.body.getReader();
+    console.log('[chat] Groq stream started');
+    const reader = groqRes.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    let chunkCount = 0;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -840,20 +832,14 @@ router.post('/chat', requireAuth, async (req, res) => {
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
         const data = line.slice(6).trim();
-        if (!data) continue;
+        if (data === '[DONE]') {
+          res.write('data: [DONE]\n\n');
+          break;
+        }
         try {
           const event = JSON.parse(data);
-          const text = event.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) {
-            chunkCount++;
-            res.write(`data: ${JSON.stringify({ text })}\n\n`);
-          }
-          // Only send DONE on the final chunk (finishReason STOP/MAX_TOKENS/etc)
-          const finishReason = event.candidates?.[0]?.finishReason;
-          if (finishReason && finishReason !== 'FINISH_REASON_UNSPECIFIED') {
-            console.log(`[chat] done — reason: ${finishReason}, chunks: ${chunkCount}`);
-            res.write('data: [DONE]\n\n');
-          }
+          const text = event.choices?.[0]?.delta?.content;
+          if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
         } catch { /* skip malformed events */ }
       }
     }

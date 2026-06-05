@@ -1,6 +1,26 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Fragment } from "react";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 import iwosanIcon from "@/assets/iwosan_icon.webp";
+
+function MessageContent({ text }: { text: string }) {
+  // Split on **bold** markers, then handle line breaks within each segment
+  const segments = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {segments.map((seg, i) => {
+        if (seg.startsWith("**") && seg.endsWith("**") && seg.length > 4) {
+          return <strong key={i} className="font-semibold">{seg.slice(2, -2)}</strong>;
+        }
+        return seg.split("\n").map((line, j, arr) => (
+          <Fragment key={`${i}-${j}`}>
+            {line}
+            {j < arr.length - 1 && <br />}
+          </Fragment>
+        ));
+      })}
+    </>
+  );
+}
 
 type Message = {
   role: "user" | "assistant";
@@ -31,6 +51,11 @@ export function ChatWidget() {
   useEffect(() => {
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 150);
   }, [isOpen]);
+
+  // Refocus input as soon as the response finishes streaming
+  useEffect(() => {
+    if (!isStreaming && isOpen) inputRef.current?.focus();
+  }, [isStreaming, isOpen]);
 
   const autoResize = (el: HTMLTextAreaElement) => {
     el.style.height = "auto";
@@ -205,7 +230,11 @@ export function ChatWidget() {
               >
                 {msg.content && (
                   <>
-                    {msg.content}
+                    {msg.role === "assistant" ? (
+                      <MessageContent text={msg.content} />
+                    ) : (
+                      msg.content
+                    )}
                     {msg.streaming && (
                       <span className="inline-block w-0.5 h-3.5 bg-current ml-0.5 animate-pulse align-text-bottom" />
                     )}
