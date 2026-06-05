@@ -1,19 +1,61 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
-import { ArrowRight, Heart, Stethoscope, BookOpen, Building2, Users, Newspaper, MapPin, Phone, Mail } from "lucide-react";
+import { ArrowRight, Heart, Stethoscope, BookOpen, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import heroBannerMobileImg from "@/assets/hero-hub-mobile.webp";
 import heroBannerDesktopImg from "@/assets/hero-hub-desktop.webp";
 import teamImg from "@/assets/team-photo.webp";
 import innovationImg from "@/assets/innovation-bg.webp";
-import { newsItems, subsidiaries, quickLinks } from "@/data/hub-data";
-import iwosanIcon from "@/assets/iwosan_icon.webp";
-import { Headphones, Calendar, CreditCard, GraduationCap } from "lucide-react";
+import { newsItems, subsidiaries } from "@/data/hub-data";
 
 const latestNews = [...newsItems].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const iconMap: Record<string, any> = { Mail, Users, Headphones, Calendar, CreditCard, GraduationCap };
+
+const faqs = [
+  {
+    question: "What is the Iwosan Innovation Hub?",
+    answer: "The Iwosan Innovation Hub is a centralized digital platform that connects all Iwosan Healthcare Systems subsidiaries — providing a unified space for tools, resources, healthcare collaboration, and information across the Iwosan network.",
+  },
+  {
+    question: "Which hospitals and platforms are part of the Iwosan network?",
+    answer: "The Iwosan network currently comprises Iwosan Lagoon Hospitals, Eurapharma Care Services (Euracare), Paelon Memorial Hospital, and IASO Medipark — each specializing in different aspects of healthcare delivery across Lagos, Nigeria.",
+  },
+  {
+    question: "Where are Iwosan's facilities located?",
+    answer: "Iwosan's facilities are located across Lagos, Nigeria, with hospitals and care centres in Ikoyi, Ikeja, Victoria Island, Ikoyi, and Alaro City. The network continues to expand its footprint to improve access to quality healthcare.",
+  },
+  {
+    question: "How long has Iwosan been operating in Nigeria?",
+    answer: "Iwosan Investments Limited was co-founded in 2019 and went on to acquire other subsidiaries along the way. In 2026, the group rebranded as Iwosan Healthcare Systems Limited to reflect its expanded focus on healthcare delivery and management across Nigeria. The network's hospitals have a combined history of over 40 years of healthcare excellence in the region.",
+  },
+  {
+    question: "Is Iwosan Lagoon Hospitals internationally accredited?",
+    answer: "Yes. Iwosan Lagoon Hospitals has earned the Joint Commission International (JCI) Gold Seal of Approval five consecutive times, making it one of the most accredited hospitals in Sub-Saharan Africa and the first hospital in the region to achieve JCI accreditation.",
+  },
+  {
+    question: "What specialist services does the Iwosan network offer?",
+    answer: "Across its network, Iwosan offers a comprehensive range of services including cardiology, neurosurgery, oncology, maternal and child health, emergency care, diagnostics, telemedicine, pharmaceutical care, and multi-specialist outpatient consultations.",
+  },
+  {
+    question: "How can I contact Iwosan Healthcare Systems?",
+    answer: "You can reach us by phone at +2349139352779, by email at info@iwosanhealth.com, or by visiting our facility in Lagos. You can also connect with individual subsidiaries through their dedicated websites accessible via the Our Platforms section.",
+  },
+  {
+    question: "What is Iwosan's mission in the Nigerian healthcare landscape?",
+    answer: "Iwosan's mission is to transform Nigeria into a global healthcare frontier by raising the standards of healthcare delivery and management in line with global best practices — leveraging institutional partnerships, innovation, and investment to advance healthcare access and quality.",
+  },
+  {
+    question: "Does Iwosan support healthcare professionals and institutions?",
+    answer: "Yes. Through the Iwosan Innovation Hub, the network supports institutional stakeholders, medical professionals, and healthcare innovators with resources, knowledge-sharing platforms, training, and collaborative opportunities to advance healthcare in Nigeria.",
+  },
+  {
+    question: "How is Iwosan embracing digital healthcare transformation?",
+    answer: "Iwosan is actively investing in digital health infrastructure, including electronic health records, telemedicine services, and a connected ecosystem across its subsidiaries. The Iwosan Innovation Hub itself is part of this digital transformation drive, serving as a centralized platform for the entire network.",
+  },
+];
 
 const Index = () => {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
   return (
     <>
 
@@ -81,49 +123,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Quick Access */}
-      <section className="py-16 px-8 lg:px-16 max-w-6xl mx-auto">
-        <AnimateOnScroll>
-          <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-2">Tools</p>
-          <h2 className="text-3xl font-bold mb-2">Quick Access</h2>
-          <div className="section-divider mb-10" />
-        </AnimateOnScroll>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
-          {quickLinks.map((link, i) => {
-            const Icon = iconMap[link.icon];
-            const isExternal = link.url.startsWith("http");
-            const isInternal = link.url.startsWith("/");
-            const className = "flex flex-col items-center gap-3 group py-4";
-            const content = (
-              <>
-                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-accent/10 transition-colors duration-300">
-                  {Icon && <Icon className="h-6 w-6 text-muted-foreground group-hover:text-accent transition-colors" />}
-                </div>
-                <span className="text-xs font-sans font-medium text-foreground text-center">{link.title}</span>
-              </>
-            );
-
-            return (
-              <AnimateOnScroll key={link.title} delay={i * 0.08}>
-                {isInternal ? (
-                  <Link to={link.url} className={className}>
-                    {content}
-                  </Link>
-                ) : (
-                  <a
-                    href={link.url}
-                    target={isExternal ? "_blank" : undefined}
-                    rel={isExternal ? "noopener noreferrer" : undefined}
-                    className={className}
-                  >
-                    {content}
-                  </a>
-                )}
-              </AnimateOnScroll>
-            );
-          })}
-        </div>
-      </section>
 
       {/* About split */}
       <section className="py-20 bg-muted/50">
@@ -287,99 +286,42 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-primary border-t border-primary-foreground/10">
-        <div className="max-w-6xl mx-auto px-8 lg:px-16 py-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-
-          {/* Brand */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
-              <img src={iwosanIcon} alt="Iwosan" className="h-9 w-9 rounded-lg object-contain" />
-              <span className="font-serif font-semibold text-primary-foreground text-base leading-tight">
-                Iwosan<br />
-                <span className="text-accent font-sans font-normal text-xs tracking-widest uppercase">Innovation Hub</span>
-              </span>
+      {/* FAQs */}
+      <section className="py-20 bg-muted/50">
+        <div className="max-w-3xl mx-auto px-8 lg:px-16">
+          <AnimateOnScroll>
+            <div className="text-center mb-12">
+              <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">FAQ</p>
+              <h2 className="text-3xl font-bold mb-3">Frequently Asked Questions</h2>
+              <div className="section-divider mx-auto mt-3" />
             </div>
-            <p className="text-sm font-sans text-primary-foreground/50 leading-relaxed max-w-xs">
-              Your centralized digital hub for healthcare excellence, innovation, and collaboration across the Iwosan network.
-            </p>
-            <div className="flex items-center gap-2 mt-5">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              <span className="text-xs font-sans text-primary-foreground/40 tracking-wide">Transforming Nigerian Healthcare</span>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <div>
-            <h4 className="font-sans text-primary-foreground/80 font-semibold text-xs uppercase tracking-widest mb-4">
-              Navigate
-            </h4>
-            <nav className="space-y-2.5">
-              {[
-                { label: "Home", url: "/" },
-                { label: "About Iwosan", url: "/about" },
-                { label: "Our Platforms", url: "/subsidiaries" },
-                { label: "Leadership", url: "/leadership" },
-                { label: "Resources & Knowledge", url: "/resources" },
-                { label: "News & Updates", url: "/news" },
-              ].map(({ label, url }) => (
-                <Link
-                  key={url}
-                  to={url}
-                  className="flex items-center gap-1.5 text-sm font-sans text-primary-foreground/50 hover:text-accent transition-colors duration-200 group"
-                >
-                  <ArrowRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="font-sans text-primary-foreground/80 font-semibold text-xs uppercase tracking-widest mb-4">
-              Contact
-            </h4>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2.5">
-                <MapPin className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                <span className="text-sm font-sans text-primary-foreground/50 leading-relaxed">Lagos, Nigeria
-                </span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Phone className="h-4 w-4 text-accent shrink-0" />
-                <a
-                  href="tel:+2349139352779"
-                  className="text-sm font-sans text-primary-foreground/50 hover:text-accent transition-colors duration-200"
-                >
-                  +234 913 935 2779
-                </a>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Mail className="h-4 w-4 text-accent shrink-0" />
-                <a
-                  href="mailto:info@iwosanhealth.com"
-                  className="text-sm font-sans text-primary-foreground/50 hover:text-accent transition-colors duration-200 break-all"
-                >
-                  info@iwosanhealth.com
-                </a>
-              </div>
-            </div>
+          </AnimateOnScroll>
+          <div className="space-y-3">
+            {faqs.map((faq, i) => (
+              <AnimateOnScroll key={i} delay={i * 0.05}>
+                <div className="bg-background rounded-xl border border-border overflow-hidden">
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left"
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    aria-expanded={openFaq === i ? "true" : "false"}
+                  >
+                    <span className="font-serif font-semibold text-base text-foreground leading-snug">{faq.question}</span>
+                    <ChevronDown
+                      className={`h-5 w-5 text-accent shrink-0 transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ${openFaq === i ? "max-h-96" : "max-h-0"}`}
+                  >
+                    <p className="px-6 pb-5 text-sm font-sans text-muted-foreground leading-relaxed">{faq.answer}</p>
+                  </div>
+                </div>
+              </AnimateOnScroll>
+            ))}
           </div>
         </div>
-
-        {/* Bottom bar */}
-        <div className="border-t border-primary-foreground/10">
-          <div className="max-w-6xl mx-auto px-8 lg:px-16 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs font-sans text-primary-foreground/30">
-              © {new Date().getFullYear()} Iwosan Healthcare Systems Limited. All rights reserved.
-            </p>
-            <p className="text-xs font-sans text-primary-foreground/20 tracking-wide uppercase">
-              Transforming Healthcare · Nigeria
-            </p>
-          </div>
-        </div>
-      </footer>
+      </section>
 
     </>
   );

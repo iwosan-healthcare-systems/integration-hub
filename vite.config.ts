@@ -11,7 +11,8 @@ const __dirname = path.dirname(__filename);
 export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
-    port: 5000,
+    port: 5173,
+    strictPort: true,
     hmr: {
       overlay: false,
     },
@@ -23,8 +24,13 @@ export default defineConfig(({ mode }) => ({
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: "es2020",
+    },
+  },
   build: {
-    target: "es2015",
+    target: "es2020",
     sourcemap: false,
     minify: "esbuild",
     cssCodeSplit: true,

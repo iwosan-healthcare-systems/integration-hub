@@ -16,11 +16,11 @@ import { AdminLayout } from "@/layouts/AdminLayout";
 const LoginPage        = lazy(() => import("./pages/LoginPage"));
 const Index            = lazy(() => import("./pages/Index"));
 const AboutPage        = lazy(() => import("./pages/AboutPage"));
-const SubsidiariesPage = lazy(() => import("./pages/SubsidiariesPage"));
+const SubsidiariesPage     = lazy(() => import("./pages/SubsidiariesPage"));
+const SubsidiaryDetailPage = lazy(() => import("./pages/SubsidiaryDetailPage"));
 const ResourcesPage    = lazy(() => import("./pages/ResourcesPage"));
 const NewsPage         = lazy(() => import("./pages/NewsPage"));
 const LeadershipPage   = lazy(() => import("./pages/LeadershipPage"));
-const EmailPortalPage  = lazy(() => import("./pages/EmailPortalPage"));
 const AdminDashboard   = lazy(() => import("./pages/admin/AdminDashboard"));
 const UsersPage        = lazy(() => import("./pages/admin/UsersPage"));
 const NotFound         = lazy(() => import("./pages/NotFound"));
@@ -92,10 +92,10 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/subsidiaries" element={<SubsidiariesPage />} />
+                <Route path="/subsidiaries/:slug" element={<SubsidiaryDetailPage />} />
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/leadership" element={<LeadershipPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
-                <Route path="/email-portal" element={<EmailPortalPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
