@@ -761,7 +761,7 @@ Centralized digital platform for the Iwosan network providing: unified space con
 - Never fabricate information, staff details, or medical advice
 - You can suggest relevant hub pages: About, Our Platforms, Leadership, Resources, News`;
 
-// POST /api/chat — streaming SSE endpoint for the Iwo AI assistant
+// POST /api/chat — streaming SSE endpoint for the Iwo AI assistant (Google Gemini)
 router.post('/chat', requireAuth, async (req, res) => {
   const { messages } = req.body;
 
@@ -769,7 +769,7 @@ router.post('/chat', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'messages array required' });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(503).json({ error: 'AI assistant is not configured on this server' });
   }
@@ -783,36 +783,38 @@ router.post('/chat', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Last message must be from the user' });
   }
 
+  // Gemini uses "model" instead of "assistant" and requires the conversation to start with "user"
+  const geminiContents = validMessages
+    .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }))
+    .filter((_, i, arr) => !(i === 0 && arr[0].role === 'model')); // drop leading model turns
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
   try {
-    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        stream: true,
-        system: CHAT_SYSTEM_PROMPT,
-        messages: validMessages,
-      }),
-    });
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: CHAT_SYSTEM_PROMPT }] },
+          contents: geminiContents,
+          generationConfig: { maxOutputTokens: 1024 },
+        }),
+      }
+    );
 
-    if (!anthropicRes.ok) {
-      const errText = await anthropicRes.text();
-      console.error('Anthropic API error:', errText);
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      console.error('Gemini API error:', errText);
       res.write(`data: ${JSON.stringify({ error: 'AI service error' })}\n\n`);
       return res.end();
     }
 
-    const reader = anthropicRes.body.getReader();
+    const reader = geminiRes.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 
@@ -827,14 +829,12 @@ router.post('/chat', requireAuth, async (req, res) => {
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
         const data = line.slice(6).trim();
-        if (data === '[DONE]') continue;
+        if (!data) continue;
         try {
           const event = JSON.parse(data);
-          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-            res.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`);
-          } else if (event.type === 'message_stop') {
-            res.write('data: [DONE]\n\n');
-          }
+          const text = event.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+          if (event.candidates?.[0]?.finishReason) res.write('data: [DONE]\n\n');
         } catch { /* skip malformed events */ }
       }
     }
