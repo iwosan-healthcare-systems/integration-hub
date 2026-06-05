@@ -110,7 +110,7 @@ export function ChatWidget() {
       const errorText = isNotFound
         ? "The AI assistant is not yet available. Please check back soon."
         : isUnconfigured
-        ? "The AI assistant hasn't been configured on the server yet. Please add the API key."
+        ? "The AI assistant hasn't been configured yet. Please check back soon."
         : "Sorry, I'm having trouble connecting right now. Please try again or reach us at info@iwosanhealth.com.";
 
       console.error("[Iwo chat error]", msg);

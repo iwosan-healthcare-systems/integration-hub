@@ -771,7 +771,8 @@ router.post('/chat', requireAuth, async (req, res) => {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(503).json({ error: 'AI assistant is not configured on this server' });
+    console.error('[chat] GEMINI_API_KEY is not set');
+    return res.status(503).json({ error: 'AI assistant is not configured yet' });
   }
 
   const validMessages = messages
@@ -786,7 +787,7 @@ router.post('/chat', requireAuth, async (req, res) => {
   // Gemini uses "model" instead of "assistant" and requires the conversation to start with "user"
   const geminiContents = validMessages
     .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }))
-    .filter((_, i, arr) => !(i === 0 && arr[0].role === 'model')); // drop leading model turns
+    .filter((_, i, arr) => !(i === 0 && arr[0].role === 'model'));
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -794,29 +795,39 @@ router.post('/chat', requireAuth, async (req, res) => {
   res.flushHeaders();
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: CHAT_SYSTEM_PROMPT }] },
-          contents: geminiContents,
-          generationConfig: { maxOutputTokens: 1024 },
-        }),
-      }
-    );
+    console.log('[chat] calling Gemini for user:', req.authUser?.userId);
+
+    // Support both key formats: legacy AIza... (query param) and newer AQ.... (Bearer header)
+    const isLegacyKey = apiKey.startsWith('AIza');
+    const geminiUrl = isLegacyKey
+      ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`
+      : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse`;
+
+    const geminiRes = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(!isLegacyKey && { 'Authorization': `Bearer ${apiKey}` }),
+      },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: CHAT_SYSTEM_PROMPT }] },
+        contents: geminiContents,
+        generationConfig: { maxOutputTokens: 1024 },
+      }),
+    });
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      console.error('Gemini API error:', errText);
+      console.error('[chat] Gemini API error:', geminiRes.status, errText);
       res.write(`data: ${JSON.stringify({ error: 'AI service error' })}\n\n`);
       return res.end();
     }
 
+    console.log('[chat] Gemini stream started');
     const reader = geminiRes.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let chunkCount = 0;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -833,8 +844,16 @@ router.post('/chat', requireAuth, async (req, res) => {
         try {
           const event = JSON.parse(data);
           const text = event.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
-          if (event.candidates?.[0]?.finishReason) res.write('data: [DONE]\n\n');
+          if (text) {
+            chunkCount++;
+            res.write(`data: ${JSON.stringify({ text })}\n\n`);
+          }
+          // Only send DONE on the final chunk (finishReason STOP/MAX_TOKENS/etc)
+          const finishReason = event.candidates?.[0]?.finishReason;
+          if (finishReason && finishReason !== 'FINISH_REASON_UNSPECIFIED') {
+            console.log(`[chat] done — reason: ${finishReason}, chunks: ${chunkCount}`);
+            res.write('data: [DONE]\n\n');
+          }
         } catch { /* skip malformed events */ }
       }
     }
