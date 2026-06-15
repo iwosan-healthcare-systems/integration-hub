@@ -342,4 +342,7 @@ export const milestones = [
 export const quickLinks = [
   { title: "HR System", url: "https://hrportal.lagoonhospitals.com/", icon: "Users" },
   { title: "IT Support", url: "##", icon: "Headphones" },
+  { title: "Lagoon EMR", url: "http://192.168.120.9:300/Login.aspx?Logout=1&RefURL=", icon: "FileText" },
+  { title: "Paelon EMR", url: "https://paelon.instanta.app", icon: "FileText" },
+  { title: "Euracare EMR", url: "https://10.130.2.8", icon: "FileText" },
 ];
