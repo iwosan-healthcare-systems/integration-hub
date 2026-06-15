@@ -343,3 +343,241 @@ export const quickLinks = [
   { title: "HR System", url: "https://hrportal.lagoonhospitals.com/", icon: "Users" },
   { title: "IT Support", url: "##", icon: "Headphones" },
 ];
+
+// ─── Learning Centre ────────────────────────────────────────────────────────
+
+export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
+export type CourseCategory =
+  | "Onboarding"
+  | "Clinical"
+  | "Compliance"
+  | "IT & Digital"
+  | "Leadership"
+  | "Soft Skills";
+
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  category: CourseCategory;
+  level: CourseLevel;
+  duration: string;
+  audience: string;
+  modules: number;
+  mandatory: boolean;
+}
+
+export const courses: Course[] = [
+  {
+    id: "onboarding-101",
+    title: "New Staff Orientation & Iwosan Culture",
+    description: "An essential first step for all new joiners covering Iwosan's history, values, organisational structure, policies, and expectations for every team member across the network.",
+    category: "Onboarding",
+    level: "Beginner",
+    duration: "2h",
+    audience: "All New Staff",
+    modules: 6,
+    mandatory: true,
+  },
+  {
+    id: "patient-safety",
+    title: "Patient Safety & Risk Management",
+    description: "Covers incident reporting, fall prevention, medication safety, safe handover protocols, and managing clinical risk in line with JCI standards.",
+    category: "Clinical",
+    level: "Intermediate",
+    duration: "3h",
+    audience: "Clinical Staff",
+    modules: 8,
+    mandatory: true,
+  },
+  {
+    id: "clinical-docs",
+    title: "Medical Records & Clinical Documentation",
+    description: "Best practices for accurate and complete documentation, patient consent, record retention, and legal requirements for medical records across Iwosan subsidiaries.",
+    category: "Clinical",
+    level: "Intermediate",
+    duration: "2h 30m",
+    audience: "Clinical Staff",
+    modules: 6,
+    mandatory: true,
+  },
+  {
+    id: "ipc",
+    title: "Infection Prevention & Control (IPC)",
+    description: "Standard precautions, hand hygiene, PPE use, isolation protocols, and waste management practices to prevent healthcare-associated infections.",
+    category: "Clinical",
+    level: "Intermediate",
+    duration: "2h",
+    audience: "Clinical Staff",
+    modules: 5,
+    mandatory: true,
+  },
+  {
+    id: "ndpr-compliance",
+    title: "Data Protection & NDPR Compliance",
+    description: "Understanding Nigeria's Data Protection Regulation, patient data rights, how to handle personal health information, and staff obligations under NDPR.",
+    category: "Compliance",
+    level: "Beginner",
+    duration: "1h 30m",
+    audience: "All Staff",
+    modules: 4,
+    mandatory: true,
+  },
+  {
+    id: "fire-safety",
+    title: "Fire Safety & Emergency Response",
+    description: "Fire prevention, evacuation procedures, use of fire extinguishers, and how to respond to different types of emergencies in a healthcare facility.",
+    category: "Compliance",
+    level: "Beginner",
+    duration: "1h",
+    audience: "All Staff",
+    modules: 3,
+    mandatory: true,
+  },
+  {
+    id: "jci-standards",
+    title: "JCI Standards & Accreditation Readiness",
+    description: "In-depth overview of Joint Commission International standards, accreditation requirements, survey preparation, and how each department contributes to maintaining the Gold Seal.",
+    category: "Compliance",
+    level: "Advanced",
+    duration: "4h",
+    audience: "Department Heads & Clinical Staff",
+    modules: 10,
+    mandatory: false,
+  },
+  {
+    id: "emr-training",
+    title: "EMR System Training",
+    description: "A practical walkthrough of the Electronic Medical Records systems in use across Iwosan subsidiaries — patient registration, clinical notes, order entry, and reporting.",
+    category: "IT & Digital",
+    level: "Beginner",
+    duration: "2h",
+    audience: "All Staff",
+    modules: 5,
+    mandatory: false,
+  },
+  {
+    id: "m365",
+    title: "Microsoft 365 for Healthcare Teams",
+    description: "Effective use of Teams, Outlook, SharePoint, and OneDrive for secure communication, document collaboration, and productivity across the Iwosan network.",
+    category: "IT & Digital",
+    level: "Beginner",
+    duration: "1h 30m",
+    audience: "All Staff",
+    modules: 4,
+    mandatory: false,
+  },
+  {
+    id: "leadership-101",
+    title: "Leading High-Performance Teams",
+    description: "Practical frameworks for setting direction, motivating teams, managing performance, resolving conflict, and cultivating a culture of excellence in healthcare.",
+    category: "Leadership",
+    level: "Advanced",
+    duration: "4h",
+    audience: "Managers & Team Leads",
+    modules: 8,
+    mandatory: false,
+  },
+  {
+    id: "communication",
+    title: "Effective Communication in Healthcare",
+    description: "Structured communication tools (SBAR, teach-back), active listening, inter-professional communication, and handling difficult conversations with patients and families.",
+    category: "Soft Skills",
+    level: "Beginner",
+    duration: "1h 30m",
+    audience: "All Staff",
+    modules: 4,
+    mandatory: false,
+  },
+  {
+    id: "customer-service",
+    title: "Customer Service Excellence",
+    description: "Delivering an exceptional patient and visitor experience — service recovery, managing complaints, exceeding expectations, and building a patient-centred culture.",
+    category: "Soft Skills",
+    level: "Beginner",
+    duration: "2h",
+    audience: "All Staff",
+    modules: 5,
+    mandatory: false,
+  },
+];
+
+export interface LearningPath {
+  title: string;
+  description: string;
+  audience: string;
+  courseIds: string[];
+  totalDuration: string;
+  icon: string;
+}
+
+export const learningPaths: LearningPath[] = [
+  {
+    title: "New Joiner Path",
+    description: "Everything a new staff member needs in their first 30 days — culture, compliance, safety, and systems.",
+    audience: "All New Staff",
+    courseIds: ["onboarding-101", "ndpr-compliance", "fire-safety", "emr-training"],
+    totalDuration: "6h 30m",
+    icon: "Rocket",
+  },
+  {
+    title: "Clinical Excellence",
+    description: "Essential courses for clinical staff to maintain the highest standards of patient care, documentation, and infection control.",
+    audience: "Clinical & Nursing Staff",
+    courseIds: ["patient-safety", "clinical-docs", "ipc", "jci-standards"],
+    totalDuration: "11h 30m",
+    icon: "Stethoscope",
+  },
+  {
+    title: "Digital Readiness",
+    description: "Get confident using the tools and systems that power the Iwosan digital workplace — from EMR to Microsoft 365.",
+    audience: "All Departments",
+    courseIds: ["emr-training", "m365"],
+    totalDuration: "3h 30m",
+    icon: "Monitor",
+  },
+  {
+    title: "People Leadership",
+    description: "Develop the skills to lead, inspire, and grow high-performing teams across the Iwosan network.",
+    audience: "Managers & Team Leads",
+    courseIds: ["leadership-101", "communication", "customer-service"],
+    totalDuration: "7h 30m",
+    icon: "Users",
+  },
+];
+
+export interface LiveSession {
+  title: string;
+  date: string;
+  time: string;
+  format: "Virtual" | "In-Person" | "Hybrid";
+  venue: string;
+  host: string;
+}
+
+export const liveSessions: LiveSession[] = [
+  {
+    title: "Monthly Safety Debrief — June 2026",
+    date: "June 20, 2026",
+    time: "10:00 AM",
+    format: "Virtual",
+    venue: "Microsoft Teams",
+    host: "Quality & Sustainability Team",
+  },
+  {
+    title: "Quarterly Compliance Review",
+    date: "July 5, 2026",
+    time: "9:00 AM",
+    format: "In-Person",
+    venue: "Lagoon Hospitals Ikeja — Conference Room A",
+    host: "Legal, Risk & Compliance",
+  },
+  {
+    title: "EMR Advanced Training Workshop",
+    date: "July 12, 2026",
+    time: "2:00 PM",
+    format: "Hybrid",
+    venue: "Lagoon Hospitals Ikoyi + Microsoft Teams",
+    host: "IT Department",
+  },
+];

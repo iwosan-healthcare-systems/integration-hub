@@ -18,9 +18,10 @@ const Index            = lazy(() => import("./pages/Index"));
 const AboutPage        = lazy(() => import("./pages/AboutPage"));
 const SubsidiariesPage     = lazy(() => import("./pages/SubsidiariesPage"));
 const SubsidiaryDetailPage = lazy(() => import("./pages/SubsidiaryDetailPage"));
-const ResourcesPage    = lazy(() => import("./pages/ResourcesPage"));
-const NewsPage         = lazy(() => import("./pages/NewsPage"));
-const LeadershipPage   = lazy(() => import("./pages/LeadershipPage"));
+const ResourcesPage       = lazy(() => import("./pages/ResourcesPage"));
+const NewsPage            = lazy(() => import("./pages/NewsPage"));
+const LeadershipPage      = lazy(() => import("./pages/LeadershipPage"));
+const LearningCentrePage  = lazy(() => import("./pages/LearningCentrePage"));
 const AdminDashboard   = lazy(() => import("./pages/admin/AdminDashboard"));
 const UsersPage        = lazy(() => import("./pages/admin/UsersPage"));
 const NotFound         = lazy(() => import("./pages/NotFound"));
@@ -96,6 +97,7 @@ const App = () => (
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/leadership" element={<LeadershipPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
+                <Route path="/learning" element={<LearningCentrePage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

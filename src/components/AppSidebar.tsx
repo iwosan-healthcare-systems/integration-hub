@@ -1,4 +1,4 @@
-import { Home, Building2, Users, FolderOpen, Newspaper, Link } from "lucide-react";
+import { Home, Building2, Users, FolderOpen, Newspaper, Link, GraduationCap } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import iwosanLogo from "@/assets/iwosan_logo.webp";
 import {
@@ -22,6 +22,7 @@ const mainNav = [
   { title: "Resources & Knowledge", url: "/resources", icon: FolderOpen },
   { title: "News & Updates", url: "/news", icon: Newspaper },
   { title: "Leadership", url: "/leadership", icon: Users },
+  { title: "Learning Centre", url: "/learning", icon: GraduationCap },
 ];
 
 export function AppSidebar() {
