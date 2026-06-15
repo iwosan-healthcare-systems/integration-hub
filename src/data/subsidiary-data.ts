@@ -80,8 +80,8 @@ export const subsidiaryPortals: SubsidiaryPortal[] = [
     },
     emr: {
       label: "EMR System",
-      url: null,
-      available: false,
+      url: "http://192.168.120.9:300/Login.aspx?Logout=1&RefURL=",
+      available: true,
     },
 
     itSupport: {
@@ -129,8 +129,8 @@ export const subsidiaryPortals: SubsidiaryPortal[] = [
     },
     emr: {
       label: "EMR System",
-      url: null,
-      available: false,
+      url: "https://10.130.2.8",
+      available: true,
     },
 
     itSupport: {
@@ -178,8 +178,8 @@ export const subsidiaryPortals: SubsidiaryPortal[] = [
     },
     emr: {
       label: "EMR System",
-      url: null,
-      available: false,
+      url: "https://paelon.instanta.app",
+      available: true,
     },
 
     itSupport: {

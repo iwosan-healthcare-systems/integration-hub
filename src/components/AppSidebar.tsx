@@ -1,7 +1,6 @@
-import { Home, Building2, Users, FolderOpen, Newspaper, Link, FileText, Headphones, type LucideIcon } from "lucide-react";
+import { Home, Building2, Users, FolderOpen, Newspaper, Link } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import iwosanLogo from "@/assets/iwosan_logo.webp";
-import { quickLinks } from "@/data/hub-data";
 import {
   Sidebar,
   SidebarContent,
@@ -15,12 +14,6 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-
-const iconMap: Record<string, LucideIcon> = {
-  Users,
-  Headphones,
-  FileText,
-};
 
 const mainNav = [
   { title: "Home", url: "/", icon: Home },
@@ -76,34 +69,6 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup className="mt-2">
-          <SidebarGroupLabel className="text-sidebar-foreground/40 font-sans uppercase text-[10px] tracking-widest mb-3">
-            Quick Access
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {quickLinks.map((link) => {
-                const Icon = iconMap[link.icon] ?? FileText;
-                return (
-                  <SidebarMenuItem key={link.title} className="rounded-2xl">
-                    <SidebarMenuButton asChild>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-sidebar-foreground transition-colors duration-200 hover:bg-sidebar-accent/20 hover:text-sidebar-accent-foreground"
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{link.title}</span>}
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
