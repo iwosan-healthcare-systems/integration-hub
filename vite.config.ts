@@ -24,15 +24,10 @@ export default defineConfig(({ mode }) => ({
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
-  optimizeDeps: {
-    esbuildOptions: {
-      target: "es2020",
-    },
-  },
   build: {
     target: "es2020",
     sourcemap: false,
-    minify: "esbuild",
+    minify: true,
     cssCodeSplit: true,
     assetsInlineLimit: 4096,
     rollupOptions: {
