@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, LayoutDashboard } from "lucide-react";
+import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, LayoutDashboard, GraduationCap } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,10 +12,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { newsItems, subsidiaries } from "@/data/hub-data";
+import { newsItems, subsidiaries, courses, learningPaths, liveSessions } from "@/data/hub-data";
 import iwosanIcon from "@/assets/iwosan_icon.webp";
 import { useAuth } from "@/contexts/AuthContext";
 
+// ── Nav pages ──────────────────────────────────────────────────────────────
+// ADD any new page here so it is immediately searchable.
 const navItems = [
   { title: "Home", url: "/" },
   { title: "About Iwosan", url: "/about" },
@@ -23,10 +25,11 @@ const navItems = [
   { title: "Resources & Knowledge", url: "/resources" },
   { title: "News & Updates", url: "/news" },
   { title: "Leadership", url: "/leadership" },
+  { title: "Learning Centre", url: "/learning" },
 ];
 
 type SearchItem = {
-  type: "page" | "news" | "subsidiary";
+  type: "page" | "news" | "subsidiary" | "course" | "learning-path" | "live-session";
   title: string;
   url: string;
   external: boolean;
@@ -46,14 +49,20 @@ export function TopNavbar() {
     navigate("/login");
   };
 
+  // ── Searchable index ───────────────────────────────────────────────────
+  // To add new content: import its data array from hub-data.ts and map it
+  // into this list following the same pattern as the sections below.
   const searchableItems = useMemo<SearchItem[]>(
     () => [
+      // Pages
       ...navItems.map((item) => ({
         type: "page" as const,
         title: item.title,
         url: item.url,
         external: false,
       })),
+
+      // News articles
       ...newsItems.map((item) => ({
         type: "news" as const,
         title: item.title,
@@ -62,6 +71,8 @@ export function TopNavbar() {
         meta: `${item.category} · ${item.date}`,
         description: item.excerpt,
       })),
+
+      // Subsidiaries
       ...subsidiaries.map((sub) => ({
         type: "subsidiary" as const,
         title: sub.name,
@@ -69,6 +80,36 @@ export function TopNavbar() {
         external: true,
         meta: sub.category,
         description: sub.description,
+      })),
+
+      // Learning Centre — courses
+      ...courses.map((course) => ({
+        type: "course" as const,
+        title: course.title,
+        url: "/learning",
+        external: false,
+        meta: `${course.category} · ${course.level} · ${course.duration}`,
+        description: course.description,
+      })),
+
+      // Learning Centre — learning paths
+      ...learningPaths.map((path) => ({
+        type: "learning-path" as const,
+        title: path.title,
+        url: "/learning",
+        external: false,
+        meta: `Learning Path · ${path.audience}`,
+        description: path.description,
+      })),
+
+      // Learning Centre — live sessions
+      ...liveSessions.map((session) => ({
+        type: "live-session" as const,
+        title: session.title,
+        url: "/learning",
+        external: false,
+        meta: `Live Session · ${session.date} · ${session.format}`,
+        description: `${session.venue} · Hosted by ${session.host}`,
       })),
     ],
     [],
@@ -115,6 +156,8 @@ export function TopNavbar() {
   const typeIcon = (type: SearchItem["type"]) => {
     if (type === "news") return <Newspaper className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
     if (type === "subsidiary") return <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
+    if (type === "course" || type === "learning-path" || type === "live-session")
+      return <GraduationCap className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
     return <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
   };
 
@@ -209,7 +252,7 @@ export function TopNavbar() {
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search pages, news, subsidiaries…"
+                placeholder="Search pages, courses, news, subsidiaries…"
                 className="flex-1"
               />
               <Button type="submit" className="px-4">Search</Button>
@@ -230,7 +273,7 @@ export function TopNavbar() {
                   <div className="grid gap-1.5">
                     {results.slice(0, 8).map((result) => (
                       <button
-                        key={`${result.type}-${result.url}`}
+                        key={`${result.type}-${result.url}-${result.title}`}
                         type="button"
                         onClick={() => open(result.url, result.external)}
                         className="w-full rounded-2xl border border-border/70 bg-background px-4 py-3 text-left transition hover:border-accent hover:bg-accent/5"
@@ -256,7 +299,7 @@ export function TopNavbar() {
                   <p className="text-sm text-muted-foreground px-1 py-2">No results found for &ldquo;{query}&rdquo;.</p>
                 )
               ) : (
-                <p className="text-sm text-muted-foreground px-1 py-2">Search pages, news articles, and subsidiaries.</p>
+                <p className="text-sm text-muted-foreground px-1 py-2">Search pages, courses, news articles, and subsidiaries.</p>
               )}
             </div>
           </div>
