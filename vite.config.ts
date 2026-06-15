@@ -37,10 +37,16 @@ export default defineConfig(({ mode }) => ({
     assetsInlineLimit: 4096,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom", "react-router-dom"],
-          ui: ["@radix-ui/react-dialog", "@radix-ui/react-navigation-menu", "@radix-ui/react-tooltip"],
-          icons: ["lucide-react"],
+        manualChunks(id) {
+          if (id.includes("node_modules/react") || id.includes("node_modules/react-dom") || id.includes("node_modules/react-router-dom")) {
+            return "vendor";
+          }
+          if (id.includes("node_modules/@radix-ui")) {
+            return "ui";
+          }
+          if (id.includes("node_modules/lucide-react")) {
+            return "icons";
+          }
         },
         chunkFileNames: "assets/js/[name]-[hash].js",
         entryFileNames: "assets/js/[name]-[hash].js",
