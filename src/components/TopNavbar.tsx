@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, LayoutDashboard, GraduationCap } from "lucide-react";
+import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, LayoutDashboard, GraduationCap, PenSquare } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { newsItems, subsidiaries, courses, learningPaths, liveSessions } from "@/data/hub-data";
+import { subsidiaries } from "@/data/hub-data";
+import { getNews, getCourses, getLearningPaths, getSessions, type NewsItem, type Course, type LearningPath, type LiveSession } from "@/services/cmsService";
 import iwosanIcon from "@/assets/iwosan_icon.webp";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -44,14 +45,32 @@ export function TopNavbar() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { user, loading, logout } = useAuth();
 
+  // CMS data loaded once when search first opens
+  const [cmsLoaded, setCmsLoaded] = useState(false);
+  const [cmsNews, setCmsNews] = useState<NewsItem[]>([]);
+  const [cmsCourses, setCmsCourses] = useState<Course[]>([]);
+  const [cmsPaths, setCmsPaths] = useState<LearningPath[]>([]);
+  const [cmsSessions, setCmsSessions] = useState<LiveSession[]>([]);
+
+  useEffect(() => {
+    if (!searchOpen || cmsLoaded) return;
+    Promise.all([getNews(), getCourses(), getLearningPaths(), getSessions()]).then(
+      ([n, c, lp, s]) => {
+        setCmsNews(n.news ?? []);
+        setCmsCourses(c.courses ?? []);
+        setCmsPaths(lp.learningPaths ?? []);
+        setCmsSessions(s.sessions ?? []);
+        setCmsLoaded(true);
+      }
+    );
+  }, [searchOpen, cmsLoaded]);
+
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
   // ── Searchable index ───────────────────────────────────────────────────
-  // To add new content: import its data array from hub-data.ts and map it
-  // into this list following the same pattern as the sections below.
   const searchableItems = useMemo<SearchItem[]>(
     () => [
       // Pages
@@ -63,7 +82,7 @@ export function TopNavbar() {
       })),
 
       // News articles
-      ...newsItems.map((item) => ({
+      ...cmsNews.map((item) => ({
         type: "news" as const,
         title: item.title,
         url: item.url,
@@ -83,7 +102,7 @@ export function TopNavbar() {
       })),
 
       // Learning Centre — courses
-      ...courses.map((course) => ({
+      ...cmsCourses.map((course) => ({
         type: "course" as const,
         title: course.title,
         url: "/learning",
@@ -93,7 +112,7 @@ export function TopNavbar() {
       })),
 
       // Learning Centre — learning paths
-      ...learningPaths.map((path) => ({
+      ...cmsPaths.map((path) => ({
         type: "learning-path" as const,
         title: path.title,
         url: "/learning",
@@ -103,7 +122,7 @@ export function TopNavbar() {
       })),
 
       // Learning Centre — live sessions
-      ...liveSessions.map((session) => ({
+      ...cmsSessions.map((session) => ({
         type: "live-session" as const,
         title: session.title,
         url: "/learning",
@@ -112,7 +131,7 @@ export function TopNavbar() {
         description: `${session.venue} · Hosted by ${session.host}`,
       })),
     ],
-    [],
+    [cmsNews, cmsCourses, cmsPaths, cmsSessions],
   );
 
   const results = useMemo(() => {
@@ -213,6 +232,15 @@ export function TopNavbar() {
                     >
                       <LayoutDashboard className="h-4 w-4 mr-2" />
                       Admin Panel
+                    </DropdownMenuItem>
+                  )}
+                  {user.canEditCms && user.role === 'user' && (
+                    <DropdownMenuItem
+                      onClick={() => navigate('/cms')}
+                      className="cursor-pointer"
+                    >
+                      <PenSquare className="h-4 w-4 mr-2" />
+                      Content Manager
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem

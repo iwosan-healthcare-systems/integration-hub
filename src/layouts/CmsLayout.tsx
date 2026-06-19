@@ -1,23 +1,18 @@
 import { useState, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { LayoutDashboard, Users, LogOut, Shield, Menu, X, ArrowLeft, Newspaper, BookOpen, CalendarDays, GraduationCap, ChevronDown } from 'lucide-react';
+import { Newspaper, BookOpen, CalendarDays, GraduationCap, LogOut, PenSquare, Menu, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { clearAzureSession } from '@/services/authService';
 import { useInactivityLogout } from '@/hooks/useInactivityLogout';
 import iwosanIcon from '@/assets/iwosan_icon.webp';
 
-const navItems = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/admin/users', label: 'Users', icon: Users, end: false },
-];
-
 const cmsItems = [
-  { to: '/admin/cms/news', label: 'News', icon: Newspaper },
-  { to: '/admin/cms/courses', label: 'Courses', icon: BookOpen },
-  { to: '/admin/cms/sessions', label: 'Sessions', icon: CalendarDays },
-  { to: '/admin/cms/learning-paths', label: 'Learning Paths', icon: GraduationCap },
+  { to: '/cms/news', label: 'News', icon: Newspaper },
+  { to: '/cms/courses', label: 'Courses', icon: BookOpen },
+  { to: '/cms/sessions', label: 'Sessions', icon: CalendarDays },
+  { to: '/cms/learning-paths', label: 'Learning Paths', icon: GraduationCap },
 ];
 
 function SidebarContent({
@@ -28,7 +23,6 @@ function SidebarContent({
   onLogout: () => void;
 }) {
   const { user } = useAuth();
-  const isManager = user?.role === 'manager';
 
   return (
     <>
@@ -37,19 +31,16 @@ function SidebarContent({
         <img src={iwosanIcon} alt="Iwosan" className="h-7 w-auto" />
         <div className="min-w-0">
           <p className="text-xs font-bold text-foreground leading-tight truncate">Iwosan Innovation Hub</p>
-          <p className="text-[10px] text-accent font-semibold uppercase tracking-widest">
-            {isManager ? 'Manager Panel' : 'Admin Panel'}
-          </p>
+          <p className="text-[10px] text-accent font-semibold uppercase tracking-widest">Content Manager</p>
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map(({ to, label, icon: Icon, end }) => (
+        {cmsItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
-            end={end}
             onClick={onNavClick}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -64,31 +55,7 @@ function SidebarContent({
           </NavLink>
         ))}
 
-        {/* CMS section */}
-        <div className="pt-3 pb-1">
-          <p className="flex items-center gap-1.5 px-3 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest mb-1">
-            <ChevronDown className="h-3 w-3" /> Content
-          </p>
-          {cmsItems.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={onNavClick}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`
-              }
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {label}
-            </NavLink>
-          ))}
-        </div>
-
-        {isManager && (
+        <div className="pt-2">
           <NavLink
             to="/"
             onClick={onNavClick}
@@ -97,14 +64,14 @@ function SidebarContent({
             <ArrowLeft className="h-4 w-4 shrink-0" />
             Back to Hub
           </NavLink>
-        )}
+        </div>
       </nav>
 
       {/* User info + logout */}
       <div className="px-3 py-4 border-t border-border/60 space-y-3 shrink-0">
         <div className="flex items-center gap-3 px-3">
           <div className="h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
-            <Shield className="h-4 w-4 text-accent" />
+            <PenSquare className="h-4 w-4 text-accent" />
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-foreground truncate">{user?.name}</p>
@@ -125,7 +92,7 @@ function SidebarContent({
   );
 }
 
-export function AdminLayout() {
+export function CmsLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -167,7 +134,6 @@ export function AdminLayout() {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Close button */}
         <button
           type="button"
           onClick={closeSidebar}
@@ -184,7 +150,6 @@ export function AdminLayout() {
         {/* Top header */}
         <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border/60 bg-background/90 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-3">
-            {/* Hamburger — mobile only */}
             <Button
               type="button"
               variant="ghost"
@@ -192,7 +157,7 @@ export function AdminLayout() {
               className="md:hidden h-9 w-9 text-muted-foreground hover:text-foreground"
               onClick={() => setSidebarOpen(true)}
               aria-label="Open menu"
-            > 
+            >
               <Menu className="h-5 w-5" />
             </Button>
           </div>

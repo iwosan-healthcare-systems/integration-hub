@@ -1,16 +1,51 @@
+import { useEffect, useState } from "react";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
-import { newsItems } from "@/data/hub-data";
+import { getNews, type NewsItem } from "@/services/cmsService";
 import { Clock } from "lucide-react";
-import { useState } from "react";
-const categories = ["All", ...Array.from(new Set(newsItems.map((n) => n.category)))];
 
 const NewsPage = () => {
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
-  const filtered = filter === "All" ? newsItems : newsItems.filter((n) => n.category === filter);
+
+  useEffect(() => {
+    getNews().then(({ news: data }) => {
+      setNews(data ?? []);
+      setLoading(false);
+    });
+  }, []);
+
+  const categories = ["All", ...Array.from(new Set(news.map((n) => n.category)))];
+  const filtered = filter === "All" ? news : news.filter((n) => n.category === filter);
+
+  if (loading) {
+    return (
+      <>
+        <section className="bg-news-header min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
+          <div className="w-full max-w-6xl mx-auto">
+            <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Stay Updated</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">News & Announcements</h1>
+            <p className="font-sans text-primary-foreground/60 max-w-xl">Internal updates, industry news, and organizational highlights.</p>
+          </div>
+        </section>
+        <section className="py-12 px-6 sm:px-8 lg:px-16 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="space-y-3">
+                <div className="h-48 rounded-xl bg-muted animate-pulse" />
+                <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+                <div className="h-5 w-full rounded bg-muted animate-pulse" />
+                <div className="h-4 w-3/4 rounded bg-muted animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </>
+    );
+  }
 
   return (
     <>
-
       <section className="bg-news-header min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
         <div className="w-full max-w-6xl mx-auto">
           <AnimateOnScroll>
@@ -28,6 +63,7 @@ const NewsPage = () => {
           {categories.map((cat) => (
             <button
               key={cat}
+              type="button"
               onClick={() => setFilter(cat)}
               className={`px-5 py-2 rounded-full font-sans text-sm font-medium transition-all duration-300 ${
                 filter === cat
@@ -39,6 +75,10 @@ const NewsPage = () => {
             </button>
           ))}
         </div>
+
+        {filtered.length === 0 && (
+          <p className="text-center text-muted-foreground py-16">No news articles found.</p>
+        )}
 
         {/* Featured article */}
         {filtered.length > 0 && filtered[0].featured && (
@@ -65,12 +105,14 @@ const NewsPage = () => {
 
         {/* Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filtered.slice(1).map((item, i) => (
-            <AnimateOnScroll key={item.title} delay={i * 0.1}>
+          {(filtered[0]?.featured ? filtered.slice(1) : filtered).map((item, i) => (
+            <AnimateOnScroll key={item.id} delay={i * 0.1}>
               <a href={item.url} target="_blank" rel="noopener noreferrer" className="group block">
-                <div className="h-48 rounded-xl overflow-hidden mb-4 img-zoom">
-                  <img src={item.image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
-                </div>
+                {item.image && (
+                  <div className="h-48 rounded-xl overflow-hidden mb-4 img-zoom">
+                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                )}
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-[10px] font-sans uppercase tracking-widest text-accent font-medium">{item.category}</span>
                   <span className="text-xs font-sans text-muted-foreground">{item.date}</span>
@@ -82,7 +124,6 @@ const NewsPage = () => {
           ))}
         </div>
       </section>
-
     </>
   );
 };

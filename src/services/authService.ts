@@ -9,10 +9,11 @@ export interface User {
   isFirstLogin: boolean;
   isActive: boolean;
   authProvider: string;
+  canEditCms: boolean;
 }
 
 export interface AdminUser extends User {
-  authProvider: string;
+  canEditCms: boolean;
   lastSignInAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -127,7 +128,7 @@ export async function listUsers(): Promise<{ users: AdminUser[] | null; error: s
 
 export async function updateUser(
   id: number,
-  fields: { name?: string; role?: string; isActive?: boolean }
+  fields: { name?: string; role?: string; isActive?: boolean; canEditCms?: boolean }
 ): Promise<{ user: User | null; error: string | null }> {
   const { data, error } = await apiFetch<{ user: User }>(`/admin/users/${id}`, {
     method: 'PATCH',

@@ -13,8 +13,8 @@ import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { randomBytes, createPublicKey } from 'crypto';
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { resolve, dirname, extname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -75,6 +75,8 @@ const COOKIE_NAME = 'iwosan_token';
 
 const isAdmin = (u) => u?.role === 'admin';
 const isAdminOrManager = (u) => u?.role === 'admin' || u?.role === 'manager';
+// CMS editor: admin, manager, OR any user explicitly granted CMS access
+const isCmsEditor = (u) => u?.role === 'admin' || u?.role === 'manager' || u?.canEditCms === true;
 const COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function signToken(payload) {
@@ -102,12 +104,12 @@ async function requireAuth(req, res, next) {
   if (!decoded) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const rows = await db(
-      'SELECT id, role, is_active FROM users WHERE id = $1',
+      'SELECT id, role, is_active, can_edit_cms FROM users WHERE id = $1',
       [decoded.userId]
     );
     if (!rows[0] || !rows[0].is_active)
       return res.status(403).json({ error: 'Account deactivated' });
-    req.authUser = { ...decoded, role: rows[0].role };
+    req.authUser = { ...decoded, role: rows[0].role, canEditCms: rows[0].can_edit_cms };
     next();
   } catch (err) {
     console.error('requireAuth error:', err);
@@ -214,8 +216,13 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
+
+// Serve uploaded images statically at /uploads/*
+const UPLOADS_DIR = resolve(__dirname, 'uploads');
+if (!existsSync(UPLOADS_DIR)) mkdirSync(UPLOADS_DIR, { recursive: true });
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // ── Routes ────────────────────────────────────────────────────────────────
 // All routes are prefixed with /api to match the frontend authService paths:
@@ -232,7 +239,7 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
   }
   try {
     const rows = await db(
-      'SELECT id, email, password_hash, name, role, is_first_login, is_active, auth_provider FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, name, role, is_first_login, is_active, auth_provider, can_edit_cms FROM users WHERE email = $1',
       [String(email).toLowerCase().trim()]
     );
     const user = rows[0];
@@ -257,6 +264,7 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
         isFirstLogin: user.is_first_login,
         isActive: user.is_active,
         authProvider: user.auth_provider,
+        canEditCms: user.can_edit_cms,
       },
     });
   } catch (err) {
@@ -327,7 +335,7 @@ router.post('/auth/azure', async (req, res) => {
 
     // 5. Find or auto-create the user
     let rows = await db(
-      'SELECT id, email, name, role, is_first_login, is_active, auth_provider FROM users WHERE email = $1',
+      'SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms FROM users WHERE email = $1',
       [email]
     );
 
@@ -361,6 +369,7 @@ router.post('/auth/azure', async (req, res) => {
         isFirstLogin: user.is_first_login,
         isActive: user.is_active,
         authProvider: user.auth_provider,
+        canEditCms: user.can_edit_cms,
       },
     });
   } catch (err) {
@@ -384,7 +393,7 @@ router.get('/auth/me', async (req, res) => {
   if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const rows = await db(
-      'SELECT id, email, name, role, is_first_login, is_active, auth_provider FROM users WHERE id = $1',
+      'SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms FROM users WHERE id = $1',
       [authUser.userId]
     );
     const u = rows[0];
@@ -399,6 +408,7 @@ router.get('/auth/me', async (req, res) => {
         isFirstLogin: u.is_first_login,
         isActive: u.is_active,
         authProvider: u.auth_provider,
+        canEditCms: u.can_edit_cms,
       },
     });
   } catch (err) {
@@ -524,7 +534,7 @@ router.get('/admin/users', requireAuth, async (req, res) => {
   }
   try {
     const rows = await db(
-      `SELECT id, email, name, role, is_first_login, is_active, auth_provider, last_sign_in_at, created_at, updated_at
+      `SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, last_sign_in_at, created_at, updated_at
        FROM users ORDER BY created_at DESC`,
       []
     );
@@ -537,6 +547,7 @@ router.get('/admin/users', requireAuth, async (req, res) => {
         isFirstLogin: u.is_first_login,
         isActive: u.is_active,
         authProvider: u.auth_provider,
+        canEditCms: u.can_edit_cms,
         lastSignInAt: u.last_sign_in_at,
         createdAt: u.created_at,
         updatedAt: u.updated_at,
@@ -560,7 +571,7 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Cannot modify your own account via the admin panel' });
   }
 
-  const { name, role, isActive } = req.body ?? {};
+  const { name, role, isActive, canEditCms } = req.body ?? {};
 
   // Managers cannot touch admin accounts or promote anyone to admin
   if (!isAdmin(authUser)) {
@@ -592,6 +603,10 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
     setClauses.push(`is_active = $${idx++}`);
     params.push(Boolean(isActive));
   }
+  if (canEditCms !== undefined) {
+    setClauses.push(`can_edit_cms = $${idx++}`);
+    params.push(Boolean(canEditCms));
+  }
   if (setClauses.length === 0) {
     return res.status(400).json({ error: 'No fields to update' });
   }
@@ -601,7 +616,7 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${idx}
-       RETURNING id, email, name, role, is_first_login, is_active`,
+       RETURNING id, email, name, role, is_first_login, is_active, can_edit_cms`,
       params
     );
     if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
@@ -614,6 +629,7 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
         role: u.role,
         isFirstLogin: u.is_first_login,
         isActive: u.is_active,
+        canEditCms: u.can_edit_cms,
       },
     });
   } catch (err) {
@@ -853,6 +869,406 @@ router.post('/chat', requireAuth, async (req, res) => {
       res.write(`data: ${JSON.stringify({ error: 'Stream interrupted' })}\n\n`);
       res.end();
     }
+  }
+});
+
+// ── CMS helpers ───────────────────────────────────────────────────────────
+
+function fmtDate(d) {
+  // Format a JS Date or ISO string → "April 23, 2026"
+  return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+// ── CMS: Image upload ─────────────────────────────────────────────────────
+
+// POST /api/admin/cms/upload  — accepts { image: "data:<mime>;base64,<data>" }
+router.post('/admin/cms/upload', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const { image } = req.body ?? {};
+  if (!image || typeof image !== 'string') return res.status(400).json({ error: 'image field is required' });
+
+  const match = image.match(/^data:(image\/(jpeg|jpg|png|webp|gif|svg\+xml));base64,(.+)$/);
+  if (!match) return res.status(400).json({ error: 'Invalid image format. Supported: jpeg, png, webp, gif, svg' });
+
+  const mimeToExt = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/svg+xml': 'svg' };
+  const ext = mimeToExt[match[1]] ?? 'jpg';
+  const base64Data = match[3];
+
+  // Sanity-check size (~7.5 MB decoded limit)
+  if (base64Data.length > 10 * 1024 * 1024) return res.status(400).json({ error: 'Image too large. Max 7.5 MB.' });
+
+  try {
+    const filename = `${Date.now()}-${randomBytes(6).toString('hex')}.${ext}`;
+    const filePath = resolve(UPLOADS_DIR, filename);
+    writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+    return res.json({ url: `/uploads/${filename}` });
+  } catch (err) {
+    console.error('Upload error:', err);
+    return res.status(500).json({ error: 'Failed to save image' });
+  }
+});
+
+// ── CMS: News (public read, admin write) ──────────────────────────────────
+
+// GET /api/news
+router.get('/news', requireAuth, async (req, res) => {
+  try {
+    const rows = await db(
+      `SELECT id, title, excerpt, content, date, category, featured, image, url, sort_order
+       FROM news ORDER BY date DESC`,
+      []
+    );
+    return res.json({
+      news: rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        excerpt: r.excerpt,
+        content: r.content,
+        date: fmtDate(r.date),
+        category: r.category,
+        featured: r.featured,
+        image: r.image,
+        url: r.url,
+        sortOrder: r.sort_order,
+      })),
+    });
+  } catch (err) {
+    console.error('GET /news error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/cms/news
+router.post('/admin/cms/news', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const { title, excerpt = '', content = '', date, category, featured = false, image = '', url = '', sortOrder = 0 } = req.body ?? {};
+  if (!title || !date || !category) return res.status(400).json({ error: 'title, date, and category are required' });
+  try {
+    const rows = await db(
+      `INSERT INTO news (title, excerpt, content, date, category, featured, image, url, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      [title, excerpt, content, date, category, Boolean(featured), image, url, Number(sortOrder)]
+    );
+    const r = rows[0];
+    return res.status(201).json({
+      newsItem: { id: r.id, title: r.title, excerpt: r.excerpt, content: r.content, date: fmtDate(r.date), category: r.category, featured: r.featured, image: r.image, url: r.url, sortOrder: r.sort_order },
+    });
+  } catch (err) {
+    console.error('POST /admin/cms/news error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/admin/cms/news/:id
+router.patch('/admin/cms/news/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  const { title, excerpt, content, date, category, featured, image, url, sortOrder } = req.body ?? {};
+  const set = []; const params = []; let i = 1;
+  if (title !== undefined)     { set.push(`title=$${i++}`);       params.push(title); }
+  if (excerpt !== undefined)   { set.push(`excerpt=$${i++}`);     params.push(excerpt); }
+  if (content !== undefined)   { set.push(`content=$${i++}`);     params.push(content); }
+  if (date !== undefined)      { set.push(`date=$${i++}`);        params.push(date); }
+  if (category !== undefined)  { set.push(`category=$${i++}`);    params.push(category); }
+  if (featured !== undefined)  { set.push(`featured=$${i++}`);    params.push(Boolean(featured)); }
+  if (image !== undefined)     { set.push(`image=$${i++}`);       params.push(image); }
+  if (url !== undefined)       { set.push(`url=$${i++}`);         params.push(url); }
+  if (sortOrder !== undefined) { set.push(`sort_order=$${i++}`);  params.push(Number(sortOrder)); }
+  if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+  set.push(`updated_at=NOW()`); params.push(id);
+  try {
+    const rows = await db(`UPDATE news SET ${set.join(',')} WHERE id=$${i} RETURNING *`, params);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    const r = rows[0];
+    return res.json({
+      newsItem: { id: r.id, title: r.title, excerpt: r.excerpt, content: r.content, date: fmtDate(r.date), category: r.category, featured: r.featured, image: r.image, url: r.url, sortOrder: r.sort_order },
+    });
+  } catch (err) {
+    console.error('PATCH /admin/cms/news error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/cms/news/:id
+router.delete('/admin/cms/news/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    const rows = await db('DELETE FROM news WHERE id=$1 RETURNING id', [id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    return res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /admin/cms/news error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── CMS: Courses (public read, admin write) ───────────────────────────────
+
+// GET /api/courses
+router.get('/courses', requireAuth, async (req, res) => {
+  try {
+    const rows = await db(
+      `SELECT id, title, description, category, level, duration, audience, modules, mandatory, course_url, sort_order
+       FROM courses ORDER BY sort_order ASC`,
+      []
+    );
+    return res.json({
+      courses: rows.map((r) => ({
+        id: r.id, title: r.title, description: r.description, category: r.category,
+        level: r.level, duration: r.duration, audience: r.audience,
+        modules: r.modules, mandatory: r.mandatory, courseUrl: r.course_url, sortOrder: r.sort_order,
+      })),
+    });
+  } catch (err) {
+    console.error('GET /courses error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/cms/courses
+router.post('/admin/cms/courses', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const { id, title, description = '', category, level, duration, audience = '', modules = 1, mandatory = false, courseUrl = '', sortOrder = 0 } = req.body ?? {};
+  if (!id || !title || !category || !level || !duration) return res.status(400).json({ error: 'id, title, category, level, and duration are required' });
+  try {
+    const rows = await db(
+      `INSERT INTO courses (id,title,description,category,level,duration,audience,modules,mandatory,course_url,sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [id, title, description, category, level, duration, audience, Number(modules), Boolean(mandatory), courseUrl, Number(sortOrder)]
+    );
+    const r = rows[0];
+    return res.status(201).json({
+      course: { id: r.id, title: r.title, description: r.description, category: r.category, level: r.level, duration: r.duration, audience: r.audience, modules: r.modules, mandatory: r.mandatory, courseUrl: r.course_url, sortOrder: r.sort_order },
+    });
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'A course with this ID already exists' });
+    console.error('POST /admin/cms/courses error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/admin/cms/courses/:id
+router.patch('/admin/cms/courses/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const courseId = req.params.id;
+  const { title, description, category, level, duration, audience, modules, mandatory, courseUrl, sortOrder } = req.body ?? {};
+  const set = []; const params = []; let i = 1;
+  if (title !== undefined)       { set.push(`title=$${i++}`);       params.push(title); }
+  if (description !== undefined) { set.push(`description=$${i++}`); params.push(description); }
+  if (category !== undefined)    { set.push(`category=$${i++}`);    params.push(category); }
+  if (level !== undefined)       { set.push(`level=$${i++}`);       params.push(level); }
+  if (duration !== undefined)    { set.push(`duration=$${i++}`);    params.push(duration); }
+  if (audience !== undefined)    { set.push(`audience=$${i++}`);    params.push(audience); }
+  if (modules !== undefined)     { set.push(`modules=$${i++}`);     params.push(Number(modules)); }
+  if (mandatory !== undefined)   { set.push(`mandatory=$${i++}`);   params.push(Boolean(mandatory)); }
+  if (courseUrl !== undefined)   { set.push(`course_url=$${i++}`);  params.push(courseUrl); }
+  if (sortOrder !== undefined)   { set.push(`sort_order=$${i++}`);  params.push(Number(sortOrder)); }
+  if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+  set.push(`updated_at=NOW()`); params.push(courseId);
+  try {
+    const rows = await db(`UPDATE courses SET ${set.join(',')} WHERE id=$${i} RETURNING *`, params);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    const r = rows[0];
+    return res.json({
+      course: { id: r.id, title: r.title, description: r.description, category: r.category, level: r.level, duration: r.duration, audience: r.audience, modules: r.modules, mandatory: r.mandatory, courseUrl: r.course_url, sortOrder: r.sort_order },
+    });
+  } catch (err) {
+    console.error('PATCH /admin/cms/courses error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/cms/courses/:id
+router.delete('/admin/cms/courses/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const courseId = req.params.id;
+  try {
+    const rows = await db('DELETE FROM courses WHERE id=$1 RETURNING id', [courseId]);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    return res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /admin/cms/courses error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── CMS: Learning Paths (public read, admin write) ────────────────────────
+
+// GET /api/learning-paths
+router.get('/learning-paths', requireAuth, async (req, res) => {
+  try {
+    const rows = await db(
+      `SELECT id, title, description, audience, course_ids, total_duration, icon, sort_order
+       FROM learning_paths ORDER BY sort_order ASC`,
+      []
+    );
+    return res.json({
+      learningPaths: rows.map((r) => ({
+        id: r.id, title: r.title, description: r.description, audience: r.audience,
+        courseIds: r.course_ids, totalDuration: r.total_duration, icon: r.icon, sortOrder: r.sort_order,
+      })),
+    });
+  } catch (err) {
+    console.error('GET /learning-paths error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/cms/learning-paths
+router.post('/admin/cms/learning-paths', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const { title, description = '', audience = '', courseIds = [], totalDuration = '', icon = 'GraduationCap', sortOrder = 0 } = req.body ?? {};
+  if (!title) return res.status(400).json({ error: 'title is required' });
+  try {
+    const rows = await db(
+      `INSERT INTO learning_paths (title,description,audience,course_ids,total_duration,icon,sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [title, description, audience, courseIds, totalDuration, icon, Number(sortOrder)]
+    );
+    const r = rows[0];
+    return res.status(201).json({
+      learningPath: { id: r.id, title: r.title, description: r.description, audience: r.audience, courseIds: r.course_ids, totalDuration: r.total_duration, icon: r.icon, sortOrder: r.sort_order },
+    });
+  } catch (err) {
+    console.error('POST /admin/cms/learning-paths error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/admin/cms/learning-paths/:id
+router.patch('/admin/cms/learning-paths/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  const { title, description, audience, courseIds, totalDuration, icon, sortOrder } = req.body ?? {};
+  const set = []; const params = []; let i = 1;
+  if (title !== undefined)         { set.push(`title=$${i++}`);          params.push(title); }
+  if (description !== undefined)   { set.push(`description=$${i++}`);    params.push(description); }
+  if (audience !== undefined)      { set.push(`audience=$${i++}`);       params.push(audience); }
+  if (courseIds !== undefined)     { set.push(`course_ids=$${i++}`);     params.push(courseIds); }
+  if (totalDuration !== undefined) { set.push(`total_duration=$${i++}`); params.push(totalDuration); }
+  if (icon !== undefined)          { set.push(`icon=$${i++}`);           params.push(icon); }
+  if (sortOrder !== undefined)     { set.push(`sort_order=$${i++}`);     params.push(Number(sortOrder)); }
+  if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+  set.push(`updated_at=NOW()`); params.push(id);
+  try {
+    const rows = await db(`UPDATE learning_paths SET ${set.join(',')} WHERE id=$${i} RETURNING *`, params);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    const r = rows[0];
+    return res.json({
+      learningPath: { id: r.id, title: r.title, description: r.description, audience: r.audience, courseIds: r.course_ids, totalDuration: r.total_duration, icon: r.icon, sortOrder: r.sort_order },
+    });
+  } catch (err) {
+    console.error('PATCH /admin/cms/learning-paths error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/cms/learning-paths/:id
+router.delete('/admin/cms/learning-paths/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    const rows = await db('DELETE FROM learning_paths WHERE id=$1 RETURNING id', [id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    return res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /admin/cms/learning-paths error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── CMS: Live Sessions (public read, admin write) ─────────────────────────
+
+// GET /api/sessions
+router.get('/sessions', requireAuth, async (req, res) => {
+  try {
+    const rows = await db(
+      `SELECT id, title, session_date, session_time, format, venue, host, meeting_url
+       FROM live_sessions ORDER BY session_date ASC`,
+      []
+    );
+    return res.json({
+      sessions: rows.map((r) => ({
+        id: r.id, title: r.title, date: fmtDate(r.session_date),
+        time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url,
+      })),
+    });
+  } catch (err) {
+    console.error('GET /sessions error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/cms/sessions
+router.post('/admin/cms/sessions', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const { title, date, time, format, venue = '', host = '', meetingUrl = '' } = req.body ?? {};
+  if (!title || !date || !time || !format) return res.status(400).json({ error: 'title, date, time, and format are required' });
+  const validFormats = ['Virtual', 'In-Person', 'Hybrid'];
+  if (!validFormats.includes(format)) return res.status(400).json({ error: 'format must be Virtual, In-Person, or Hybrid' });
+  try {
+    const rows = await db(
+      `INSERT INTO live_sessions (title, session_date, session_time, format, venue, host, meeting_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [title, date, time, format, venue, host, meetingUrl]
+    );
+    const r = rows[0];
+    return res.status(201).json({
+      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url },
+    });
+  } catch (err) {
+    console.error('POST /admin/cms/sessions error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/admin/cms/sessions/:id
+router.patch('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  const { title, date, time, format, venue, host, meetingUrl } = req.body ?? {};
+  if (format !== undefined && !['Virtual','In-Person','Hybrid'].includes(format)) return res.status(400).json({ error: 'Invalid format' });
+  const set = []; const params = []; let i = 1;
+  if (title !== undefined)      { set.push(`title=$${i++}`);        params.push(title); }
+  if (date !== undefined)       { set.push(`session_date=$${i++}`); params.push(date); }
+  if (time !== undefined)       { set.push(`session_time=$${i++}`); params.push(time); }
+  if (format !== undefined)     { set.push(`format=$${i++}`);       params.push(format); }
+  if (venue !== undefined)      { set.push(`venue=$${i++}`);        params.push(venue); }
+  if (host !== undefined)       { set.push(`host=$${i++}`);         params.push(host); }
+  if (meetingUrl !== undefined) { set.push(`meeting_url=$${i++}`);  params.push(meetingUrl); }
+  if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+  set.push(`updated_at=NOW()`); params.push(id);
+  try {
+    const rows = await db(`UPDATE live_sessions SET ${set.join(',')} WHERE id=$${i} RETURNING *`, params);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    const r = rows[0];
+    return res.json({
+      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url },
+    });
+  } catch (err) {
+    console.error('PATCH /admin/cms/sessions error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/cms/sessions/:id
+router.delete('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    const rows = await db('DELETE FROM live_sessions WHERE id=$1 RETURNING id', [id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    return res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /admin/cms/sessions error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

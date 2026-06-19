@@ -1,14 +1,13 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { ArrowRight, Heart, Stethoscope, BookOpen, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import heroBannerMobileImg from "@/assets/hero-hub-mobile.webp";
 import heroBannerDesktopImg from "@/assets/hero-hub-desktop.webp";
 import teamImg from "@/assets/team-photo.webp";
 import innovationImg from "@/assets/innovation-bg.webp";
-import { newsItems, subsidiaries } from "@/data/hub-data";
-
-const latestNews = [...newsItems].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+import { subsidiaries } from "@/data/hub-data";
+import { getNews, type NewsItem } from "@/services/cmsService";
 
 const faqs = [
   {
@@ -55,6 +54,13 @@ const faqs = [
 
 const Index = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
+
+  useEffect(() => {
+    getNews().then(({ news }) => {
+      if (news) setLatestNews(news.slice(0, 3));
+    });
+  }, []);
 
   return (
     <>
@@ -256,8 +262,8 @@ const Index = () => {
           </div>
         </AnimateOnScroll>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {latestNews.slice(0, 3).map((item, i) => (
-            <AnimateOnScroll key={item.title} delay={i * 0.1}>
+          {latestNews.map((item, i) => (
+            <AnimateOnScroll key={item.id} delay={i * 0.1}>
               <a href={item.url} target="_blank" rel="noopener noreferrer" className="group block">
                 <div className="h-52 rounded-xl bg-muted overflow-hidden mb-4 img-zoom">
                   <img

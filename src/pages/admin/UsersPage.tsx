@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Search, Plus, MoreHorizontal, RefreshCw, UserCheck, UserX,
-  Trash2, Pencil, X, Copy, Check, KeyRound
+  Trash2, Pencil, X, Copy, Check, KeyRound, LayoutDashboard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,14 @@ function StatusBadge({ active }: { active: boolean }) {
   return active
     ? <Badge className="bg-green-500/15 text-green-700 border-green-400/30 text-[10px]">Active</Badge>
     : <Badge variant="destructive" className="text-[10px]">Inactive</Badge>;
+}
+
+function CmsBadge() {
+  return (
+    <Badge className="bg-purple-500/15 text-purple-700 border-purple-400/30 text-[10px] gap-1">
+      <LayoutDashboard className="h-2.5 w-2.5" />CMS
+    </Badge>
+  );
 }
 
 // ── Create User Modal ──────────────────────────────────────────────────────
@@ -251,6 +259,14 @@ export default function UsersPage() {
     if (updated) setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, isActive: updated.isActive } : x)));
   };
 
+  const handleToggleCms = async (u: AdminUser) => {
+    setActionLoading(u.id);
+    const { user: updated, error } = await updateUser(u.id, { canEditCms: !u.canEditCms });
+    setActionLoading(null);
+    if (error) { setGlobalError(error); return; }
+    if (updated) setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, canEditCms: updated.canEditCms } : x)));
+  };
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setActionLoading(deleteTarget.id);
@@ -386,9 +402,10 @@ export default function UsersPage() {
                   </div>
 
                   {/* Badges */}
-                  <div className="hidden sm:flex items-center gap-2 shrink-0 w-32">
+                  <div className="hidden sm:flex items-center gap-1.5 flex-wrap shrink-0 w-40">
                     {roleBadge(u.role)}
                     <StatusBadge active={u.isActive} />
+                    {u.canEditCms && u.role === 'user' && <CmsBadge />}
                   </div>
 
                   {/* Auth provider */}
@@ -445,7 +462,7 @@ export default function UsersPage() {
                           : <MoreHorizontal className="h-4 w-4" />}
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuContent align="end" className="w-52">
                       <DropdownMenuItem onClick={() => setEditTarget(u)}>
                         <Pencil className="h-3.5 w-3.5 mr-2" /> Edit user
                       </DropdownMenuItem>
@@ -454,6 +471,12 @@ export default function UsersPage() {
                           ? <><UserX className="h-3.5 w-3.5 mr-2" /> Deactivate</>
                           : <><UserCheck className="h-3.5 w-3.5 mr-2" /> Activate</>}
                       </DropdownMenuItem>
+                      {u.role === 'user' && (
+                        <DropdownMenuItem onClick={() => handleToggleCms(u)}>
+                          <LayoutDashboard className="h-3.5 w-3.5 mr-2" />
+                          {u.canEditCms ? 'Revoke CMS access' : 'Grant CMS access'}
+                        </DropdownMenuItem>
+                      )}
                       {u.authProvider !== 'azure' && (
                         <DropdownMenuItem onClick={() => handleResetPassword(u)}>
                           <KeyRound className="h-3.5 w-3.5 mr-2" /> Reset password
