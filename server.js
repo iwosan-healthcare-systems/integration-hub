@@ -229,10 +229,9 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://iwosaninnovation
 app.use(
   cors({
     origin(origin, cb) {
-      // In development allow requests with no origin (curl, Postman).
-      // In production every request must come from a known origin.
-      if (!origin && process.env.NODE_ENV !== 'production') return cb(null, true);
-      if (origin && allowedOrigins.includes(origin)) return cb(null, true);
+      // Allow no-origin requests: Netlify's proxy forwards to Railway server-to-server
+      // without an Origin header. Auth is enforced by httpOnly cookie, not CORS.
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
       cb(new Error(`CORS: origin "${origin}" not allowed`));
     },
     credentials: true,
