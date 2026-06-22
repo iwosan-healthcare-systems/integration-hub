@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Search, Plus, MoreHorizontal, RefreshCw, UserCheck, UserX,
-  Trash2, Pencil, X, Copy, Check, KeyRound, LayoutDashboard
+  Trash2, Pencil, X, Copy, Check, KeyRound, LayoutDashboard, Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { listUsers, updateUser, deleteUser, createUser, resetUserPassword, type AdminUser } from '@/services/authService';
+import { useAuth } from '@/contexts/AuthContext';
 
 function roleBadge(role: string) {
   if (role === 'admin') return <Badge className="bg-accent/20 text-accent border-accent/30 text-[10px]">Admin</Badge>;
@@ -222,6 +223,9 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
 // ── Main Page ──────────────────────────────────────────────────────────────
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -472,10 +476,17 @@ export default function UsersPage() {
                           : <><UserCheck className="h-3.5 w-3.5 mr-2" /> Activate</>}
                       </DropdownMenuItem>
                       {u.role === 'user' && (
-                        <DropdownMenuItem onClick={() => handleToggleCms(u)}>
-                          <LayoutDashboard className="h-3.5 w-3.5 mr-2" />
-                          {u.canEditCms ? 'Revoke CMS access' : 'Grant CMS access'}
-                        </DropdownMenuItem>
+                        isAdmin ? (
+                          <DropdownMenuItem onClick={() => handleToggleCms(u)}>
+                            <LayoutDashboard className="h-3.5 w-3.5 mr-2" />
+                            {u.canEditCms ? 'Revoke CMS access' : 'Grant CMS access'}
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
+                            <Lock className="h-3.5 w-3.5 mr-2" />
+                            CMS access — Admin only
+                          </DropdownMenuItem>
+                        )
                       )}
                       {u.authProvider !== 'azure' && (
                         <DropdownMenuItem onClick={() => handleResetPassword(u)}>

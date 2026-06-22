@@ -956,7 +956,7 @@ router.get('/news', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `SELECT id, title, excerpt, content, date, category, featured, image, url, sort_order
-       FROM news ORDER BY date DESC`,
+       FROM news WHERE is_active = true ORDER BY date DESC`,
       []
     );
     return res.json({
@@ -1039,7 +1039,7 @@ router.delete('/admin/cms/news/:id', requireAuth, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
   try {
-    const rows = await db('DELETE FROM news WHERE id=$1 RETURNING id', [id]);
+    const rows = await db('UPDATE news SET is_active = false, updated_at = NOW() WHERE id=$1 AND is_active = true RETURNING id', [id]);
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     return res.json({ message: 'Deleted successfully' });
   } catch (err) {
@@ -1055,7 +1055,7 @@ router.get('/courses', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `SELECT id, title, description, category, level, duration, audience, modules, mandatory, course_url, sort_order
-       FROM courses ORDER BY sort_order ASC`,
+       FROM courses WHERE is_active = true ORDER BY sort_order ASC`,
       []
     );
     return res.json({
@@ -1131,7 +1131,7 @@ router.delete('/admin/cms/courses/:id', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const courseId = req.params.id;
   try {
-    const rows = await db('DELETE FROM courses WHERE id=$1 RETURNING id', [courseId]);
+    const rows = await db('UPDATE courses SET is_active = false, updated_at = NOW() WHERE id=$1 AND is_active = true RETURNING id', [courseId]);
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     return res.json({ message: 'Deleted successfully' });
   } catch (err) {
@@ -1147,7 +1147,7 @@ router.get('/learning-paths', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `SELECT id, title, description, audience, course_ids, total_duration, icon, sort_order
-       FROM learning_paths ORDER BY sort_order ASC`,
+       FROM learning_paths WHERE is_active = true ORDER BY sort_order ASC`,
       []
     );
     return res.json({
@@ -1218,7 +1218,7 @@ router.delete('/admin/cms/learning-paths/:id', requireAuth, async (req, res) => 
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
   try {
-    const rows = await db('DELETE FROM learning_paths WHERE id=$1 RETURNING id', [id]);
+    const rows = await db('UPDATE learning_paths SET is_active = false, updated_at = NOW() WHERE id=$1 AND is_active = true RETURNING id', [id]);
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     return res.json({ message: 'Deleted successfully' });
   } catch (err) {
@@ -1234,7 +1234,7 @@ router.get('/sessions', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `SELECT id, title, session_date, session_time, format, venue, host, meeting_url
-       FROM live_sessions ORDER BY session_date ASC`,
+       FROM live_sessions WHERE is_active = true ORDER BY session_date ASC`,
       []
     );
     return res.json({
@@ -1310,7 +1310,7 @@ router.delete('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
   try {
-    const rows = await db('DELETE FROM live_sessions WHERE id=$1 RETURNING id', [id]);
+    const rows = await db('UPDATE live_sessions SET is_active = false, updated_at = NOW() WHERE id=$1 AND is_active = true RETURNING id', [id]);
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     return res.json({ message: 'Deleted successfully' });
   } catch (err) {
