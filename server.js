@@ -161,38 +161,48 @@ function generatePassword() {
 }
 
 // ── Rate limiter (login brute-force protection) ───────────────────────────
-// In-memory store: max 10 attempts per IP per 15-minute window
-const loginAttempts = new Map();
+// Dual in-memory store: max 10 attempts per IP AND per email per 15-minute window.
+// Email-based limit cannot be bypassed by rotating IPs.
+const loginAttemptsIp = new Map();
+const loginAttemptsEmail = new Map();
 
 function rateLimitLogin(req, res, next) {
   const ip = req.ip || 'unknown';
+  const email = String(req.body?.email || '').toLowerCase().trim();
   const now = Date.now();
   const WINDOW_MS = 15 * 60 * 1000;
   const MAX = 10;
 
-  let record = loginAttempts.get(ip);
-  if (!record || now > record.resetAt) {
-    record = { count: 0, resetAt: now + WINDOW_MS };
-  }
-  record.count++;
-  loginAttempts.set(ip, record);
+  const check = (map, key) => {
+    let rec = map.get(key);
+    if (!rec || now > rec.resetAt) rec = { count: 0, resetAt: now + WINDOW_MS };
+    rec.count++;
+    map.set(key, rec);
+    return rec;
+  };
 
-  if (record.count > MAX) {
-    const retryAfter = Math.ceil((record.resetAt - now) / 1000);
-    res.set('Retry-After', String(retryAfter));
-    return res.status(429).json({
-      error: 'Too many login attempts. Please try again in 15 minutes.',
-    });
+  const ipRec = check(loginAttemptsIp, ip);
+  if (ipRec.count > MAX) {
+    res.set('Retry-After', String(Math.ceil((ipRec.resetAt - now) / 1000)));
+    return res.status(429).json({ error: 'Too many login attempts. Please try again in 15 minutes.' });
   }
+
+  if (email) {
+    const emailRec = check(loginAttemptsEmail, email);
+    if (emailRec.count > MAX) {
+      res.set('Retry-After', String(Math.ceil((emailRec.resetAt - now) / 1000)));
+      return res.status(429).json({ error: 'Too many login attempts. Please try again in 15 minutes.' });
+    }
+  }
+
   next();
 }
 
-// Purge expired rate-limit entries every 15 minutes
+// Purge expired entries every 15 minutes
 setInterval(() => {
   const now = Date.now();
-  for (const [ip, record] of loginAttempts) {
-    if (now > record.resetAt) loginAttempts.delete(ip);
-  }
+  for (const [k, r] of loginAttemptsIp) if (now > r.resetAt) loginAttemptsIp.delete(k);
+  for (const [k, r] of loginAttemptsEmail) if (now > r.resetAt) loginAttemptsEmail.delete(k);
 }, 15 * 60 * 1000);
 
 // ── App setup ─────────────────────────────────────────────────────────────
@@ -219,11 +229,13 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://iwosaninnovation
 app.use(
   cors({
     origin(origin, cb) {
-      // Allow requests with no origin (curl, Postman, server-to-server)
-      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      // In development allow requests with no origin (curl, Postman).
+      // In production every request must come from a known origin.
+      if (!origin && process.env.NODE_ENV !== 'production') return cb(null, true);
+      if (origin && allowedOrigins.includes(origin)) return cb(null, true);
       cb(new Error(`CORS: origin "${origin}" not allowed`));
     },
-    credentials: true, // Required for cross-origin cookies
+    credentials: true,
   })
 );
 
@@ -622,6 +634,9 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
     params.push(Boolean(isActive));
   }
   if (canEditCms !== undefined) {
+    if (!isAdmin(authUser)) {
+      return res.status(403).json({ error: 'Only admins can change CMS access' });
+    }
     setClauses.push(`can_edit_cms = $${idx++}`);
     params.push(Boolean(canEditCms));
   }
