@@ -97,11 +97,7 @@ function verifyToken(token) {
 }
 
 function getAuthUser(req) {
-  const token =
-    req.cookies?.[COOKIE_NAME] ||
-    (req.headers.authorization?.startsWith('Bearer ')
-      ? req.headers.authorization.slice(7)
-      : null);
+  const token = req.cookies?.[COOKIE_NAME];
   return token ? verifyToken(token) : null;
 }
 
@@ -128,9 +124,7 @@ async function requireAuth(req, res, next) {
 const cookieOpts = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  // 'none' required for cross-subdomain cookies (frontend on iwosaninnovationhub.com,
-  // API on api.iwosaninnovationhub.com). Must be paired with secure:true.
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  sameSite: 'lax',
   domain: process.env.COOKIE_DOMAIN || undefined,
   path: '/',
 };
@@ -210,6 +204,14 @@ app.set('trust proxy', 1);
 // Remove the X-Powered-By: Express header
 app.disable('x-powered-by');
 
+// Security headers on all API responses
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://iwosaninnovationhub.com')
   .split(',')
   .map((o) => o.trim());
@@ -231,7 +233,12 @@ app.use(cookieParser());
 // Serve uploaded images statically at /uploads/*
 const UPLOADS_DIR = resolve(__dirname, 'uploads');
 if (!existsSync(UPLOADS_DIR)) mkdirSync(UPLOADS_DIR, { recursive: true });
-app.use('/uploads', express.static(UPLOADS_DIR));
+app.use('/uploads', express.static(UPLOADS_DIR, {
+  setHeaders(res) {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Disposition', 'attachment');
+  },
+}));
 
 // ── Routes ────────────────────────────────────────────────────────────────
 // All routes are prefixed with /api to match the frontend authService paths:
@@ -890,6 +897,11 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+// Reject any URL that is not http/https (prevents javascript: URI stored XSS)
+function validateUrl(value) {
+  return !value || /^https?:\/\//i.test(String(value));
+}
+
 // ── CMS: Image upload ─────────────────────────────────────────────────────
 
 // POST /api/admin/cms/upload  — accepts { image: "data:<mime>;base64,<data>" }
@@ -898,10 +910,10 @@ router.post('/admin/cms/upload', requireAuth, async (req, res) => {
   const { image } = req.body ?? {};
   if (!image || typeof image !== 'string') return res.status(400).json({ error: 'image field is required' });
 
-  const match = image.match(/^data:(image\/(jpeg|jpg|png|webp|gif|svg\+xml));base64,(.+)$/);
-  if (!match) return res.status(400).json({ error: 'Invalid image format. Supported: jpeg, png, webp, gif, svg' });
+  const match = image.match(/^data:(image\/(jpeg|jpg|png|webp|gif));base64,(.+)$/);
+  if (!match) return res.status(400).json({ error: 'Invalid image format. Supported: jpeg, png, webp, gif' });
 
-  const mimeToExt = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/svg+xml': 'svg' };
+  const mimeToExt = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
   const ext = mimeToExt[match[1]] ?? 'jpg';
   const base64Data = match[3];
 
@@ -954,6 +966,7 @@ router.post('/admin/cms/news', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const { title, excerpt = '', content = '', date, category, featured = false, image = '', url = '', sortOrder = 0 } = req.body ?? {};
   if (!title || !date || !category) return res.status(400).json({ error: 'title, date, and category are required' });
+  if (!validateUrl(url)) return res.status(400).json({ error: 'url must be an http or https URL' });
   try {
     const rows = await db(
       `INSERT INTO news (title, excerpt, content, date, category, featured, image, url, sort_order)
@@ -976,6 +989,7 @@ router.patch('/admin/cms/news/:id', requireAuth, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
   const { title, excerpt, content, date, category, featured, image, url, sortOrder } = req.body ?? {};
+  if (url !== undefined && !validateUrl(url)) return res.status(400).json({ error: 'url must be an http or https URL' });
   const set = []; const params = []; let i = 1;
   if (title !== undefined)     { set.push(`title=$${i++}`);       params.push(title); }
   if (excerpt !== undefined)   { set.push(`excerpt=$${i++}`);     params.push(excerpt); }
@@ -1044,6 +1058,7 @@ router.post('/admin/cms/courses', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const { id, title, description = '', category, level, duration, audience = '', modules = 1, mandatory = false, courseUrl = '', sortOrder = 0 } = req.body ?? {};
   if (!id || !title || !category || !level || !duration) return res.status(400).json({ error: 'id, title, category, level, and duration are required' });
+  if (!validateUrl(courseUrl)) return res.status(400).json({ error: 'courseUrl must be an http or https URL' });
   try {
     const rows = await db(
       `INSERT INTO courses (id,title,description,category,level,duration,audience,modules,mandatory,course_url,sort_order)
@@ -1066,6 +1081,7 @@ router.patch('/admin/cms/courses/:id', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const courseId = req.params.id;
   const { title, description, category, level, duration, audience, modules, mandatory, courseUrl, sortOrder } = req.body ?? {};
+  if (courseUrl !== undefined && !validateUrl(courseUrl)) return res.status(400).json({ error: 'courseUrl must be an http or https URL' });
   const set = []; const params = []; let i = 1;
   if (title !== undefined)       { set.push(`title=$${i++}`);       params.push(title); }
   if (description !== undefined) { set.push(`description=$${i++}`); params.push(description); }
@@ -1222,6 +1238,7 @@ router.post('/admin/cms/sessions', requireAuth, async (req, res) => {
   if (!title || !date || !time || !format) return res.status(400).json({ error: 'title, date, time, and format are required' });
   const validFormats = ['Virtual', 'In-Person', 'Hybrid'];
   if (!validFormats.includes(format)) return res.status(400).json({ error: 'format must be Virtual, In-Person, or Hybrid' });
+  if (!validateUrl(meetingUrl)) return res.status(400).json({ error: 'meetingUrl must be an http or https URL' });
   try {
     const rows = await db(
       `INSERT INTO live_sessions (title, session_date, session_time, format, venue, host, meeting_url)
@@ -1245,6 +1262,7 @@ router.patch('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
   const { title, date, time, format, venue, host, meetingUrl } = req.body ?? {};
   if (format !== undefined && !['Virtual','In-Person','Hybrid'].includes(format)) return res.status(400).json({ error: 'Invalid format' });
+  if (meetingUrl !== undefined && !validateUrl(meetingUrl)) return res.status(400).json({ error: 'meetingUrl must be an http or https URL' });
   const set = []; const params = []; let i = 1;
   if (title !== undefined)      { set.push(`title=$${i++}`);        params.push(title); }
   if (date !== undefined)       { set.push(`session_date=$${i++}`); params.push(date); }

@@ -4,7 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  VITE_API_BASE_URL = "https://api.iwosaninnovationhub.com"
+  VITE_API_BASE_URL = ""
 
   # ── Azure AD — Microsoft Sign-In ──────────────────────────────────────────
   # Set the real values in Netlify dashboard → Site Settings → Environment
@@ -21,6 +21,12 @@
   # Iwosan Healthcare Systems
   VITE_AZURE_ORG3_CLIENT_ID = ""
   VITE_AZURE_ORG3_TENANT_ID = ""
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.iwosaninnovationhub.com/api/:splat"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
