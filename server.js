@@ -265,6 +265,7 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
     setAuthCookie(res, token);
     return res.json({
+      token,
       user: {
         id: user.id,
         email: user.email,
@@ -370,6 +371,7 @@ router.post('/auth/azure', async (req, res) => {
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
     setAuthCookie(res, token);
     return res.json({
+      token,
       user: {
         id: user.id,
         email: user.email,
