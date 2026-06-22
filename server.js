@@ -97,7 +97,11 @@ function verifyToken(token) {
 }
 
 function getAuthUser(req) {
-  const token = req.cookies?.[COOKIE_NAME];
+  const token =
+    req.cookies?.[COOKIE_NAME] ||
+    (req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.slice(7)
+      : null);
   return token ? verifyToken(token) : null;
 }
 

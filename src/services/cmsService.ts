@@ -1,3 +1,5 @@
+import { getStoredToken } from './authService';
+
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
 async function apiFetch<T>(
@@ -5,8 +7,12 @@ async function apiFetch<T>(
   options?: RequestInit
 ): Promise<{ data: T | null; error: string | null }> {
   try {
+    const token = getStoredToken();
     const res = await fetch(`${API_BASE}/api${path}`, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       credentials: 'include',
       ...options,
     });

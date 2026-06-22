@@ -21,13 +21,22 @@ export interface AdminUser extends User {
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
+const TOKEN_KEY = 'iwosan_token';
+export const getStoredToken = () => localStorage.getItem(TOKEN_KEY);
+export const setStoredToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
+export const clearStoredToken = () => localStorage.removeItem(TOKEN_KEY);
+
 async function apiFetch<T>(
   path: string,
   options?: RequestInit
 ): Promise<{ data: T | null; error: string | null }> {
   try {
+    const token = getStoredToken();
     const res = await fetch(`${API_BASE}/api${path}`, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       credentials: 'include',
       ...options,
     });
@@ -49,12 +58,12 @@ export async function loginUser(
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
+  if (data?.token) setStoredToken(data.token);
   return { user: data?.user ?? null, error };
 }
 
 export async function logoutUser(): Promise<void> {
-  // Clear any legacy localStorage token from before the proxy migration
-  localStorage.removeItem('iwosan_token');
+  clearStoredToken();
   await apiFetch('/auth/logout', { method: 'POST' });
 }
 
@@ -107,6 +116,7 @@ export async function loginWithAzure(
       method: 'POST',
       body: JSON.stringify({ idToken: result.idToken, orgId }),
     });
+    if (data?.token) setStoredToken(data.token);
     return { user: data?.user ?? null, error };
   } catch (err) {
     if (err instanceof Error) {
