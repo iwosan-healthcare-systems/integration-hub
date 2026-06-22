@@ -128,8 +128,9 @@ async function requireAuth(req, res, next) {
 const cookieOpts = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
-  // Shared across iwosaninnovationhub.com and api.iwosaninnovationhub.com
+  // 'none' required for cross-subdomain cookies (frontend on iwosaninnovationhub.com,
+  // API on api.iwosaninnovationhub.com). Must be paired with secure:true.
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   domain: process.env.COOKIE_DOMAIN || undefined,
   path: '/',
 };
