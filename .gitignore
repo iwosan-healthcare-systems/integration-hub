@@ -29,3 +29,6 @@ dist-ssr
 .claude
 cookies.txt
 schema.sql
+# Bulk user import — contains admin credentials and generated passwords
+scripts/bulk-create-users.mjs
+user-passwords.csv
