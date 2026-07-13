@@ -13,7 +13,7 @@ import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { randomBytes, createPublicKey } from 'crypto';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync } from 'fs';
 import { resolve, dirname, extname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -245,15 +245,21 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
-// Serve uploaded images statically at /uploads/*
-const UPLOADS_DIR = resolve(__dirname, 'uploads');
-if (!existsSync(UPLOADS_DIR)) mkdirSync(UPLOADS_DIR, { recursive: true });
-app.use('/uploads', express.static(UPLOADS_DIR, {
-  setHeaders(res) {
+// Serve uploaded images from the database at /uploads/*
+// (not local disk — hosting platforms like Railway wipe local files on redeploy)
+app.get('/uploads/:filename', async (req, res) => {
+  try {
+    const rows = await db('SELECT mime_type, data FROM cms_images WHERE id = $1', [req.params.filename]);
+    if (rows.length === 0) return res.status(404).end();
+    res.setHeader('Content-Type', rows[0].mime_type);
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Content-Disposition', 'attachment');
-  },
-}));
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.send(rows[0].data);
+  } catch (err) {
+    console.error('Image fetch error:', err);
+    return res.status(500).end();
+  }
+});
 
 // ── Routes ────────────────────────────────────────────────────────────────
 // All routes are prefixed with /api to match the frontend authService paths:
@@ -940,8 +946,8 @@ router.post('/admin/cms/upload', requireAuth, async (req, res) => {
 
   try {
     const filename = `${Date.now()}-${randomBytes(6).toString('hex')}.${ext}`;
-    const filePath = resolve(UPLOADS_DIR, filename);
-    writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+    const buffer = Buffer.from(base64Data, 'base64');
+    await db('INSERT INTO cms_images (id, mime_type, data) VALUES ($1, $2, $3)', [filename, match[1], buffer]);
     return res.json({ url: `/uploads/${filename}` });
   } catch (err) {
     console.error('Upload error:', err);
