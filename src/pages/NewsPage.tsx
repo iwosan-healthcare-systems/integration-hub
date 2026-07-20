@@ -1,7 +1,24 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { getNews, type NewsItem } from "@/services/cmsService";
 import { Clock } from "lucide-react";
+
+// Original articles (no external url) link to the in-app article page; others open the source in a new tab.
+function ArticleLink({ item, className, children }: { item: NewsItem; className?: string; children: React.ReactNode }) {
+  if (item.url) {
+    return (
+      <a href={item.url} target="_blank" rel="noopener noreferrer" className={className}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link to={`/news/${item.id}`} className={className}>
+      {children}
+    </Link>
+  );
+}
 
 const NewsPage = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -83,7 +100,7 @@ const NewsPage = () => {
         {/* Featured article */}
         {filtered.length > 0 && filtered[0].featured && (
           <AnimateOnScroll>
-            <a href={filtered[0].url} target="_blank" rel="noopener noreferrer" className="grid lg:grid-cols-2 gap-8 mb-14 group">
+            <ArticleLink item={filtered[0]} className="grid lg:grid-cols-2 gap-8 mb-14 group">
               <div className="rounded-2xl overflow-hidden img-zoom h-72 lg:h-auto">
                 <img src={filtered[0].image} alt={filtered[0].title} className="w-full h-full object-cover" loading="lazy" />
               </div>
@@ -99,7 +116,7 @@ const NewsPage = () => {
                 </h2>
                 <p className="font-sans text-muted-foreground leading-relaxed">{filtered[0].excerpt}</p>
               </div>
-            </a>
+            </ArticleLink>
           </AnimateOnScroll>
         )}
 
@@ -107,7 +124,7 @@ const NewsPage = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {(filtered[0]?.featured ? filtered.slice(1) : filtered).map((item, i) => (
             <AnimateOnScroll key={item.id} delay={i * 0.1}>
-              <a href={item.url} target="_blank" rel="noopener noreferrer" className="group block">
+              <ArticleLink item={item} className="group block">
                 {item.image && (
                   <div className="h-48 rounded-xl overflow-hidden mb-4 img-zoom">
                     <img src={item.image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
@@ -119,7 +136,7 @@ const NewsPage = () => {
                 </div>
                 <h3 className="font-serif font-semibold text-lg mb-2 group-hover:text-accent transition-colors">{item.title}</h3>
                 <p className="text-sm font-sans text-muted-foreground leading-relaxed line-clamp-2">{item.excerpt}</p>
-              </a>
+              </ArticleLink>
             </AnimateOnScroll>
           ))}
         </div>

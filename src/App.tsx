@@ -21,6 +21,7 @@ const SubsidiariesPage     = lazy(() => import("./pages/SubsidiariesPage"));
 const SubsidiaryDetailPage = lazy(() => import("./pages/SubsidiaryDetailPage"));
 const ResourcesPage        = lazy(() => import("./pages/ResourcesPage"));
 const NewsPage             = lazy(() => import("./pages/NewsPage"));
+const NewsArticlePage      = lazy(() => import("./pages/NewsArticlePage"));
 const LeadershipPage       = lazy(() => import("./pages/LeadershipPage"));
 const LearningCentrePage   = lazy(() => import("./pages/LearningCentrePage"));
 const AdminDashboard          = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -130,6 +131,7 @@ const App = () => (
                 <Route path="/subsidiaries" element={<SubsidiariesPage />} />
                 <Route path="/subsidiaries/:slug" element={<SubsidiaryDetailPage />} />
                 <Route path="/news" element={<NewsPage />} />
+                <Route path="/news/:id" element={<NewsArticlePage />} />
                 <Route path="/leadership" element={<LeadershipPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/learning" element={<LearningCentrePage />} />
