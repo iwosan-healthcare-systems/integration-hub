@@ -13,9 +13,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { subsidiaries } from "@/data/hub-data";
+import { subsidiaryPortals } from "@/data/subsidiary-data";
 import { getNews, getCourses, getLearningPaths, getSessions, type NewsItem, type Course, type LearningPath, type LiveSession } from "@/services/cmsService";
 import iwosanIcon from "@/assets/iwosan_icon.webp";
 import { useAuth } from "@/contexts/AuthContext";
+import { slugify } from "@/lib/utils";
+
+// map hub-data subsidiary name → slug for internal routing (mirrors SubsidiariesPage)
+const subsidiarySlugByName: Record<string, string> = Object.fromEntries(
+  subsidiaryPortals.map((p) => [p.name, p.slug])
+);
 
 // ── Nav pages ──────────────────────────────────────────────────────────────
 // ADD any new page here so it is immediately searchable.
@@ -81,25 +88,31 @@ export function TopNavbar() {
         external: false,
       })),
 
-      // News articles
+      // News articles — original content links to the in-app article page,
+      // articles that only point to an external source open that source.
       ...cmsNews.map((item) => ({
         type: "news" as const,
         title: item.title,
-        url: item.url,
-        external: true,
+        url: item.url || `/news/${slugify(item.title)}`,
+        external: Boolean(item.url),
         meta: `${item.category} · ${item.date}`,
         description: item.excerpt,
       })),
 
-      // Subsidiaries
-      ...subsidiaries.map((sub) => ({
-        type: "subsidiary" as const,
-        title: sub.name,
-        url: sub.url,
-        external: true,
-        meta: sub.category,
-        description: sub.description,
-      })),
+      // Subsidiaries — link to the in-app detail page (staff resources, IT
+      // support, etc.), same as the Subsidiaries directory. Falls back to the
+      // subsidiary's own site only if no internal detail page exists for it.
+      ...subsidiaries.map((sub) => {
+        const slug = subsidiarySlugByName[sub.name];
+        return {
+          type: "subsidiary" as const,
+          title: sub.name,
+          url: slug ? `/subsidiaries/${slug}` : sub.url,
+          external: !slug,
+          meta: sub.category,
+          description: sub.description,
+        };
+      }),
 
       // Learning Centre — courses
       ...cmsCourses.map((course) => ({
