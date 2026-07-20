@@ -3,6 +3,7 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { ArrowLeft, ArrowUpRight, Clock } from "lucide-react";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { ArticleLink } from "@/components/ArticleLink";
+import { slugify } from "@/lib/utils";
 import { getNews, type NewsItem } from "@/services/cmsService";
 
 const RECENT_POSTS_COUNT = 3;
@@ -48,7 +49,7 @@ function buildArticleBlocks(paragraphs: string[], images: string[]): ArticleBloc
 }
 
 const NewsArticlePage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const [item, setItem] = useState<NewsItem | null>(null);
   const [allNews, setAllNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,13 +59,13 @@ const NewsArticlePage = () => {
     setLoading(true);
     setNotFound(false);
     getNews().then(({ news }) => {
-      const found = news?.find((n) => String(n.id) === id) ?? null;
+      const found = news?.find((n) => slugify(n.title) === slug) ?? null;
       if (!found) setNotFound(true);
       setItem(found);
       setAllNews(news ?? []);
       setLoading(false);
     });
-  }, [id]);
+  }, [slug]);
 
   if (loading) {
     return (

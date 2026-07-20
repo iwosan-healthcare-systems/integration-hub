@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { slugify } from "@/lib/utils";
 import type { NewsItem } from "@/services/cmsService";
 
 // Original articles (no external url) link to the in-app article page; others open the source in a new tab.
@@ -11,7 +12,7 @@ export function ArticleLink({ item, className, children }: { item: NewsItem; cla
     );
   }
   return (
-    <Link to={`/news/${item.id}`} className={className}>
+    <Link to={`/news/${slugify(item.title)}`} className={className}>
       {children}
     </Link>
   );

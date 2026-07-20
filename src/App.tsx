@@ -131,7 +131,7 @@ const App = () => (
                 <Route path="/subsidiaries" element={<SubsidiariesPage />} />
                 <Route path="/subsidiaries/:slug" element={<SubsidiaryDetailPage />} />
                 <Route path="/news" element={<NewsPage />} />
-                <Route path="/news/:id" element={<NewsArticlePage />} />
+                <Route path="/news/:slug" element={<NewsArticlePage />} />
                 <Route path="/leadership" element={<LeadershipPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/learning" element={<LearningCentrePage />} />
