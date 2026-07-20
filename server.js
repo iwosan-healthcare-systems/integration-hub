@@ -961,7 +961,7 @@ router.post('/admin/cms/upload', requireAuth, async (req, res) => {
 router.get('/news', requireAuth, async (req, res) => {
   try {
     const rows = await db(
-      `SELECT id, title, excerpt, content, date, category, featured, image, url, sort_order
+      `SELECT id, title, excerpt, content, date, category, featured, image, images, url, sort_order
        FROM news WHERE is_active = true ORDER BY date DESC`,
       []
     );
@@ -975,6 +975,7 @@ router.get('/news', requireAuth, async (req, res) => {
         category: r.category,
         featured: r.featured,
         image: r.image,
+        images: r.images ?? [],
         url: r.url,
         sortOrder: r.sort_order,
       })),
@@ -988,18 +989,19 @@ router.get('/news', requireAuth, async (req, res) => {
 // POST /api/admin/cms/news
 router.post('/admin/cms/news', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
-  const { title, excerpt = '', content = '', date, category, featured = false, image = '', url = '', sortOrder = 0 } = req.body ?? {};
+  const { title, excerpt = '', content = '', date, category, featured = false, image = '', images = [], url = '', sortOrder = 0 } = req.body ?? {};
   if (!title || !date || !category) return res.status(400).json({ error: 'title, date, and category are required' });
   if (!validateUrl(url)) return res.status(400).json({ error: 'url must be an http or https URL' });
+  if (!Array.isArray(images) || !images.every((u) => typeof u === 'string')) return res.status(400).json({ error: 'images must be an array of strings' });
   try {
     const rows = await db(
-      `INSERT INTO news (title, excerpt, content, date, category, featured, image, url, sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-      [title, excerpt, content, date, category, Boolean(featured), image, url, Number(sortOrder)]
+      `INSERT INTO news (title, excerpt, content, date, category, featured, image, images, url, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      [title, excerpt, content, date, category, Boolean(featured), image, images, url, Number(sortOrder)]
     );
     const r = rows[0];
     return res.status(201).json({
-      newsItem: { id: r.id, title: r.title, excerpt: r.excerpt, content: r.content, date: fmtDate(r.date), category: r.category, featured: r.featured, image: r.image, url: r.url, sortOrder: r.sort_order },
+      newsItem: { id: r.id, title: r.title, excerpt: r.excerpt, content: r.content, date: fmtDate(r.date), category: r.category, featured: r.featured, image: r.image, images: r.images ?? [], url: r.url, sortOrder: r.sort_order },
     });
   } catch (err) {
     console.error('POST /admin/cms/news error:', err);
@@ -1012,8 +1014,11 @@ router.patch('/admin/cms/news/:id', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
-  const { title, excerpt, content, date, category, featured, image, url, sortOrder } = req.body ?? {};
+  const { title, excerpt, content, date, category, featured, image, images, url, sortOrder } = req.body ?? {};
   if (url !== undefined && !validateUrl(url)) return res.status(400).json({ error: 'url must be an http or https URL' });
+  if (images !== undefined && (!Array.isArray(images) || !images.every((u) => typeof u === 'string'))) {
+    return res.status(400).json({ error: 'images must be an array of strings' });
+  }
   const set = []; const params = []; let i = 1;
   if (title !== undefined)     { set.push(`title=$${i++}`);       params.push(title); }
   if (excerpt !== undefined)   { set.push(`excerpt=$${i++}`);     params.push(excerpt); }
@@ -1022,6 +1027,7 @@ router.patch('/admin/cms/news/:id', requireAuth, async (req, res) => {
   if (category !== undefined)  { set.push(`category=$${i++}`);    params.push(category); }
   if (featured !== undefined)  { set.push(`featured=$${i++}`);    params.push(Boolean(featured)); }
   if (image !== undefined)     { set.push(`image=$${i++}`);       params.push(image); }
+  if (images !== undefined)    { set.push(`images=$${i++}`);      params.push(images); }
   if (url !== undefined)       { set.push(`url=$${i++}`);         params.push(url); }
   if (sortOrder !== undefined) { set.push(`sort_order=$${i++}`);  params.push(Number(sortOrder)); }
   if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
@@ -1031,7 +1037,7 @@ router.patch('/admin/cms/news/:id', requireAuth, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const r = rows[0];
     return res.json({
-      newsItem: { id: r.id, title: r.title, excerpt: r.excerpt, content: r.content, date: fmtDate(r.date), category: r.category, featured: r.featured, image: r.image, url: r.url, sortOrder: r.sort_order },
+      newsItem: { id: r.id, title: r.title, excerpt: r.excerpt, content: r.content, date: fmtDate(r.date), category: r.category, featured: r.featured, image: r.image, images: r.images ?? [], url: r.url, sortOrder: r.sort_order },
     });
   } catch (err) {
     console.error('PATCH /admin/cms/news error:', err);

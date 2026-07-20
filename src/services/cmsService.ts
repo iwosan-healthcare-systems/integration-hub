@@ -35,6 +35,7 @@ export interface NewsItem {
   category: string;
   featured: boolean;
   image: string;
+  images: string[];
   url: string;
   sortOrder: number;
 }
@@ -101,7 +102,7 @@ export async function getSessions(): Promise<{ sessions: LiveSession[] | null; e
 
 export type NewsInput = {
   title: string; excerpt: string; content: string; date: string; category: string;
-  featured: boolean; image: string; url: string; sortOrder?: number;
+  featured: boolean; image: string; images: string[]; url: string; sortOrder?: number;
 };
 
 export async function uploadNewsImage(base64DataUrl: string): Promise<{ url: string | null; error: string | null }> {
