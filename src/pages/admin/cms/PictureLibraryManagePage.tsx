@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { GalleryField } from '@/components/cms/GalleryField';
 import { PreviewDialog } from '@/components/cms/previews/PreviewDialog';
 import { PicturePreviewCard } from '@/components/cms/previews/PreviewCards';
+import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import {
   getPictureLibrary, createPicture, updatePicture, deletePicture,
   type PictureLibraryItem, type PictureLibraryInput,
@@ -123,6 +124,13 @@ export default function PictureLibraryManagePage() {
   const [formTarget, setFormTarget] = useState<PictureLibraryItem | 'new' | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PictureLibraryItem | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filtered = pictures.filter((p) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
+  });
 
   const load = async () => {
     setLoading(true);
@@ -171,6 +179,8 @@ export default function PictureLibraryManagePage() {
         </div>
       </div>
 
+      <CmsSearchBar value={search} onChange={setSearch} placeholder="Search albums by title or description…" />
+
       {globalError && (
         <div className="flex items-center justify-between rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {globalError}
@@ -186,11 +196,13 @@ export default function PictureLibraryManagePage() {
                 <div key={i} className="aspect-square rounded-lg bg-muted animate-pulse" />
               ))}
             </div>
-          ) : pictures.length === 0 ? (
-            <p className="text-sm text-muted-foreground px-5 py-8 text-center">No albums yet. Click "Add Album" to get started.</p>
+          ) : filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground px-5 py-8 text-center">
+              {pictures.length === 0 ? 'No albums yet. Click "Add Album" to get started.' : 'No albums match your search.'}
+            </p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5">
-              {pictures.map((pic) => {
+              {filtered.map((pic) => {
                 const cover = pic.images[0];
                 return (
                   <div key={pic.id} className="group relative rounded-lg overflow-hidden border border-border/60 bg-muted/30">

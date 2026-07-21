@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageField } from '@/components/cms/ImageField';
 import { GalleryField } from '@/components/cms/GalleryField';
+import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import { ArticlePreviewDialog } from '@/components/cms/previews/ArticlePreviewDialog';
 import { fmtFormDate } from '@/lib/utils';
 import {
@@ -194,6 +195,13 @@ export default function NewsManagePage() {
   const [formTarget, setFormTarget] = useState<NewsItem | 'new' | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<NewsItem | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filtered = news.filter((n) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return n.title.toLowerCase().includes(q) || n.excerpt.toLowerCase().includes(q) || n.category.toLowerCase().includes(q);
+  });
 
   const load = async () => {
     setLoading(true);
@@ -244,6 +252,8 @@ export default function NewsManagePage() {
         </div>
       </div>
 
+      <CmsSearchBar value={search} onChange={setSearch} placeholder="Search articles by title, description, or category…" />
+
       {globalError && (
         <div className="flex items-center justify-between rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {globalError}
@@ -275,14 +285,16 @@ export default function NewsManagePage() {
                     </div>
                   ))}
                 </div>
-              ) : news.length === 0 ? (
-                <p className="text-sm text-muted-foreground px-5 py-8 text-center">No articles yet. Click "Add Article" to get started.</p>
+              ) : filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground px-5 py-8 text-center">
+                  {news.length === 0 ? 'No articles yet. Click "Add Article" to get started.' : 'No articles match your search.'}
+                </p>
               ) : (
                 <div>
-                  {news.map((item, idx) => (
+                  {filtered.map((item, idx) => (
                     <div
                       key={item.id}
-                      className={`grid grid-cols-[2rem_1fr_9rem_6rem_4.5rem] gap-4 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < news.length - 1 ? 'border-b border-border/40' : ''}`}
+                      className={`grid grid-cols-[2rem_1fr_9rem_6rem_4.5rem] gap-4 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
                     >
                       {/* Thumbnail */}
                       <div className="h-8 w-8 rounded overflow-hidden bg-muted shrink-0 flex items-center justify-center">

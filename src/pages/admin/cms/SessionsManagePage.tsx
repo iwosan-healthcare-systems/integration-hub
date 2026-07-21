@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PreviewDialog } from '@/components/cms/previews/PreviewDialog';
 import { SessionPreviewCard } from '@/components/cms/previews/PreviewCards';
+import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import {
   getSessions, createSession, updateSession, deleteSession,
   type LiveSession, type SessionInput,
@@ -160,6 +161,14 @@ export default function SessionsManagePage() {
   const [formTarget, setFormTarget] = useState<LiveSession | 'new' | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<LiveSession | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filtered = sessions.filter((s) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return s.title.toLowerCase().includes(q) || s.venue.toLowerCase().includes(q)
+      || s.host.toLowerCase().includes(q) || s.format.toLowerCase().includes(q);
+  });
 
   const load = async () => {
     setLoading(true);
@@ -208,6 +217,8 @@ export default function SessionsManagePage() {
         </div>
       </div>
 
+      <CmsSearchBar value={search} onChange={setSearch} placeholder="Search sessions by title, venue, or host…" />
+
       {globalError && (
         <div className="flex items-center justify-between rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {globalError}
@@ -236,14 +247,16 @@ export default function SessionsManagePage() {
                     </div>
                   ))}
                 </div>
-              ) : sessions.length === 0 ? (
-                <p className="text-sm text-muted-foreground px-5 py-8 text-center">No sessions scheduled. Click "Add Session" to create one.</p>
+              ) : filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground px-5 py-8 text-center">
+                  {sessions.length === 0 ? 'No sessions scheduled. Click "Add Session" to create one.' : 'No sessions match your search.'}
+                </p>
               ) : (
                 <div>
-                  {sessions.map((s, idx) => (
+                  {filtered.map((s, idx) => (
                     <div
                       key={s.id}
-                      className={`grid grid-cols-[1fr_7rem_10rem_4.5rem] gap-3 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < sessions.length - 1 ? 'border-b border-border/40' : ''}`}
+                      className={`grid grid-cols-[1fr_7rem_10rem_4.5rem] gap-3 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
                     >
                       {/* Session info */}
                       <div className="min-w-0">

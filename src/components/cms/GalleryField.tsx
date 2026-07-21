@@ -27,6 +27,7 @@ export function GalleryField({
 }: GalleryFieldProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadTotal, setUploadTotal] = useState(0);
   const [error, setError] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -38,21 +39,41 @@ export function GalleryField({
     onChange(value.filter((_, idx) => idx !== i));
   }
 
-  async function handleUpload(file: File) {
+  function readAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleUpload(files: FileList) {
+    const fileList = Array.from(files);
     setUploading(true);
+    setUploadTotal(fileList.length);
     setError("");
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target?.result as string;
-      const { url, error: uploadError } = await uploadImage(base64);
-      setUploading(false);
-      if (uploadError) { setError(`Image upload failed: ${uploadError}`); return; }
-      if (url) {
-        const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
-        onChange([...value, `${apiBase}${url}`]);
-      }
-    };
-    reader.readAsDataURL(file);
+
+    const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+    const results = await Promise.all(
+      fileList.map(async (file) => {
+        try {
+          const base64 = await readAsDataUrl(file);
+          return await uploadImage(base64);
+        } catch {
+          return { url: null, error: "Failed to read file" };
+        }
+      })
+    );
+
+    setUploading(false);
+    const uploaded = results.filter((r): r is { url: string; error: null } => !!r.url).map((r) => `${apiBase}${r.url}`);
+    if (uploaded.length > 0) onChange([...value, ...uploaded]);
+
+    const failedCount = results.length - uploaded.length;
+    if (failedCount > 0) {
+      setError(`${failedCount} of ${results.length} image${results.length !== 1 ? "s" : ""} failed to upload.`);
+    }
   }
 
   return (
@@ -98,7 +119,7 @@ export function GalleryField({
           onClick={() => fileRef.current?.click()}
         >
           {uploading
-            ? <><span className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />Uploading…</>
+            ? <><span className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />Uploading {uploadTotal > 1 ? `${uploadTotal} images…` : "…"}</>
             : <><Upload className="h-3.5 w-3.5" />{addButtonLabel}</>}
         </Button>
         {enableLibraryPicker && (
@@ -110,12 +131,13 @@ export function GalleryField({
           ref={fileRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
-          title="Upload additional image"
-          aria-label="Upload additional image"
+          multiple
+          title="Upload additional images"
+          aria-label="Upload additional images"
           className="hidden"
           onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleUpload(file);
+            const files = e.target.files;
+            if (files && files.length > 0) handleUpload(files);
             e.target.value = "";
           }}
         />
@@ -126,7 +148,8 @@ export function GalleryField({
         <PictureLibraryPickerDialog
           open={pickerOpen}
           onOpenChange={setPickerOpen}
-          onSelect={(url) => { onChange([...value, url]); setPickerOpen(false); }}
+          multiple
+          onSelect={(urls) => { onChange([...value, ...urls]); setPickerOpen(false); }}
         />
       )}
     </div>

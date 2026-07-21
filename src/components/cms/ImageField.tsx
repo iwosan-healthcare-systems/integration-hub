@@ -115,7 +115,7 @@ export function ImageField({ label = "Image", value, onChange, enableLibraryPick
         <PictureLibraryPickerDialog
           open={pickerOpen}
           onOpenChange={setPickerOpen}
-          onSelect={(url) => { onChange(url); setPickerOpen(false); }}
+          onSelect={([url]) => { onChange(url); setPickerOpen(false); }}
         />
       )}
     </div>

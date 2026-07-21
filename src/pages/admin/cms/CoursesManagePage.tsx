@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PreviewDialog } from '@/components/cms/previews/PreviewDialog';
 import { CoursePreviewCard } from '@/components/cms/previews/PreviewCards';
+import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import {
   getCourses, createCourse, updateCourse, deleteCourse,
   type Course, type CourseInput,
@@ -175,6 +176,14 @@ export default function CoursesManagePage() {
   const [formTarget, setFormTarget] = useState<Course | 'new' | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Course | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filtered = courses.filter((c) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q)
+      || c.category.toLowerCase().includes(q) || c.audience.toLowerCase().includes(q);
+  });
 
   const load = async () => {
     setLoading(true);
@@ -229,6 +238,8 @@ export default function CoursesManagePage() {
         </div>
       </div>
 
+      <CmsSearchBar value={search} onChange={setSearch} placeholder="Search courses by title, category, or audience…" />
+
       {globalError && (
         <div className="flex items-center justify-between rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {globalError}
@@ -259,14 +270,16 @@ export default function CoursesManagePage() {
                     </div>
                   ))}
                 </div>
-              ) : courses.length === 0 ? (
-                <p className="text-sm text-muted-foreground px-5 py-8 text-center">No courses yet.</p>
+              ) : filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground px-5 py-8 text-center">
+                  {courses.length === 0 ? 'No courses yet.' : 'No courses match your search.'}
+                </p>
               ) : (
                 <div>
-                  {courses.map((c, idx) => (
+                  {filtered.map((c, idx) => (
                     <div
                       key={c.id}
-                      className={`grid grid-cols-[1fr_8rem_7rem_5.5rem_4.5rem] gap-3 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < courses.length - 1 ? 'border-b border-border/40' : ''}`}
+                      className={`grid grid-cols-[1fr_8rem_7rem_5.5rem_4.5rem] gap-3 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
                     >
                       {/* Course info */}
                       <div className="min-w-0">

@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PreviewDialog } from '@/components/cms/previews/PreviewDialog';
 import { LearningPathPreviewCard } from '@/components/cms/previews/PreviewCards';
+import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import {
   getLearningPaths, getCourses, createLearningPath, updateLearningPath, deleteLearningPath,
   type LearningPath, type Course, type LearningPathInput,
@@ -171,6 +172,13 @@ export default function LearningPathsManagePage() {
   const [formTarget, setFormTarget] = useState<LearningPath | 'new' | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<LearningPath | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filtered = paths.filter((p) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.audience.toLowerCase().includes(q);
+  });
 
   const load = async () => {
     setLoading(true);
@@ -222,6 +230,8 @@ export default function LearningPathsManagePage() {
         </div>
       </div>
 
+      <CmsSearchBar value={search} onChange={setSearch} placeholder="Search learning paths by title or audience…" />
+
       {globalError && (
         <div className="flex items-center justify-between rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {globalError}
@@ -250,14 +260,16 @@ export default function LearningPathsManagePage() {
                     </div>
                   ))}
                 </div>
-              ) : paths.length === 0 ? (
-                <p className="text-sm text-muted-foreground px-5 py-8 text-center">No learning paths yet.</p>
+              ) : filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground px-5 py-8 text-center">
+                  {paths.length === 0 ? 'No learning paths yet.' : 'No learning paths match your search.'}
+                </p>
               ) : (
                 <div>
-                  {paths.map((p, idx) => (
+                  {filtered.map((p, idx) => (
                     <div
                       key={p.id}
-                      className={`grid grid-cols-[1fr_11rem_8rem_4.5rem] gap-3 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < paths.length - 1 ? 'border-b border-border/40' : ''}`}
+                      className={`grid grid-cols-[1fr_11rem_8rem_4.5rem] gap-3 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
                     >
                       {/* Title + description */}
                       <div className="min-w-0">
