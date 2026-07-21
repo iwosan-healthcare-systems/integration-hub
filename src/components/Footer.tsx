@@ -13,7 +13,7 @@ export function Footer() {
             <img src={iwosanIcon} alt="Iwosan" className="h-9 w-9 rounded-lg object-contain" />
             <span className="font-serif font-semibold text-primary-foreground text-base leading-tight">
               Iwosan<br />
-              <span className="text-accent font-sans font-normal text-xs tracking-widest uppercase">Innovation Hub</span>
+              <span className="text-accent font-sans font-normal text-xs tracking-widest uppercase">Integration Hub</span>
             </span>
           </div>
           <p className="text-sm font-sans text-primary-foreground/50 leading-relaxed max-w-xs">

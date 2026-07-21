@@ -48,7 +48,7 @@ export default function CmsDashboard() {
       <div>
         <h2 className="text-xl font-bold text-foreground">Content Manager</h2>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Manage the dynamic content shown across the Iwosan Innovation Hub.
+          Manage the dynamic content shown across the Iwosan Integration Hub.
         </p>
       </div>
 

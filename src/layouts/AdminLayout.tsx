@@ -37,7 +37,7 @@ function SidebarContent({
       <div className="h-16 flex items-center gap-3 px-5 border-b border-border/60 shrink-0">
         <img src={iwosanIcon} alt="Iwosan" className="h-7 w-auto" />
         <div className="min-w-0">
-          <p className="text-xs font-bold text-foreground leading-tight truncate">Iwosan Innovation Hub</p>
+          <p className="text-xs font-bold text-foreground leading-tight truncate">Iwosan Integration Hub</p>
           <p className="text-[10px] text-accent font-semibold uppercase tracking-widest">
             {isManager ? 'Manager Panel' : 'Admin Panel'}
           </p>
@@ -197,7 +197,7 @@ export function AdminLayout() {
               <Menu className="h-5 w-5" />
             </Button>
           </div>
-          <span className="hidden sm:block text-xs text-muted-foreground">Iwosan Innovation Hub</span>
+          <span className="hidden sm:block text-xs text-muted-foreground">Iwosan Integration Hub</span>
         </header>
 
         {/* Page content */}

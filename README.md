@@ -1,4 +1,4 @@
-# Iwosan Innovation Hub
+# Iwosan Integration Hub
 
 A centralized internal web platform for the Iwosan Healthcare network — providing staff, partners, and stakeholders with a single destination for news, resources, leadership information, and quick access to operational tools.
 
@@ -6,7 +6,7 @@ A centralized internal web platform for the Iwosan Healthcare network — provid
 
 ## Overview
 
-The Iwosan Innovation Hub is a React single-page application that serves as the digital front door for the Iwosan Healthcare group. It surfaces the group's five subsidiary platforms, latest news and announcements, leadership profiles, and downloadable resources — all within a consistent, branded interface.
+The Iwosan Integration Hub is a React single-page application that serves as the digital front door for the Iwosan Healthcare group. It surfaces the group's five subsidiary platforms, latest news and announcements, leadership profiles, and downloadable resources — all within a consistent, branded interface.
 
 ---
 

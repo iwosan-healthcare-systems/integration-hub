@@ -1,9 +1,9 @@
 /**
- * Iwosan Innovation Hub — Express API Server
- * Runs on CPanel Node.js App at api.iwosaninnovationhub.com
+ * Iwosan Integration Hub — Express API Server
+ * Runs on AWS EC2 (Integration-Hub instance) at api.iwosaninnovationhub.com
  *
  * Local dev:  node server.js  (set PORT=3001 in .env.local)
- * Production: started automatically by CPanel Phusion Passenger
+ * Production: started via pm2 on the Integration-Hub EC2 instance
  */
 
 import express from 'express';
@@ -20,7 +20,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Environment ───────────────────────────────────────────────────────────
-// Load .env (CPanel) or .env.local (local dev) if present
+// Load .env (production) or .env.local (local dev) if present
 for (const name of ['.env', '.env.local']) {
   try {
     const content = readFileSync(resolve(__dirname, name), 'utf-8');
@@ -702,7 +702,7 @@ router.delete('/admin/users/:id', requireAuth, async (req, res) => {
 });
 
 // ── AI Chat (Iwo assistant) ───────────────────────────────────────────────
-const CHAT_SYSTEM_PROMPT = `You are Iwo, the AI assistant for the Iwosan Innovation Hub — a centralized digital platform for Iwosan Healthcare Systems Limited and its network of hospitals and healthcare platforms in Nigeria.
+const CHAT_SYSTEM_PROMPT = `You are Iwo, the AI assistant for the Iwosan Integration Hub — a centralized digital platform for Iwosan Healthcare Systems Limited and its network of hospitals and healthcare platforms in Nigeria.
 
 Your role is to help hub users find information about Iwosan Healthcare Systems, navigate the platform, and answer questions about services, leadership, history, and more. Always respond in a warm, professional tone that reflects Iwosan's values: empathetic, ethical, knowledge-driven, innovative, and accessible. Keep responses concise unless depth is needed.
 
@@ -806,7 +806,7 @@ Medical Advisory Council:
 2025 — Acquired Euracare (March); Acquired Paelon Memorial Hospital (November)
 2026 — Rebranded as Iwosan Healthcare Systems Limited; expanded into Alaro City
 
-━━━ THE IWOSAN INNOVATION HUB ━━━
+━━━ THE IWOSAN INTEGRATION HUB ━━━
 
 Centralized digital platform for the Iwosan network providing: unified space connecting all subsidiaries, tools and resources for healthcare staff, knowledge-sharing and collaboration, quick links to HR systems, IT support, subsidiary platforms, and news and updates from across the network.
 

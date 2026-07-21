@@ -11,8 +11,8 @@ import { getNews, type NewsItem } from "@/services/cmsService";
 
 const faqs = [
   {
-    question: "What is the Iwosan Innovation Hub?",
-    answer: "The Iwosan Innovation Hub is a centralized digital platform that connects all Iwosan Healthcare Systems subsidiaries — providing a unified space for tools, resources, healthcare collaboration, and information across the Iwosan network.",
+    question: "What is the Iwosan Integration Hub?",
+    answer: "The Iwosan Integration Hub is a centralized digital platform that connects all Iwosan Healthcare Systems subsidiaries — providing a unified space for tools, resources, healthcare collaboration, and information across the Iwosan network.",
   },
   {
     question: "Which hospitals and platforms are part of the Iwosan network?",
@@ -44,11 +44,11 @@ const faqs = [
   },
   {
     question: "Does Iwosan support healthcare professionals and institutions?",
-    answer: "Yes. Through the Iwosan Innovation Hub, the network supports institutional stakeholders, medical professionals, and healthcare innovators with resources, knowledge-sharing platforms, training, and collaborative opportunities to advance healthcare in Nigeria.",
+    answer: "Yes. Through the Iwosan Integration Hub, the network supports institutional stakeholders, medical professionals, and healthcare innovators with resources, knowledge-sharing platforms, training, and collaborative opportunities to advance healthcare in Nigeria.",
   },
   {
     question: "How is Iwosan embracing digital healthcare transformation?",
-    answer: "Iwosan is actively investing in digital health infrastructure, including electronic health records, telemedicine services, and a connected ecosystem across its subsidiaries. The Iwosan Innovation Hub itself is part of this digital transformation drive, serving as a centralized platform for the entire network.",
+    answer: "Iwosan is actively investing in digital health infrastructure, including electronic health records, telemedicine services, and a connected ecosystem across its subsidiaries. The Iwosan Integration Hub itself is part of this digital transformation drive, serving as a centralized platform for the entire network.",
   },
 ];
 
@@ -81,7 +81,7 @@ const Index = () => {
             </AnimateOnScroll>
             <AnimateOnScroll delay={0.1}>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-[1.1] mb-5 md:mb-6">
-                Iwosan Innovation Hub
+                Iwosan Integration Hub
               </h1>
             </AnimateOnScroll>
             <AnimateOnScroll delay={0.2}>

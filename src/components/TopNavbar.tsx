@@ -213,7 +213,7 @@ export function TopNavbar() {
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
           <div className="hidden md:flex flex-col">
-            <span className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Iwosan Innovation Hub</span>
+            <span className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Iwosan Integration Hub</span>
           </div>
         </div>
 

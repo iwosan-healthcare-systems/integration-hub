@@ -33,7 +33,7 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 const WELCOME: Message = {
   role: "assistant",
   content:
-    "Hi! I'm Iwo, your Iwosan Innovation Hub assistant. I can help you find information about our hospitals, services, leadership, history, and more. How can I help you today?",
+    "Hi! I'm Iwo, your Iwosan Integration Hub assistant. I can help you find information about our hospitals, services, leadership, history, and more. How can I help you today?",
 };
 
 export function ChatWidget() {

@@ -32,6 +32,7 @@ schema.sql
 # Bulk user import — contains admin credentials and generated passwords
 scripts/bulk-create-users.mjs
 user-passwords.csv
+ProductionKey.pem
 
 # Local backups of uploaded CMS images
 cms-images-backup/

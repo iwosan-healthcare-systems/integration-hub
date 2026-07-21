@@ -131,7 +131,7 @@ export default function LoginPage() {
             className="h-10 w-auto drop-shadow-lg"
           />
           <p className="text-[20px] uppercase tracking-[0.4em] text-white/50 font-medium">
-            Innovation Hub
+            Integration Hub
           </p>
         </div>
 
@@ -260,7 +260,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-white/30 mt-8">
-          © {new Date().getFullYear()} Iwosan Innovation Hub · All rights reserved
+          © {new Date().getFullYear()} Iwosan Integration Hub · All rights reserved
         </p>
       </div>
     </div>
