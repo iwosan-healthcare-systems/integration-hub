@@ -24,12 +24,14 @@ const NewsPage             = lazy(() => import("./pages/NewsPage"));
 const NewsArticlePage      = lazy(() => import("./pages/NewsArticlePage"));
 const LeadershipPage       = lazy(() => import("./pages/LeadershipPage"));
 const LearningCentrePage   = lazy(() => import("./pages/LearningCentrePage"));
+const PictureLibraryPage   = lazy(() => import("./pages/PictureLibraryPage"));
 const AdminDashboard          = lazy(() => import("./pages/admin/AdminDashboard"));
 const UsersPage               = lazy(() => import("./pages/admin/UsersPage"));
 const NewsManagePage          = lazy(() => import("./pages/admin/cms/NewsManagePage"));
 const CoursesManagePage       = lazy(() => import("./pages/admin/cms/CoursesManagePage"));
 const SessionsManagePage      = lazy(() => import("./pages/admin/cms/SessionsManagePage"));
 const LearningPathsManagePage = lazy(() => import("./pages/admin/cms/LearningPathsManagePage"));
+const PictureLibraryManagePage = lazy(() => import("./pages/admin/cms/PictureLibraryManagePage"));
 const CmsDashboard            = lazy(() => import("./pages/cms/CmsDashboard"));
 const NotFound                = lazy(() => import("./pages/NotFound"));
 
@@ -101,6 +103,7 @@ const App = () => (
                 <Route path="/admin/cms/courses" element={<CoursesManagePage />} />
                 <Route path="/admin/cms/sessions" element={<SessionsManagePage />} />
                 <Route path="/admin/cms/learning-paths" element={<LearningPathsManagePage />} />
+                <Route path="/admin/cms/picture-library" element={<PictureLibraryManagePage />} />
               </Route>
 
               {/* CMS editor panel — users with canEditCms permission */}
@@ -116,6 +119,7 @@ const App = () => (
                 <Route path="/cms/courses" element={<CoursesManagePage />} />
                 <Route path="/cms/sessions" element={<SessionsManagePage />} />
                 <Route path="/cms/learning-paths" element={<LearningPathsManagePage />} />
+                <Route path="/cms/picture-library" element={<PictureLibraryManagePage />} />
               </Route>
 
               {/* Hub — authenticated users */}
@@ -135,6 +139,7 @@ const App = () => (
                 <Route path="/leadership" element={<LeadershipPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/learning" element={<LearningCentrePage />} />
+                <Route path="/picture-library" element={<PictureLibraryPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

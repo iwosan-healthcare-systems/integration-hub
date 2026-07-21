@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, X, ExternalLink, Star, Upload, ImageIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Plus, Pencil, Trash2, RefreshCw, X, ExternalLink, Star, ImageIcon, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,192 +8,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ImageField } from '@/components/cms/ImageField';
+import { GalleryField } from '@/components/cms/GalleryField';
+import { ArticlePreviewDialog } from '@/components/cms/previews/ArticlePreviewDialog';
+import { fmtFormDate } from '@/lib/utils';
 import {
-  getNews, createNews, updateNews, deleteNews, uploadNewsImage,
+  getNews, createNews, updateNews, deleteNews,
   type NewsItem, type NewsInput,
 } from '@/services/cmsService';
 
 const CATEGORIES = ['Partnership','Milestone','Expansion','Acquisition','Medical Education','Community','Health Advisory','Awards','Infrastructure'];
-
-// ── Image Upload Field ─────────────────────────────────────────────────────
-
-function ImageField({
-  value,
-  onChange,
-  uploading,
-  onUpload,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  uploading: boolean;
-  onUpload: (file: File) => void;
-}) {
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <div className="space-y-2">
-      <Label>Image</Label>
-      {/* URL input */}
-      <Input
-        type="url"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="https://… (paste URL or upload below)"
-      />
-      {/* Upload button */}
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-2 text-xs"
-          disabled={uploading}
-          onClick={() => fileRef.current?.click()}
-        >
-          {uploading
-            ? <><span className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />Uploading…</>
-            : <><Upload className="h-3.5 w-3.5" />Upload image</>}
-        </Button>
-        <span className="text-[10px] text-muted-foreground">JPG, PNG, WebP or GIF · max 7.5 MB</span>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          title="Upload image"
-          aria-label="Upload image"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onUpload(file);
-            e.target.value = '';
-          }}
-        />
-      </div>
-      {/* Preview */}
-      {value && (
-        <div className="relative w-full h-36 rounded-lg border border-border/60 overflow-hidden bg-muted/30">
-          <img
-            src={value}
-            alt="preview"
-            className="w-full h-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
-          <button
-            type="button"
-            aria-label="Remove image"
-            onClick={() => onChange('')}
-            className="absolute top-2 right-2 h-6 w-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Gallery Field (additional in-article images) ───────────────────────────
-
-function GalleryField({
-  value,
-  onChange,
-}: {
-  value: string[];
-  onChange: (v: string[]) => void;
-}) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
-
-  function updateAt(i: number, v: string) {
-    onChange(value.map((u, idx) => (idx === i ? v : u)));
-  }
-
-  function removeAt(i: number) {
-    onChange(value.filter((_, idx) => idx !== i));
-  }
-
-  async function handleUpload(file: File) {
-    setUploading(true);
-    setError('');
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target?.result as string;
-      const { url, error: uploadError } = await uploadNewsImage(base64);
-      setUploading(false);
-      if (uploadError) { setError(`Image upload failed: ${uploadError}`); return; }
-      if (url) {
-        const apiBase = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
-        onChange([...value, `${apiBase}${url}`]);
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-
-  return (
-    <div className="space-y-2">
-      <Label>
-        Additional Images
-        <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">optional — extra photos shown within the article</span>
-      </Label>
-
-      {value.length > 0 && (
-        <div className="space-y-2">
-          {value.map((url, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded overflow-hidden bg-muted/30 border border-border/60 shrink-0 flex items-center justify-center">
-                {url
-                  ? <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  : <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/40" />}
-              </div>
-              <Input
-                value={url}
-                onChange={(e) => updateAt(i, e.target.value)}
-                placeholder="https://…"
-                className="flex-1"
-              />
-              <Button type="button" aria-label="Remove image" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeAt(i)}>
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="flex items-center gap-3">
-        <Button type="button" variant="outline" size="sm" className="gap-2 text-xs" onClick={() => onChange([...value, ''])}>
-          <Plus className="h-3.5 w-3.5" />Add image URL
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-2 text-xs"
-          disabled={uploading}
-          onClick={() => fileRef.current?.click()}
-        >
-          {uploading
-            ? <><span className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />Uploading…</>
-            : <><Upload className="h-3.5 w-3.5" />Upload image</>}
-        </Button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          title="Upload additional image"
-          aria-label="Upload additional image"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleUpload(file);
-            e.target.value = '';
-          }}
-        />
-      </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
-    </div>
-  );
-}
 
 // ── News Form Modal ────────────────────────────────────────────────────────
 
@@ -218,29 +42,11 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
     sortOrder: item?.sortOrder ?? 0,
   });
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   function set(field: keyof NewsInput, value: string | boolean | number) {
     setForm((f) => ({ ...f, [field]: value }));
-  }
-
-  async function handleImageUpload(file: File) {
-    setUploading(true);
-    setError('');
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target?.result as string;
-      const { url, error: uploadError } = await uploadNewsImage(base64);
-      setUploading(false);
-      if (uploadError) { setError(`Image upload failed: ${uploadError}`); return; }
-      if (url) {
-        // Server returns a relative path — prepend the API base so the preview works
-        const apiBase = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
-        set('image', `${apiBase}${url}`);
-      }
-    };
-    reader.readAsDataURL(file);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -313,8 +119,7 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
           <ImageField
             value={form.image}
             onChange={(v) => set('image', v)}
-            uploading={uploading}
-            onUpload={handleImageUpload}
+            enableLibraryPicker
           />
 
           <GalleryField
@@ -340,16 +145,34 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={loading || uploading}>
-              {loading
-                ? <span className="flex items-center gap-2"><span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />{isEdit ? 'Saving…' : 'Creating…'}</span>
-                : isEdit ? 'Save Changes' : 'Create Article'}
+          <DialogFooter className="sm:justify-between">
+            <Button type="button" variant="outline" className="gap-2" onClick={() => setPreviewOpen(true)}>
+              <Eye className="h-3.5 w-3.5" />Preview
             </Button>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+              <Button type="submit" disabled={loading}>
+                {loading
+                  ? <span className="flex items-center gap-2"><span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />{isEdit ? 'Saving…' : 'Creating…'}</span>
+                  : isEdit ? 'Save Changes' : 'Create Article'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <ArticlePreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        title={form.title || 'Untitled Article'}
+        image={form.image}
+        category={form.category}
+        date={fmtFormDate(form.date)}
+        excerpt={form.excerpt}
+        content={form.content}
+        images={form.images}
+        url={form.url}
+      />
     </Dialog>
   );
 }

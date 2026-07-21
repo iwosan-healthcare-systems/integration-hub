@@ -76,6 +76,14 @@ export interface LiveSession {
   meetingUrl: string;
 }
 
+export interface PictureLibraryItem {
+  id: number;
+  title: string;
+  description: string;
+  images: string[];
+  sortOrder: number;
+}
+
 // ── Public reads ──────────────────────────────────────────────────────────
 
 export async function getNews(): Promise<{ news: NewsItem[] | null; error: string | null }> {
@@ -98,6 +106,11 @@ export async function getSessions(): Promise<{ sessions: LiveSession[] | null; e
   return { sessions: data?.sessions ?? null, error };
 }
 
+export async function getPictureLibrary(): Promise<{ pictures: PictureLibraryItem[] | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ pictures: PictureLibraryItem[] }>('/picture-library');
+  return { pictures: data?.pictures ?? null, error };
+}
+
 // ── Admin: News ───────────────────────────────────────────────────────────
 
 export type NewsInput = {
@@ -105,7 +118,9 @@ export type NewsInput = {
   featured: boolean; image: string; images: string[]; url: string; sortOrder?: number;
 };
 
-export async function uploadNewsImage(base64DataUrl: string): Promise<{ url: string | null; error: string | null }> {
+// Generic CMS image upload — used by News, Picture Library, and any other
+// content type's image fields. Stores the file in the DB and returns its path.
+export async function uploadImage(base64DataUrl: string): Promise<{ url: string | null; error: string | null }> {
   const { data, error } = await apiFetch<{ url: string }>('/admin/cms/upload', {
     method: 'POST', body: JSON.stringify({ image: base64DataUrl }),
   });
@@ -207,5 +222,30 @@ export async function updateSession(id: number, input: Partial<SessionInput>): P
 
 export async function deleteSession(id: number): Promise<{ error: string | null }> {
   const { error } = await apiFetch(`/admin/cms/sessions/${id}`, { method: 'DELETE' });
+  return { error };
+}
+
+// ── Admin: Picture Library ────────────────────────────────────────────────
+
+export type PictureLibraryInput = {
+  title: string; description: string; images: string[]; sortOrder?: number;
+};
+
+export async function createPicture(input: PictureLibraryInput): Promise<{ picture: PictureLibraryItem | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ picture: PictureLibraryItem }>('/admin/cms/picture-library', {
+    method: 'POST', body: JSON.stringify(input),
+  });
+  return { picture: data?.picture ?? null, error };
+}
+
+export async function updatePicture(id: number, input: Partial<PictureLibraryInput>): Promise<{ picture: PictureLibraryItem | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ picture: PictureLibraryItem }>(`/admin/cms/picture-library/${id}`, {
+    method: 'PATCH', body: JSON.stringify(input),
+  });
+  return { picture: data?.picture ?? null, error };
+}
+
+export async function deletePicture(id: number): Promise<{ error: string | null }> {
+  const { error } = await apiFetch(`/admin/cms/picture-library/${id}`, { method: 'DELETE' });
   return { error };
 }

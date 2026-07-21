@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, LayoutDashboard, GraduationCap, PenSquare } from "lucide-react";
+import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, LayoutDashboard, GraduationCap, Images, PenSquare } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { subsidiaries } from "@/data/hub-data";
 import { subsidiaryPortals } from "@/data/subsidiary-data";
-import { getNews, getCourses, getLearningPaths, getSessions, type NewsItem, type Course, type LearningPath, type LiveSession } from "@/services/cmsService";
+import { getNews, getCourses, getLearningPaths, getSessions, getPictureLibrary, type NewsItem, type Course, type LearningPath, type LiveSession, type PictureLibraryItem } from "@/services/cmsService";
 import iwosanIcon from "@/assets/iwosan_icon.webp";
 import { useAuth } from "@/contexts/AuthContext";
 import { slugify } from "@/lib/utils";
@@ -34,10 +34,11 @@ const navItems = [
   { title: "News & Updates", url: "/news" },
   { title: "Leadership", url: "/leadership" },
   { title: "Learning Centre", url: "/learning" },
+  { title: "Picture Library", url: "/picture-library" },
 ];
 
 type SearchItem = {
-  type: "page" | "news" | "subsidiary" | "course" | "learning-path" | "live-session";
+  type: "page" | "news" | "subsidiary" | "course" | "learning-path" | "live-session" | "picture";
   title: string;
   url: string;
   external: boolean;
@@ -58,15 +59,17 @@ export function TopNavbar() {
   const [cmsCourses, setCmsCourses] = useState<Course[]>([]);
   const [cmsPaths, setCmsPaths] = useState<LearningPath[]>([]);
   const [cmsSessions, setCmsSessions] = useState<LiveSession[]>([]);
+  const [cmsPictures, setCmsPictures] = useState<PictureLibraryItem[]>([]);
 
   useEffect(() => {
     if (!searchOpen || cmsLoaded) return;
-    Promise.all([getNews(), getCourses(), getLearningPaths(), getSessions()]).then(
-      ([n, c, lp, s]) => {
+    Promise.all([getNews(), getCourses(), getLearningPaths(), getSessions(), getPictureLibrary()]).then(
+      ([n, c, lp, s, p]) => {
         setCmsNews(n.news ?? []);
         setCmsCourses(c.courses ?? []);
         setCmsPaths(lp.learningPaths ?? []);
         setCmsSessions(s.sessions ?? []);
+        setCmsPictures(p.pictures ?? []);
         setCmsLoaded(true);
       }
     );
@@ -143,8 +146,18 @@ export function TopNavbar() {
         meta: `Live Session · ${session.date} · ${session.format}`,
         description: `${session.venue} · Hosted by ${session.host}`,
       })),
+
+      // Picture Library
+      ...cmsPictures.map((pic) => ({
+        type: "picture" as const,
+        title: pic.title,
+        url: "/picture-library",
+        external: false,
+        meta: "Picture Library",
+        description: pic.description,
+      })),
     ],
-    [cmsNews, cmsCourses, cmsPaths, cmsSessions],
+    [cmsNews, cmsCourses, cmsPaths, cmsSessions, cmsPictures],
   );
 
   const results = useMemo(() => {
@@ -190,6 +203,7 @@ export function TopNavbar() {
     if (type === "subsidiary") return <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
     if (type === "course" || type === "learning-path" || type === "live-session")
       return <GraduationCap className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
+    if (type === "picture") return <Images className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
     return <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
   };
 
@@ -340,7 +354,7 @@ export function TopNavbar() {
                   <p className="text-sm text-muted-foreground px-1 py-2">No results found for &ldquo;{query}&rdquo;.</p>
                 )
               ) : (
-                <p className="text-sm text-muted-foreground px-1 py-2">Search pages, courses, news articles, and subsidiaries.</p>
+                <p className="text-sm text-muted-foreground px-1 py-2">Search pages, courses, news articles, subsidiaries, and pictures.</p>
               )}
             </div>
           </div>

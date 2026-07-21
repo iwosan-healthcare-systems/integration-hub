@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Newspaper, BookOpen, CalendarDays, GraduationCap, LogOut, PenSquare, Menu, X, ArrowLeft } from 'lucide-react';
+import { Newspaper, BookOpen, CalendarDays, GraduationCap, Images, LogOut, PenSquare, Menu, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { clearAzureSession } from '@/services/authService';
@@ -13,6 +13,7 @@ const cmsItems = [
   { to: '/cms/courses', label: 'Courses', icon: BookOpen },
   { to: '/cms/sessions', label: 'Sessions', icon: CalendarDays },
   { to: '/cms/learning-paths', label: 'Learning Paths', icon: GraduationCap },
+  { to: '/cms/picture-library', label: 'Picture Library', icon: Images },
 ];
 
 function SidebarContent({

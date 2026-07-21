@@ -1331,6 +1331,93 @@ router.delete('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
   }
 });
 
+// ── CMS: Picture Library (public read, admin write) ───────────────────────
+
+// GET /api/picture-library
+router.get('/picture-library', requireAuth, async (req, res) => {
+  try {
+    const rows = await db(
+      `SELECT id, title, description, images, sort_order
+       FROM picture_library WHERE is_active = true ORDER BY sort_order ASC, created_at DESC`,
+      []
+    );
+    return res.json({
+      pictures: rows.map((r) => ({
+        id: r.id, title: r.title, description: r.description, images: r.images ?? [], sortOrder: r.sort_order,
+      })),
+    });
+  } catch (err) {
+    console.error('GET /picture-library error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/cms/picture-library
+router.post('/admin/cms/picture-library', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const { title, description = '', images = [], sortOrder = 0 } = req.body ?? {};
+  if (!Array.isArray(images) || !images.every((u) => typeof u === 'string')) return res.status(400).json({ error: 'images must be an array of strings' });
+  if (!title || images.length === 0) return res.status(400).json({ error: 'title and at least one image are required' });
+  try {
+    const rows = await db(
+      `INSERT INTO picture_library (title, description, images, sort_order)
+       VALUES ($1,$2,$3,$4) RETURNING *`,
+      [title, description, images, Number(sortOrder)]
+    );
+    const r = rows[0];
+    return res.status(201).json({
+      picture: { id: r.id, title: r.title, description: r.description, images: r.images ?? [], sortOrder: r.sort_order },
+    });
+  } catch (err) {
+    console.error('POST /admin/cms/picture-library error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/admin/cms/picture-library/:id
+router.patch('/admin/cms/picture-library/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  const { title, description, images, sortOrder } = req.body ?? {};
+  if (images !== undefined && (!Array.isArray(images) || !images.every((u) => typeof u === 'string'))) {
+    return res.status(400).json({ error: 'images must be an array of strings' });
+  }
+  const set = []; const params = []; let i = 1;
+  if (title !== undefined)       { set.push(`title=$${i++}`);       params.push(title); }
+  if (description !== undefined) { set.push(`description=$${i++}`); params.push(description); }
+  if (images !== undefined)      { set.push(`images=$${i++}`);      params.push(images); }
+  if (sortOrder !== undefined)   { set.push(`sort_order=$${i++}`);  params.push(Number(sortOrder)); }
+  if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+  set.push(`updated_at=NOW()`); params.push(id);
+  try {
+    const rows = await db(`UPDATE picture_library SET ${set.join(',')} WHERE id=$${i} RETURNING *`, params);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    const r = rows[0];
+    return res.json({
+      picture: { id: r.id, title: r.title, description: r.description, images: r.images ?? [], sortOrder: r.sort_order },
+    });
+  } catch (err) {
+    console.error('PATCH /admin/cms/picture-library error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/cms/picture-library/:id
+router.delete('/admin/cms/picture-library/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    const rows = await db('UPDATE picture_library SET is_active = false, updated_at = NOW() WHERE id=$1 AND is_active = true RETURNING id', [id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    return res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /admin/cms/picture-library error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /health  — ping to confirm the server is alive
 router.get('/health', (_, res) =>
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

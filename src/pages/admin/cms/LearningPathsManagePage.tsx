@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, X, BookOpen, Clock } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, X, BookOpen, Clock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PreviewDialog } from '@/components/cms/previews/PreviewDialog';
+import { LearningPathPreviewCard } from '@/components/cms/previews/PreviewCards';
 import {
   getLearningPaths, getCourses, createLearningPath, updateLearningPath, deleteLearningPath,
   type LearningPath, type Course, type LearningPathInput,
@@ -37,6 +39,7 @@ function PathFormModal({ item, courses, onClose, onSaved }: PathFormProps) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   function set<K extends keyof LearningPathInput>(field: K, value: LearningPathInput[K]) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -79,6 +82,7 @@ function PathFormModal({ item, courses, onClose, onSaved }: PathFormProps) {
             <Label htmlFor="lp-desc">Description</Label>
             <textarea
               id="lp-desc"
+              title="Description"
               value={form.description}
               onChange={(e) => set('description', e.target.value)}
               rows={2}
@@ -136,14 +140,23 @@ function PathFormModal({ item, courses, onClose, onSaved }: PathFormProps) {
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? <span className="flex items-center gap-2"><span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />{isEdit ? 'Saving…' : 'Creating…'}</span> : isEdit ? 'Save Changes' : 'Create Path'}
+          <DialogFooter className="sm:justify-between">
+            <Button type="button" variant="outline" className="gap-2" onClick={() => setPreviewOpen(true)}>
+              <Eye className="h-3.5 w-3.5" />Preview
             </Button>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? <span className="flex items-center gap-2"><span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />{isEdit ? 'Saving…' : 'Creating…'}</span> : isEdit ? 'Save Changes' : 'Create Path'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <PreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} className="sm:max-w-sm">
+        <LearningPathPreviewCard path={form} courses={courses} />
+      </PreviewDialog>
     </Dialog>
   );
 }

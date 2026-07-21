@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Newspaper, BookOpen, CalendarDays, GraduationCap } from 'lucide-react';
+import { Newspaper, BookOpen, CalendarDays, GraduationCap, Images } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 const sections = [
@@ -30,6 +30,13 @@ const sections = [
     label: 'Learning Paths',
     description: 'Curate structured learning paths that group courses for specific audiences.',
     color: 'text-purple-600 bg-purple-500/10',
+  },
+  {
+    to: '/cms/picture-library',
+    icon: Images,
+    label: 'Picture Library',
+    description: 'Upload and organize pictures — with titles and descriptions — for the Picture Library page.',
+    color: 'text-pink-600 bg-pink-500/10',
   },
 ];
 
