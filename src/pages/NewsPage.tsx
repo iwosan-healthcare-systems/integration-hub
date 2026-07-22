@@ -68,7 +68,9 @@ const NewsPage = () => {
     setPage(p);
     const container = document.getElementById("main-scroll");
     if (container && sectionRef.current) {
-      container.scrollTo({ top: sectionRef.current.offsetTop, behavior: "smooth" });
+      const containerTop = container.getBoundingClientRect().top;
+      const sectionTop = sectionRef.current.getBoundingClientRect().top;
+      container.scrollTo({ top: container.scrollTop + (sectionTop - containerTop), behavior: "smooth" });
     } else {
       sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }

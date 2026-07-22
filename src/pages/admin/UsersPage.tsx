@@ -422,174 +422,161 @@ export default function UsersPage() {
       </div>
 
       {/* Table */}
-      <Card className="border-border/60">
-        {/* Column headings */}
-        <div className="flex items-center gap-4 px-5 py-2.5 border-b border-border/60 bg-muted/50">
-          {/* Avatar spacer */}
-          <div className="h-4 w-8 shrink-0" />
-          {/* User */}
-          <div className="flex-1 min-w-0">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">User</span>
-          </div>
-          {/* Role & Status */}
-          <div className="hidden sm:block shrink-0 w-40">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Role & Status</span>
-          </div>
-          {/* Auth */}
-          <div className="hidden lg:block shrink-0 w-24">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Auth</span>
-          </div>
-          {/* Joined */}
-          <div className="hidden md:block w-24 shrink-0 text-right">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Joined</span>
-          </div>
-          {/* Last Sign In */}
-          <div className="hidden lg:block w-36 shrink-0 text-right">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Last Sign In</span>
-          </div>
-          {/* Actions spacer */}
-          <div className="w-7 shrink-0" />
-        </div>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="space-y-0">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4 px-5 py-3.5 border-b border-border/40 last:border-0">
-                  <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-3.5 w-36 rounded bg-muted animate-pulse" />
-                    <div className="h-3 w-48 rounded bg-muted animate-pulse" />
-                  </div>
-                </div>
-              ))}
+      <Card className="border-border/60 overflow-hidden">
+        <div className="overflow-x-auto">
+          <div className="min-w-[860px]">
+            {/* Column headings */}
+            <div className="grid grid-cols-[2rem_1fr_10rem_6rem_6rem_9rem_1.75rem] gap-4 items-center px-5 py-2.5 border-b border-border/60 bg-muted/50">
+              <span />
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">User</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Role & Status</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Auth</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest text-right">Joined</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest text-right">Last Sign In</span>
+              <span />
             </div>
-          ) : filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground px-5 py-8 text-center">
-              {search ? `No users matching "${search}".` : 'No users yet.'}
-            </p>
-          ) : (
-            <div>
-              {filtered.map((u, idx) => (
-                <div
-                  key={u.id}
-                  className={`flex items-center gap-4 px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
-                >
-                  {/* Avatar */}
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 font-semibold text-sm ${u.isActive ? 'bg-accent/15 text-accent' : 'bg-muted text-muted-foreground'}`}>
-                    {u.name.charAt(0).toUpperCase()}
-                  </div>
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="space-y-0">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 px-5 py-3.5 border-b border-border/40 last:border-0">
+                      <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3.5 w-36 rounded bg-muted animate-pulse" />
+                        <div className="h-3 w-48 rounded bg-muted animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground px-5 py-8 text-center">
+                  {search ? `No users matching "${search}".` : 'No users yet.'}
+                </p>
+              ) : (
+                <div>
+                  {filtered.map((u, idx) => (
+                    <div
+                      key={u.id}
+                      className={`grid grid-cols-[2rem_1fr_10rem_6rem_6rem_9rem_1.75rem] gap-4 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
+                    >
+                      {/* Avatar */}
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 font-semibold text-sm ${u.isActive ? 'bg-accent/15 text-accent' : 'bg-muted text-muted-foreground'}`}>
+                        {u.name.charAt(0).toUpperCase()}
+                      </div>
 
-                  {/* Identity */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{u.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                    {u.isFirstLogin && u.authProvider !== 'azure' && (
-                      <p className="text-[10px] text-amber-600 font-medium mt-0.5">Pending first login</p>
-                    )}
-                  </div>
+                      {/* Identity */}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{u.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                        {u.isFirstLogin && u.authProvider !== 'azure' && (
+                          <p className="text-[10px] text-amber-600 font-medium mt-0.5">Pending first login</p>
+                        )}
+                      </div>
 
-                  {/* Badges */}
-                  <div className="hidden sm:flex items-center gap-1.5 flex-wrap shrink-0 w-40">
-                    {roleBadge(u.role)}
-                    <StatusBadge active={u.isActive} />
-                    {u.canEditCms && u.role === 'user' && <CmsBadge />}
-                  </div>
+                      {/* Badges */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {roleBadge(u.role)}
+                        <StatusBadge active={u.isActive} />
+                        {u.canEditCms && u.role === 'user' && <CmsBadge />}
+                      </div>
 
-                  {/* Auth provider */}
-                  <div className="hidden lg:block shrink-0 w-24">
-                    {u.authProvider === 'azure' ? (
-                      <Badge variant="outline" className="text-[10px] text-blue-500 border-blue-400/40 gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" width="9" height="9" className="shrink-0">
-                          <rect x="1" y="1" width="9" height="9" fill="#f25022" />
-                          <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
-                          <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
-                          <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
-                        </svg>
-                        Microsoft
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/60">
-                        Local
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Joined */}
-                  <span className="hidden md:block text-xs text-muted-foreground w-24 shrink-0 text-right">
-                    {new Date(u.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
-                  </span>
-
-                  {/* Last Sign In */}
-                  <div className="hidden lg:flex flex-col items-end w-36 shrink-0">
-                    {u.lastSignInAt ? (
-                      <>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(u.lastSignInAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground/60">
-                          {new Date(u.lastSignInAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-xs text-muted-foreground/50 italic">Never</span>
-                    )}
-                  </div>
-
-                  {/* Actions menu */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 shrink-0 text-muted-foreground"
-                        disabled={actionLoading === u.id}
-                      >
-                        {actionLoading === u.id
-                          ? <span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                          : <MoreHorizontal className="h-4 w-4" />}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-52">
-                      <DropdownMenuItem onClick={() => setEditTarget(u)}>
-                        <Pencil className="h-3.5 w-3.5 mr-2" /> Edit user
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleToggleActive(u)}>
-                        {u.isActive
-                          ? <><UserX className="h-3.5 w-3.5 mr-2" /> Deactivate</>
-                          : <><UserCheck className="h-3.5 w-3.5 mr-2" /> Activate</>}
-                      </DropdownMenuItem>
-                      {u.role === 'user' && (
-                        isAdmin ? (
-                          <DropdownMenuItem onClick={() => handleToggleCms(u)}>
-                            <LayoutDashboard className="h-3.5 w-3.5 mr-2" />
-                            {u.canEditCms ? 'Revoke CMS access' : 'Grant CMS access'}
-                          </DropdownMenuItem>
+                      {/* Auth provider */}
+                      <div>
+                        {u.authProvider === 'azure' ? (
+                          <Badge variant="outline" className="text-[10px] text-blue-500 border-blue-400/40 gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" width="9" height="9" className="shrink-0">
+                              <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                              <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+                              <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+                              <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+                            </svg>
+                            Microsoft
+                          </Badge>
                         ) : (
-                          <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
-                            <Lock className="h-3.5 w-3.5 mr-2" />
-                            CMS access — Admin only
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/60">
+                            Local
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Joined */}
+                      <span className="text-xs text-muted-foreground text-right">
+                        {new Date(u.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                      </span>
+
+                      {/* Last Sign In */}
+                      <div className="flex flex-col items-end">
+                        {u.lastSignInAt ? (
+                          <>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(u.lastSignInAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground/60">
+                              {new Date(u.lastSignInAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/50 italic">Never</span>
+                        )}
+                      </div>
+
+                      {/* Actions menu */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 text-muted-foreground"
+                            disabled={actionLoading === u.id}
+                          >
+                            {actionLoading === u.id
+                              ? <span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              : <MoreHorizontal className="h-4 w-4" />}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuItem onClick={() => setEditTarget(u)}>
+                            <Pencil className="h-3.5 w-3.5 mr-2" /> Edit user
                           </DropdownMenuItem>
-                        )
-                      )}
-                      {u.authProvider !== 'azure' && (
-                        <DropdownMenuItem onClick={() => handleResetPassword(u)}>
-                          <KeyRound className="h-3.5 w-3.5 mr-2" /> Reset password
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => setDeleteTarget(u)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete user
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                          <DropdownMenuItem onClick={() => handleToggleActive(u)}>
+                            {u.isActive
+                              ? <><UserX className="h-3.5 w-3.5 mr-2" /> Deactivate</>
+                              : <><UserCheck className="h-3.5 w-3.5 mr-2" /> Activate</>}
+                          </DropdownMenuItem>
+                          {u.role === 'user' && (
+                            isAdmin ? (
+                              <DropdownMenuItem onClick={() => handleToggleCms(u)}>
+                                <LayoutDashboard className="h-3.5 w-3.5 mr-2" />
+                                {u.canEditCms ? 'Revoke CMS access' : 'Grant CMS access'}
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
+                                <Lock className="h-3.5 w-3.5 mr-2" />
+                                CMS access — Admin only
+                              </DropdownMenuItem>
+                            )
+                          )}
+                          {u.authProvider !== 'azure' && (
+                            <DropdownMenuItem onClick={() => handleResetPassword(u)}>
+                              <KeyRound className="h-3.5 w-3.5 mr-2" /> Reset password
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setDeleteTarget(u)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete user
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+              )}
+            </CardContent>
+          </div>
+        </div>
       </Card>
 
       {/* Modals */}

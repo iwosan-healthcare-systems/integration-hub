@@ -303,7 +303,7 @@ const LearningCentrePage = () => {
                       <h3 className="font-serif text-base font-semibold text-foreground leading-snug mb-1.5 group-hover:text-accent transition-colors">
                         {course.title}
                       </h3>
-                      <p className="font-sans text-xs text-muted-foreground leading-relaxed flex-1 mb-4">
+                      <p className="font-sans text-sm text-muted-foreground leading-relaxed flex-1 mb-4">
                         {course.description}
                       </p>
 

@@ -55,17 +55,19 @@ const LeadershipPage = () => {
 
         <div className="space-y-8">
           <Tabs defaultValue="boardMembers">
-            <TabsList className="justify-center gap-2 overflow-hidden rounded-full border border-slate-200 bg-slate-100 p-1 shadow-sm mb-10">
-              {categories.map((category) => (
-                <TabsTrigger
-                  key={category.value}
-                  value={category.value}
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition-all duration-200 hover:bg-white hover:text-accent focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent/20 data-[state=active]:to-secondary/20 data-[state=active]:text-accent"
-                >
-                  {category.title}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <div className="w-full overflow-x-auto mb-10">
+              <TabsList className="w-max min-w-full sm:min-w-0 sm:mx-auto justify-center gap-2 rounded-full border border-slate-200 bg-slate-100 p-1 shadow-sm">
+                {categories.map((category) => (
+                  <TabsTrigger
+                    key={category.value}
+                    value={category.value}
+                    className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition-all duration-200 whitespace-nowrap hover:bg-white hover:text-accent focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent/20 data-[state=active]:to-secondary/20 data-[state=active]:text-accent"
+                  >
+                    {category.title}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
 
             {categories.map((category) => (
               <TabsContent key={category.value} value={category.value}>
