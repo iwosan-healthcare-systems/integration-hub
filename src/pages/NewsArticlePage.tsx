@@ -6,6 +6,7 @@ import { ArticleLink } from "@/components/ArticleLink";
 import { ArticleBody } from "@/components/ArticleBody";
 import { slugify } from "@/lib/utils";
 import { getNews, type NewsItem } from "@/services/cmsService";
+import { Seo } from "@/components/Seo";
 
 const RECENT_POSTS_COUNT = 3;
 
@@ -52,6 +53,12 @@ const NewsArticlePage = () => {
 
   return (
     <article className="pb-16">
+      <Seo
+        title={item.title}
+        description={item.excerpt}
+        path={`/news/${slug}`}
+        image={item.image?.startsWith("http") ? item.image : undefined}
+      />
       {/* Back nav */}
       <div className="max-w-3xl mx-auto px-6 sm:px-8 lg:px-16 pt-8 pb-4">
         <Link

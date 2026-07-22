@@ -1,6 +1,7 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { useState } from "react";
 import { coreValues, milestones } from "@/data/hub-data";
+import { Seo } from "@/components/Seo";
 import { Heart, Shield, BookOpen, Lightbulb, Globe } from "lucide-react";
 import hospitalImg from "@/assets/hospital-interior.webp";
 import visionIcon1 from "@/assets/vision-icon-1.png";
@@ -43,6 +44,11 @@ const AboutPage = () => {
 
   return (
     <>
+      <Seo
+        title="About Us"
+        description="Transforming the standards of healthcare delivery and management in Nigeria — learn about Iwosan's story, vision, and values."
+        path="/about"
+      />
 
       {/* Hero */}
       <section className="relative bg-about-header min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 overflow-hidden">

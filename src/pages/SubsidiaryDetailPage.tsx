@@ -12,6 +12,7 @@ import {
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { getSubsidiaryBySlug, type SubsidiaryPortal } from "@/data/subsidiary-data";
 import innovationImg from "@/assets/innovation-bg.webp";
+import { Seo } from "@/components/Seo";
 
 // ── Resource card ─────────────────────────────────────────────────────────────
 
@@ -79,6 +80,11 @@ export default function SubsidiaryDetailPage() {
 
   return (
     <>
+      <Seo
+        title={entity.shortName}
+        description={entity.overview.length > 160 ? `${entity.overview.slice(0, 157)}...` : entity.overview}
+        path={`/subsidiaries/${slug}`}
+      />
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[260px] sm:min-h-[300px] flex items-end py-12 sm:py-16 px-6 sm:px-8 lg:px-16 overflow-hidden">
         {/* background image */}

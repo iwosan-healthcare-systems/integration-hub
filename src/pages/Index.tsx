@@ -8,6 +8,7 @@ import teamImg from "@/assets/team-photo.webp";
 import innovationImg from "@/assets/innovation-bg.webp";
 import { subsidiaries } from "@/data/hub-data";
 import { getNews, type NewsItem } from "@/services/cmsService";
+import { Seo } from "@/components/Seo";
 
 const faqs = [
   {
@@ -64,6 +65,11 @@ const Index = () => {
 
   return (
     <>
+      <Seo
+        title="Iwosan Integration Hub"
+        description="Transforming Nigeria into a global healthcare frontier. Your centralized platform for tools, resources, and collaboration across the Iwosan network."
+        path="/"
+      />
 
       {/* Hero */}
       <section className="relative min-h-[88svh] sm:min-h-[82svh] md:min-h-[75vh] flex items-center overflow-hidden">

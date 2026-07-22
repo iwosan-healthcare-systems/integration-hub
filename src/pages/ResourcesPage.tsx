@@ -1,6 +1,7 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { subsidiaries } from "@/data/hub-data";
 import { ArrowRight, Building2, FileText, Shield, Users } from "lucide-react";
+import { Seo } from "@/components/Seo";
 
 const sopFolderUrl = "https://iwosan.sharepoint.com/:f:/s/IWOSAN-HEALTHCARE-SYSTEMS/IgCQRkxrc-ImRps1sQtEs4exAauTGCxHW-BFgF3cm_lsFgU";
 
@@ -25,6 +26,11 @@ const sopFocusAreas = [
 const ResourcesPage = () => {
   return (
     <>
+      <Seo
+        title="Resources"
+        description="A single access point for standard operating procedures across the Iwosan network."
+        path="/resources"
+      />
       {/* Header */}
       <section className="bg-resources-header min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
         <div className="w-full max-w-6xl mx-auto">

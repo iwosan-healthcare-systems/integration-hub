@@ -3,6 +3,15 @@ import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { ArticleLink } from "@/components/ArticleLink";
 import { getNews, type NewsItem } from "@/services/cmsService";
 import { Clock } from "lucide-react";
+import { Seo } from "@/components/Seo";
+
+const NEWS_SEO = (
+  <Seo
+    title="News & Announcements"
+    description="Internal updates, industry news, and organizational highlights from across the Iwosan network."
+    path="/news"
+  />
+);
 
 const NewsPage = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -22,6 +31,7 @@ const NewsPage = () => {
   if (loading) {
     return (
       <>
+        {NEWS_SEO}
         <section className="bg-news-header min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
           <div className="w-full max-w-6xl mx-auto">
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Stay Updated</p>
@@ -47,6 +57,7 @@ const NewsPage = () => {
 
   return (
     <>
+      {NEWS_SEO}
       <section className="bg-news-header min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
         <div className="w-full max-w-6xl mx-auto">
           <AnimateOnScroll>

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import iwosanVideo from '@/assets/iwosan_vision_values_1080p.webm';
 import iwosanLogo from '@/assets/iwosan_logo.webp';
+import { Seo } from '@/components/Seo';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -103,6 +104,11 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black">
+      <Seo
+        title="Sign In"
+        description="Sign in to access the Iwosan Integration Hub."
+        path="/login"
+      />
 
       {/* ── Full-screen background video ── */}
       <video

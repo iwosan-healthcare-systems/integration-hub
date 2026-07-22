@@ -18,6 +18,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { getCourses, getLearningPaths, getSessions, type Course, type LearningPath, type LiveSession } from "@/services/cmsService";
+import { Seo } from "@/components/Seo";
 
 // ─── Config maps ────────────────────────────────────────────────────────────
 
@@ -81,6 +82,11 @@ const LearningCentrePage = () => {
 
   return (
     <>
+      <Seo
+        title="Learning Centre"
+        description="Your hub for professional development across the Iwosan network — structured courses, guided learning paths, and live training sessions."
+        path="/learning"
+      />
       {/* ── Hero ── */}
       <section className="bg-learning-header min-h-[240px] sm:min-h-[260px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
         <div className="w-full max-w-6xl mx-auto">

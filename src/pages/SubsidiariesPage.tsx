@@ -5,6 +5,7 @@ import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { subsidiaries } from "@/data/hub-data";
 import { subsidiaryPortals } from "@/data/subsidiary-data";
 import innovationImg from "@/assets/innovation-bg.webp";
+import { Seo } from "@/components/Seo";
 
 const categories = ["All", ...Array.from(new Set(subsidiaries.map((s) => s.category)))];
 
@@ -20,6 +21,11 @@ const SubsidiariesPage = () => {
 
   return (
     <>
+      <Seo
+        title="Subsidiaries & Platforms"
+        description="Explore the hospitals and platforms across the Iwosan Healthcare network."
+        path="/subsidiaries"
+      />
       {/* Hero */}
       <section className="relative min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 overflow-hidden">
         <div className="absolute inset-0">

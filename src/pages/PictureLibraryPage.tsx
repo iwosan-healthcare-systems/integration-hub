@@ -4,6 +4,7 @@ import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { getPictureLibrary, type PictureLibraryItem } from "@/services/cmsService";
 import innovationImg from "@/assets/innovation-bg.webp";
+import { Seo } from "@/components/Seo";
 
 const PictureLibraryPage = () => {
   const [pictures, setPictures] = useState<PictureLibraryItem[]>([]);
@@ -30,6 +31,11 @@ const PictureLibraryPage = () => {
 
   return (
     <>
+      <Seo
+        title="Picture Library"
+        description="Moments, events, and milestones from across the Iwosan network."
+        path="/picture-library"
+      />
       {/* Hero */}
       <section className="relative min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 overflow-hidden">
         <div className="absolute inset-0">

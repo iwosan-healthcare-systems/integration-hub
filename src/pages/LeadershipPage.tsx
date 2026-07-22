@@ -1,6 +1,7 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { leadership } from "@/data/hub-data";
+import { Seo } from "@/components/Seo";
 const LeadershipPage = () => {
   const categories = [
     {
@@ -25,6 +26,11 @@ const LeadershipPage = () => {
 
   return (
     <>
+      <Seo
+        title="Leadership"
+        description="Meet our board members, management team, and medical advisory council driving Iwosan's healthcare mission."
+        path="/leadership"
+      />
 
       <section className="relative bg-leadership-header min-h-[260px] sm:min-h-[300px] flex items-center py-16 sm:py-20 px-6 sm:px-8 lg:px-16 overflow-hidden">
         <div className="absolute inset-0 bg-leadership-header opacity-90" />

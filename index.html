@@ -22,6 +22,23 @@
     <meta name="twitter:title" content="Iwosan Integration Hub" />
     <meta name="twitter:description" content="Centralized digital hub for Iwosan Healthcare staff, partners and stakeholders." />
     <meta name="twitter:image" content="https://iwosaninnovationhub.com/iwosan_icon.png" />
+
+    <!-- Google Analytics (GA4) — no-ops if VITE_GA_MEASUREMENT_ID isn't set -->
+    <script>
+      (function () {
+        var GA_ID = '%VITE_GA_MEASUREMENT_ID%';
+        if (!GA_ID || GA_ID.charAt(0) === '%') return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { window.dataLayer.push(arguments); }
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', GA_ID);
+      })();
+    </script>
   </head>
 
   <body>

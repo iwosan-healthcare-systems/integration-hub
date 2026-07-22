@@ -33,7 +33,7 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 const WELCOME: Message = {
   role: "assistant",
   content:
-    "Hi! I'm Iwo, your Iwosan Integration Hub assistant. I can help you find information about our hospitals, services, leadership, history, and more. How can I help you today?",
+    "Hi! I'm Ivy, your Iwosan Integration Hub assistant. I can help you find information about our hospitals, services, leadership, history, and more. How can I help you today?",
 };
 
 export function ChatWidget() {
@@ -138,7 +138,7 @@ export function ChatWidget() {
         ? "The AI assistant hasn't been configured yet. Please check back soon."
         : "Sorry, I'm having trouble connecting right now. Please try again or reach us at info@iwosanhealth.com.";
 
-      console.error("[Iwo chat error]", msg);
+      console.error("[Ivy chat error]", msg);
 
       setMessages((prev) => {
         const next = [...prev];
@@ -191,14 +191,14 @@ export function ChatWidget() {
           <div className="relative shrink-0">
             <img
               src={iwosanIcon}
-              alt="Iwo"
+              alt="Ivy"
               className="w-9 h-9 rounded-full object-contain bg-white p-1"
             />
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-primary" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-primary-foreground font-semibold text-sm leading-none">
-              Iwo
+              Ivy
             </p>
             <p className="text-primary-foreground/50 text-xs mt-0.5">
               Iwosan AI Assistant · Online
