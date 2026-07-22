@@ -12,8 +12,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        serif: ["Century Gothic", "Futura", "Nunito", "system-ui", "sans-serif"],
+        sans: ["Montserrat", "system-ui", "sans-serif"],
+        serif: ["Montserrat", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

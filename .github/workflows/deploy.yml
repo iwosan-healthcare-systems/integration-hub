@@ -11,7 +11,8 @@ jobs:
       - name: Pull latest and redeploy
         run: |
           cd /var/www/iwosan-integration-hub
-          git pull origin master
+          git fetch origin master
+          git reset --hard origin/master
           npm install
           npm run build
           pm2 restart iwosan-integration-hub-api

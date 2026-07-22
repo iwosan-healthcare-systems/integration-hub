@@ -22,6 +22,20 @@ RULES = [
     ("logos/lagoon-logo.png", 400, 90),
     ("logos/iaso-logo.png",   400, 90),
     ("logos/paelon-logo.png", 400, 90),
+    ("team/fola-adeola.jpg",                    500, 82),
+    ("team/fola-laoye.jpg",                     500, 82),
+    ("team/oladapo-oshinusi.jpg",                500, 82),
+    ("team/prof-nelson-oyesiku.jpg",             500, 82),
+    ("team/mrs-ibukun-awosika.jpg",              500, 82),
+    ("team/rotimi-akinde.png",                   500, 82),
+    ("team/ademola-ademola-ade-yemi-bero.png",   500, 82),
+    ("team/otunba-bimbo-ashiru.jpg",             500, 82),
+    ("team/adetomi-olaobaju.jpg",                500, 82),
+    ("team/dr-ajibike-oyewumi.jpg",              500, 82),
+    ("team/dr-oluborede-olawumi.jpg",            500, 82),
+    ("team/mr-oluwafemi-oluwajimi.jpg",          500, 82),
+    ("team/prof-folasade-ogunsola.jpg",          500, 82),
+    ("team/dr-kemi-babagbemi.jpg",               500, 82),
 ]
 
 total_before = 0

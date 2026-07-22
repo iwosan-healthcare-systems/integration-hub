@@ -4,20 +4,20 @@ import iasoLogo from "@/assets/logos/iaso-logo.webp";
 import euracareLogo from "@/assets/logos/euracare-logo.svg";
 import adebiyiImg from "@/assets/adebiyi.webp";
 import mukoroImg from "@/assets/mukoro.webp";
-import folaAdeolaImg from "@/assets/team/fola-adeola.jpg";
-import folaLaoyeImg from "@/assets/team/fola-laoye.jpg";
-import oladapoOshinusiImg from "@/assets/team/oladapo-oshinusi.jpg";
-import profNelsonOyesikuImg from "@/assets/team/prof-nelson-oyesiku.jpg";
-import mrsIbukunAwosikaImg from "@/assets/team/mrs-ibukun-awosika.jpg";
-import rotimiAkindeImg from "@/assets/team/rotimi-akinde.png";
-import ademolaAdeyemiBeroImg from "@/assets/team/ademola-ademola-ade-yemi-bero.png";
-import otunbaBimboAshiruImg from "@/assets/team/otunba-bimbo-ashiru.jpg";
-import adetomiOlaobajuImg from "@/assets/team/adetomi-olaobaju.jpg";
-import drAjibikeOyewumiImg from "@/assets/team/dr-ajibike-oyewumi.jpg";
-import drOluboredeOlawumiImg from "@/assets/team/dr-oluborede-olawumi.jpg";
-import mrOluwafemiOluwajimiImg from "@/assets/team/mr-oluwafemi-oluwajimi.jpg";
-import profFolasadeOgunsolaImg from "@/assets/team/prof-folasade-ogunsola.jpg";
-import drKemiBabagbemiImg from "@/assets/team/dr-kemi-babagbemi.jpg";
+import folaAdeolaImg from "@/assets/team/fola-adeola.webp";
+import folaLaoyeImg from "@/assets/team/fola-laoye.webp";
+import oladapoOshinusiImg from "@/assets/team/oladapo-oshinusi.webp";
+import profNelsonOyesikuImg from "@/assets/team/prof-nelson-oyesiku.webp";
+import mrsIbukunAwosikaImg from "@/assets/team/mrs-ibukun-awosika.webp";
+import rotimiAkindeImg from "@/assets/team/rotimi-akinde.webp";
+import ademolaAdeyemiBeroImg from "@/assets/team/ademola-ademola-ade-yemi-bero.webp";
+import otunbaBimboAshiruImg from "@/assets/team/otunba-bimbo-ashiru.webp";
+import adetomiOlaobajuImg from "@/assets/team/adetomi-olaobaju.webp";
+import drAjibikeOyewumiImg from "@/assets/team/dr-ajibike-oyewumi.webp";
+import drOluboredeOlawumiImg from "@/assets/team/dr-oluborede-olawumi.webp";
+import mrOluwafemiOluwajimiImg from "@/assets/team/mr-oluwafemi-oluwajimi.webp";
+import profFolasadeOgunsolaImg from "@/assets/team/prof-folasade-ogunsola.webp";
+import drKemiBabagbemiImg from "@/assets/team/dr-kemi-babagbemi.webp";
 export const coreValues = [
   {
     title: "Empathetic",
