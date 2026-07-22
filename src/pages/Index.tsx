@@ -22,20 +22,20 @@ const faqs = [
     answer: "The Iwosan Integration Hub is a centralized digital platform that connects all Iwosan Healthcare Systems subsidiaries — providing a unified space for tools, resources, healthcare collaboration, and information across the Iwosan network.",
   },
   {
+    question: "What is Iwosan's mission in the Nigerian healthcare landscape?",
+    answer: "Iwosan's mission is to transform Nigeria into a global healthcare frontier by raising the standards of healthcare delivery and management in line with global best practices — leveraging institutional partnerships, innovation, and investment to advance healthcare access and quality.",
+  },
+  {
+    question: "How is Iwosan embracing digital healthcare transformation?",
+    answer: "Iwosan is actively investing in digital health infrastructure, including electronic health records, telemedicine services, and a connected ecosystem across its subsidiaries. The Iwosan Integration Hub itself is part of this digital transformation drive, serving as a centralized platform for the entire network.",
+  },
+  {
     question: "Which hospitals and platforms are part of the Iwosan network?",
     answer: "The Iwosan network currently comprises Iwosan Lagoon Hospitals, Eurapharma Care Services (Euracare), Paelon Memorial Hospital, and IASO Medipark — each specializing in different aspects of healthcare delivery across Lagos, Nigeria.",
   },
   {
-    question: "Where are Iwosan's facilities located?",
-    answer: "Iwosan's facilities are located across Lagos, Nigeria, with hospitals and care centres in Ikoyi, Ikeja, Victoria Island, Ikoyi, and Alaro City. The network continues to expand its footprint to improve access to quality healthcare.",
-  },
-  {
     question: "How long has Iwosan been operating in Nigeria?",
     answer: "Iwosan Investments Limited was co-founded in 2019 and went on to acquire other subsidiaries along the way. In 2026, the group rebranded as Iwosan Healthcare Systems Limited to reflect its expanded focus on healthcare delivery and management across Nigeria. The network's hospitals have a combined history of over 40 years of healthcare excellence in the region.",
-  },
-  {
-    question: "Is Iwosan Lagoon Hospitals internationally accredited?",
-    answer: "Yes. Iwosan Lagoon Hospitals has earned the Joint Commission International (JCI) Gold Seal of Approval five consecutive times, making it one of the most accredited hospitals in Sub-Saharan Africa and the first hospital in the region to achieve JCI accreditation.",
   },
   {
     question: "What specialist services does the Iwosan network offer?",
@@ -44,18 +44,6 @@ const faqs = [
   {
     question: "How can I contact Iwosan Healthcare Systems?",
     answer: "You can reach us by phone at +2349139352779, by email at info@iwosanhealth.com, or by visiting our facility in Lagos. You can also connect with individual subsidiaries through their dedicated websites accessible via the Our Platforms section.",
-  },
-  {
-    question: "What is Iwosan's mission in the Nigerian healthcare landscape?",
-    answer: "Iwosan's mission is to transform Nigeria into a global healthcare frontier by raising the standards of healthcare delivery and management in line with global best practices — leveraging institutional partnerships, innovation, and investment to advance healthcare access and quality.",
-  },
-  {
-    question: "Does Iwosan support healthcare professionals and institutions?",
-    answer: "Yes. Through the Iwosan Integration Hub, the network supports institutional stakeholders, medical professionals, and healthcare innovators with resources, knowledge-sharing platforms, training, and collaborative opportunities to advance healthcare in Nigeria.",
-  },
-  {
-    question: "How is Iwosan embracing digital healthcare transformation?",
-    answer: "Iwosan is actively investing in digital health infrastructure, including electronic health records, telemedicine services, and a connected ecosystem across its subsidiaries. The Iwosan Integration Hub itself is part of this digital transformation drive, serving as a centralized platform for the entire network.",
   },
 ];
 

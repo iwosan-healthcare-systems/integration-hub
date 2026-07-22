@@ -133,8 +133,8 @@ const NewsPage = () => {
           <p className="text-center text-muted-foreground py-16">No news articles found.</p>
         )}
 
-        {/* Featured article */}
-        {filtered.length > 0 && filtered[0].featured && (
+        {/* Featured article — only on the first page */}
+        {currentPage === 1 && filtered.length > 0 && filtered[0].featured && (
           <AnimateOnScroll>
             <ArticleLink item={filtered[0]} className="grid lg:grid-cols-2 gap-8 mb-14 group">
               <div className="rounded-2xl overflow-hidden img-zoom h-72 lg:h-auto">
