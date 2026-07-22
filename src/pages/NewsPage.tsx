@@ -1,9 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { ArticleLink } from "@/components/ArticleLink";
 import { getNews, type NewsItem } from "@/services/cmsService";
 import { Clock } from "lucide-react";
 import { Seo } from "@/components/Seo";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const NEWS_SEO = (
   <Seo
@@ -13,10 +22,27 @@ const NEWS_SEO = (
   />
 );
 
+const PAGE_SIZE = 9;
+
+// Builds a compact page list with ellipses, e.g. [1, "ellipsis", 4, 5, 6, "ellipsis", 10]
+function getPageNumbers(current: number, total: number): (number | "ellipsis")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "ellipsis")[] = [1];
+  if (current > 3) pages.push("ellipsis");
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  for (let p = start; p <= end; p++) pages.push(p);
+  if (current < total - 2) pages.push("ellipsis");
+  pages.push(total);
+  return pages;
+}
+
 const NewsPage = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
+  const [page, setPage] = useState(1);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     getNews().then(({ news: data }) => {
@@ -25,8 +51,23 @@ const NewsPage = () => {
     });
   }, []);
 
+  useEffect(() => {
+    setPage(1);
+  }, [filter]);
+
   const categories = ["All", ...Array.from(new Set(news.map((n) => n.category)))];
   const filtered = filter === "All" ? news : news.filter((n) => n.category === filter);
+  const hasFeatured = Boolean(filtered[0]?.featured);
+  const rest = hasFeatured ? filtered.slice(1) : filtered;
+  const totalPages = Math.max(1, Math.ceil(rest.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = rest.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const goToPage = (p: number) => {
+    if (p < 1 || p > totalPages || p === currentPage) return;
+    setPage(p);
+    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   if (loading) {
     return (
@@ -116,8 +157,8 @@ const NewsPage = () => {
         )}
 
         {/* Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {(filtered[0]?.featured ? filtered.slice(1) : filtered).map((item, i) => (
+        <div ref={listRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 scroll-mt-24">
+          {pageItems.map((item, i) => (
             <AnimateOnScroll key={item.id} delay={i * 0.1}>
               <ArticleLink item={item} className="group block">
                 {item.image && (
@@ -135,6 +176,53 @@ const NewsPage = () => {
             </AnimateOnScroll>
           ))}
         </div>
+
+        {totalPages > 1 && (
+          <Pagination className="mt-12">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    goToPage(currentPage - 1);
+                  }}
+                  className={currentPage === 1 ? "pointer-events-none opacity-40" : ""}
+                />
+              </PaginationItem>
+              {getPageNumbers(currentPage, totalPages).map((p, i) =>
+                p === "ellipsis" ? (
+                  <PaginationItem key={`ellipsis-${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      href="#"
+                      isActive={p === currentPage}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goToPage(p);
+                      }}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                ),
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    goToPage(currentPage + 1);
+                  }}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-40" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </section>
     </>
   );

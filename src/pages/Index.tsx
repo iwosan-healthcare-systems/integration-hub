@@ -1,5 +1,5 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
-import { ArrowRight, Heart, Stethoscope, BookOpen, ChevronDown, Sparkles } from "lucide-react";
+import { ArrowRight, Heart, Stethoscope, BookOpen, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import heroBannerMobileImg from "@/assets/hero-hub-mobile.webp";
@@ -321,33 +321,48 @@ const Index = () => {
 
       {/* FAQs */}
       <section className="py-20 bg-muted/50">
-        <div className="max-w-3xl mx-auto px-8 lg:px-16">
-          <AnimateOnScroll>
-            <div className="text-center mb-12">
-              <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">FAQ</p>
-              <h2 className="text-3xl font-bold mb-3">Frequently Asked Questions</h2>
-              <div className="section-divider mx-auto mt-3" />
+        <div className="max-w-6xl mx-auto px-8 lg:px-16 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:gap-16 items-start">
+          <AnimateOnScroll direction="left">
+            <div className="lg:sticky lg:top-24">
+              <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-bold mb-3">
+                Frequently Asked Questions
+              </p>
+              <h2 className="text-3xl lg:text-4xl font-bold mb-4 leading-tight">
+                Got questions? We've got answers.
+              </h2>
+              <p className="text-muted-foreground font-sans leading-relaxed mb-8 max-w-sm">
+                Here are common questions staff and partners ask about the Iwosan Integration Hub.
+              </p>
+              <a
+                href="mailto:info@iwosanhealth.com"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-iwosan-navy text-white font-sans font-semibold text-sm hover:opacity-90 transition-opacity"
+              >
+                Contact us
+              </a>
             </div>
           </AnimateOnScroll>
+
           <div className="space-y-3">
             {faqs.map((faq, i) => (
-              <AnimateOnScroll key={i} delay={i * 0.05}>
+              <AnimateOnScroll key={i} delay={i * 0.05} direction="right">
                 <div className="bg-background rounded-xl border border-border overflow-hidden">
                   <button
                     type="button"
-                    className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left"
+                    className="w-full flex items-center gap-3 px-5 py-4 text-left"
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
                     aria-expanded={openFaq === i ? "true" : "false"}
                   >
-                    <span className="font-serif font-semibold text-base text-foreground leading-snug">{faq.question}</span>
-                    <ChevronDown
-                      className={`h-5 w-5 text-accent shrink-0 transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`}
+                    <ChevronRight
+                      className={`h-4 w-4 text-accent shrink-0 transition-transform duration-300 ${openFaq === i ? "rotate-90" : ""}`}
                     />
+                    <span className="font-sans font-semibold text-sm sm:text-base text-foreground leading-snug">
+                      {faq.question}
+                    </span>
                   </button>
                   <div
                     className={`overflow-hidden transition-all duration-300 ${openFaq === i ? "max-h-96" : "max-h-0"}`}
                   >
-                    <p className="px-6 pb-5 text-sm font-sans text-muted-foreground leading-relaxed">{faq.answer}</p>
+                    <p className="px-5 pb-4 pl-12 text-sm font-sans text-muted-foreground leading-relaxed">{faq.answer}</p>
                   </div>
                 </div>
               </AnimateOnScroll>
