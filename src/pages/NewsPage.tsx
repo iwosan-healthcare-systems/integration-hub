@@ -35,8 +35,8 @@ const NewsPage = () => {
         <section className="bg-news-header min-h-[220px] sm:min-h-[240px] flex items-center py-14 sm:py-16 px-6 sm:px-8 lg:px-16 relative overflow-hidden">
           <div className="w-full max-w-6xl mx-auto">
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Stay Updated</p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">News & Announcements</h1>
-            <p className="font-sans text-primary-foreground/60 max-w-xl">Internal updates, industry news, and organizational highlights.</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">News & Announcements</h1>
+            <p className="font-sans text-white/60 max-w-xl">Internal updates, industry news, and organizational highlights.</p>
           </div>
         </section>
         <section className="py-12 px-6 sm:px-8 lg:px-16 max-w-6xl mx-auto">
@@ -62,8 +62,8 @@ const NewsPage = () => {
         <div className="w-full max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Stay Updated</p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">News & Announcements</h1>
-            <p className="font-sans text-primary-foreground/60 max-w-xl">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">News & Announcements</h1>
+            <p className="font-sans text-white/60 max-w-xl">
               Internal updates, industry news, and organizational highlights.
             </p>
           </AnimateOnScroll>

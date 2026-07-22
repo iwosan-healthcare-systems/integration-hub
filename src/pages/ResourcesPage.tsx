@@ -36,10 +36,10 @@ const ResourcesPage = () => {
         <div className="w-full max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Knowledge Base</p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
               Subsidiary SOP Repository
             </h1>
-            <p className="font-sans text-primary-foreground/60 max-w-xl">
+            <p className="font-sans text-white/60 max-w-xl">
               A single access point for standard operating procedures across the Iwosan network, helping every subsidiary work from consistent, approved, and up-to-date process documents.
             </p>
           </AnimateOnScroll>

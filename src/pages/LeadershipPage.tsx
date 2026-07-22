@@ -37,7 +37,7 @@ const LeadershipPage = () => {
         <div className="relative z-10 w-full max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.24em] text-accent text-xs font-semibold mb-3">Our Team</p>
-            <h1 className="text-3xl sm:text-4xl md:text-4xl font-bold text-primary-foreground leading-tight max-w-3xl">
+            <h1 className="text-3xl sm:text-4xl md:text-4xl font-bold text-white leading-tight max-w-3xl">
               Meet Our Industry Leaders
             </h1>
           </AnimateOnScroll>

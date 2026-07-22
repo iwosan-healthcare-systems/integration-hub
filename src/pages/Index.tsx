@@ -76,7 +76,7 @@ const Index = () => {
         <div className="absolute inset-0">
           <img src={heroBannerMobileImg} alt="" className="md:hidden w-full h-full object-cover object-center" fetchPriority="high" loading="eager" decoding="async" />
           <img src={heroBannerDesktopImg} alt="" className="hidden md:block w-full h-full object-cover object-center" fetchPriority="high" loading="eager" decoding="async" />
-          <div className="absolute inset-0 bg-primary/75" />
+          <div className="absolute inset-0 bg-iwosan-navy/75" />
         </div>
         <div className="relative z-10 w-full px-6 sm:px-8 md:px-10 lg:px-16 py-16 md:py-20">
           <div className="max-w-3xl">
@@ -86,12 +86,12 @@ const Index = () => {
               </p>
             </AnimateOnScroll>
             <AnimateOnScroll delay={0.1}>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-primary-foreground leading-[1.1] mb-5 md:mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-[1.1] mb-5 md:mb-6">
                 Iwosan Integration Hub
               </h1>
             </AnimateOnScroll>
             <AnimateOnScroll delay={0.2}>
-              <p className="text-primary-foreground/70 text-base sm:text-lg md:text-xl max-w-xl mb-7 md:mb-8 font-sans leading-relaxed">
+              <p className="text-white/70 text-base sm:text-lg md:text-xl max-w-xl mb-7 md:mb-8 font-sans leading-relaxed">
                 Transforming Nigeria into a global healthcare frontier. Your centralized
                 platform for tools, resources, and collaboration.
               </p>
@@ -106,7 +106,7 @@ const Index = () => {
                 </Link>
                 <Link
                   to="/subsidiaries"
-                  className="inline-flex items-center gap-2 px-6 sm:px-7 py-3 rounded-full border border-primary-foreground/30 text-primary-foreground font-sans font-medium text-sm hover:bg-primary-foreground/10 transition-colors"
+                  className="inline-flex items-center gap-2 px-6 sm:px-7 py-3 rounded-full border border-white/30 text-white font-sans font-medium text-sm hover:bg-white/10 transition-colors"
                 >
                   Our Platforms
                 </Link>
@@ -117,7 +117,7 @@ const Index = () => {
       </section>
 
       {/* Stats strip */}
-      <section className="bg-primary py-8">
+      <section className="bg-iwosan-navy py-8">
         <div className="max-w-6xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
             { value: "40+", label: "Years of Excellence" },
@@ -126,9 +126,9 @@ const Index = () => {
             { value: "2000+", label: "Healthcare Staff" },
           ].map((stat, i) => (
             <AnimateOnScroll key={stat.label} delay={i * 0.1}>
-              <div className="text-primary-foreground">
+              <div className="text-white">
                 <p className="text-3xl md:text-4xl font-bold font-serif">{stat.value}</p>
-                <p className="text-sm font-sans text-primary-foreground/60 mt-1">{stat.label}</p>
+                <p className="text-sm font-sans text-white/60 mt-1">{stat.label}</p>
               </div>
             </AnimateOnScroll>
           ))}
@@ -210,9 +210,9 @@ const Index = () => {
                     className="absolute inset-0 w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-500 z-10"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/10 to-transparent z-20" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-iwosan-navy/90 via-iwosan-navy/10 to-transparent z-20" />
                   <div className="absolute bottom-4 left-4 right-4 z-30">
-                    <h3 className="text-primary-foreground font-serif font-semibold text-lg drop-shadow">{sub.name}</h3>
+                    <h3 className="text-white font-serif font-semibold text-lg drop-shadow">{sub.name}</h3>
                   </div>
                 </div>
                 <p className="text-sm font-sans text-muted-foreground leading-relaxed">{sub.description}</p>
@@ -236,10 +236,10 @@ const Index = () => {
         <div className="relative z-10 max-w-3xl mx-auto text-center px-8">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-4">Innovation</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Driving Digital Healthcare Transformation
             </h2>
-            <p className="text-primary-foreground/60 font-sans mb-8 max-w-xl mx-auto">
+            <p className="text-white/60 font-sans mb-8 max-w-xl mx-auto">
               From electronic health records to telemedicine, we're building the infrastructure
               for next-generation healthcare delivery across Nigeria.
             </p>

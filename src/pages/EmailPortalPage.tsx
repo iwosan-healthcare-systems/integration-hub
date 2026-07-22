@@ -64,7 +64,7 @@ const EmailPortalPage = () => {
         <div className="relative z-10 w-full max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Tools</p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
               Email Portal
             </h1>
           </AnimateOnScroll>

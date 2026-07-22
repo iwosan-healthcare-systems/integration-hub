@@ -187,20 +187,20 @@ export function ChatWidget() {
         style={{ height: 480 }}
       >
         {/* Header */}
-        <div className="bg-primary px-4 py-3 flex items-center gap-3 shrink-0">
+        <div className="bg-iwosan-navy px-4 py-3 flex items-center gap-3 shrink-0">
           <div className="relative shrink-0">
             <img
               src={iwosanIcon}
               alt="Ivy"
               className="w-9 h-9 rounded-full object-contain bg-white p-1"
             />
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-primary" />
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-iwosan-navy" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-primary-foreground font-semibold text-sm leading-none">
+            <p className="text-white font-semibold text-sm leading-none">
               Ivy
             </p>
-            <p className="text-primary-foreground/50 text-xs mt-0.5">
+            <p className="text-white/50 text-xs mt-0.5">
               Iwosan AI Assistant · Online
             </p>
           </div>
@@ -208,7 +208,7 @@ export function ChatWidget() {
             type="button"
             onClick={() => setIsOpen(false)}
             aria-label="Close chat"
-            className="text-primary-foreground/40 hover:text-primary-foreground/80 transition-colors"
+            className="text-white/40 hover:text-white/80 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>

@@ -44,7 +44,7 @@ const SubsidiariesPage = () => {
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">
               Network
             </p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
               Subsidiaries & Platforms
             </h1>
           </AnimateOnScroll>

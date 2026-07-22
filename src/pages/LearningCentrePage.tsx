@@ -94,10 +94,10 @@ const LearningCentrePage = () => {
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">
               Learning Centre
             </p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
               Grow. Learn. Excel.
             </h1>
-            <p className="font-sans text-primary-foreground/60 max-w-xl mb-8">
+            <p className="font-sans text-white/60 max-w-xl mb-8">
               Your hub for professional development across the Iwosan network — structured courses,
               guided learning paths, and live training sessions to help every team member thrive.
               Use the search bar above to find any course by name, category, or topic.
@@ -112,8 +112,8 @@ const LearningCentrePage = () => {
                 { label: "Upcoming Sessions", value: loading ? "—" : sessions.length.toString() },
               ].map((s) => (
                 <div key={s.label} className="text-center">
-                  <p className="text-2xl font-bold text-primary-foreground">{s.value}</p>
-                  <p className="font-sans text-xs text-primary-foreground/50 mt-0.5">{s.label}</p>
+                  <p className="text-2xl font-bold text-white">{s.value}</p>
+                  <p className="font-sans text-xs text-white/50 mt-0.5">{s.label}</p>
                 </div>
               ))}
             </div>

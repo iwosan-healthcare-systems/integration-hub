@@ -52,8 +52,8 @@ const PictureLibraryPage = () => {
         <div className="relative z-10 w-full max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">Gallery</p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">Picture Library</h1>
-            <p className="font-sans text-primary-foreground/60 max-w-xl">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">Picture Library</h1>
+            <p className="font-sans text-white/60 max-w-xl">
               Moments, events, and milestones from across the Iwosan network.
             </p>
           </AnimateOnScroll>

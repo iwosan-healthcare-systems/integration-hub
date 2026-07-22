@@ -70,7 +70,10 @@ function CreateUserModal({ open, onClose, onCreated }: CreateUserModalProps) {
     setLoading(false);
     if (err) { setError(err); return; }
     if (user && temporaryPassword) {
-      onCreated({ ...user, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, temporaryPassword);
+      onCreated({
+        ...user, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        lastSignInAt: ''
+      }, temporaryPassword);
       reset();
       onClose();
     }
@@ -392,7 +395,6 @@ export default function UsersPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All login statuses</SelectItem>
-            <SelectItem value="pending">Pending first login</SelectItem>
             <SelectItem value="never">Never signed in</SelectItem>
             <SelectItem value="signed-in">Signed in</SelectItem>
           </SelectContent>

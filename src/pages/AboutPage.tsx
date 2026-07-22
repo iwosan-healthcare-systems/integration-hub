@@ -56,10 +56,10 @@ const AboutPage = () => {
         <div className="relative z-10 w-full max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-3">About Us</p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
               Our Story
             </h1>
-            <p className="text-primary-foreground/60 font-sans max-w-xl">
+            <p className="text-white/60 font-sans max-w-xl">
               Transforming the standards of healthcare delivery and management in Nigeria.
             </p>
           </AnimateOnScroll>
@@ -160,22 +160,22 @@ const AboutPage = () => {
       </section>
 
       {/* Timeline */}
-      <section className="py-20 bg-primary">
+      <section className="py-20 bg-iwosan-navy">
         <div className="max-w-4xl mx-auto px-8 lg:px-16">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-2">History</p>
-            <h2 className="text-3xl font-bold text-primary-foreground mb-2">Our Journey</h2>
+            <h2 className="text-3xl font-bold text-white mb-2">Our Journey</h2>
             <div className="section-divider mb-12" />
           </AnimateOnScroll>
           <div className="relative">
-            <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-primary-foreground/10" />
+            <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-white/10" />
             <div className="space-y-8">
               {milestones.map((m, i) => (
                 <AnimateOnScroll key={m.year} delay={i * 0.08}>
                   <div className="relative pl-10">
-                    <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-accent border-[3px] border-primary" />
+                    <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-accent border-[3px] border-iwosan-navy" />
                     <p className="font-serif font-bold text-accent text-lg">{m.year}</p>
-                    <p className="font-sans text-sm text-primary-foreground/60 mt-0.5">{m.event}</p>
+                    <p className="font-sans text-sm text-white/60 mt-0.5">{m.event}</p>
                   </div>
                 </AnimateOnScroll>
               ))}
