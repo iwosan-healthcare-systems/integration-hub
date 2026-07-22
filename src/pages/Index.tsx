@@ -86,7 +86,7 @@ const Index = () => {
               </p>
             </AnimateOnScroll>
             <AnimateOnScroll delay={0.1}>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-[1.1] mb-5 md:mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-primary-foreground leading-[1.1] mb-5 md:mb-6">
                 Iwosan Integration Hub
               </h1>
             </AnimateOnScroll>
