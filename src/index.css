@@ -320,13 +320,14 @@ input:-webkit-autofill:active {
   animation: float 4s ease-in-out infinite;
 }
 
-/* Typewriter cursor */
+/* Typewriter cursor — background is a fixed color, not currentColor, since the
+   text it sits beside may have its color overridden to transparent by .shine-text */
 .typewriter-cursor {
   display: inline-block;
   width: 3px;
   height: 0.85em;
   margin-left: 2px;
-  background: currentColor;
+  background: #fff;
   vertical-align: text-bottom;
   animation: blink 0.9s steps(1) infinite;
 }
@@ -335,7 +336,7 @@ input:-webkit-autofill:active {
   50% { opacity: 0; }
 }
 
-/* One-time shine sweep once the heading finishes typing */
+/* Continuous shine sweep highlight, directly on the text itself */
 @supports ((background-clip: text) or (-webkit-background-clip: text)) {
   .shine-text {
     background-image: linear-gradient(
@@ -353,7 +354,7 @@ input:-webkit-autofill:active {
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
-    animation: shineSweep 2.4s ease-in-out 1;
+    animation: shineSweep 3s linear infinite;
   }
 }
 

@@ -80,36 +80,25 @@ const Index = () => {
         </div>
         <div className="relative z-10 w-full px-6 sm:px-8 md:px-10 lg:px-16 py-16 md:py-20">
           <div className="max-w-3xl">
-            <div className="relative">
-              {/* Decorative rotating ring behind the eyebrow + title */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -left-8 -top-8 h-28 w-28 rounded-full border-2 border-dashed border-accent/40 sm:-left-10 sm:-top-10 sm:h-36 sm:w-36 md:h-44 md:w-44 animate-[spin_16s_linear_infinite]"
-              >
-                <span className="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-accent shadow-[0_0_10px_hsl(var(--accent))]" />
-                <span className="absolute -bottom-1.5 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-accent/60" />
-              </div>
-
-              <AnimateOnScroll>
-                <p className="relative inline-flex items-center gap-2 font-sans uppercase tracking-[0.2em] text-white text-sm sm:text-base font-bold mb-5 [text-shadow:0_0_16px_rgba(255,255,255,0.5)]">
-                  <Sparkles className="h-4 w-4 animate-pulse text-accent" aria-hidden="true" />
-                  <span aria-hidden="true">
-                    {heroEyebrowShown}
-                    {!heroFullyTyped && heroTypingEyebrow && <span className="typewriter-cursor" />}
-                  </span>
-                  <span className="sr-only">{HERO_EYEBROW}</span>
-                </p>
-              </AnimateOnScroll>
-              <AnimateOnScroll delay={0.1}>
-                <h1 className="relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-[1.1] mb-5 md:mb-6">
-                  <span aria-hidden="true" className={heroFullyTyped ? "shine-text" : undefined}>
-                    {heroTitleShown}
-                    {!heroFullyTyped && !heroTypingEyebrow && <span className="typewriter-cursor" />}
-                  </span>
-                  <span className="sr-only">{HERO_TITLE}</span>
-                </h1>
-              </AnimateOnScroll>
-            </div>
+            <AnimateOnScroll>
+              <p className="inline-flex items-center gap-2 font-sans uppercase tracking-[0.2em] text-white text-sm sm:text-base font-bold mb-5">
+                <Sparkles className="h-4 w-4 animate-pulse text-accent" aria-hidden="true" />
+                <span aria-hidden="true" className="shine-text">
+                  {heroEyebrowShown}
+                  {!heroFullyTyped && heroTypingEyebrow && <span className="typewriter-cursor" />}
+                </span>
+                <span className="sr-only">{HERO_EYEBROW}</span>
+              </p>
+            </AnimateOnScroll>
+            <AnimateOnScroll delay={0.1}>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-[1.1] mb-5 md:mb-6">
+                <span aria-hidden="true" className="shine-text">
+                  {heroTitleShown}
+                  {!heroFullyTyped && !heroTypingEyebrow && <span className="typewriter-cursor" />}
+                </span>
+                <span className="sr-only">{HERO_TITLE}</span>
+              </h1>
+            </AnimateOnScroll>
             <AnimateOnScroll delay={0.2}>
               <p className="text-white/70 text-base sm:text-lg md:text-xl max-w-xl mb-7 md:mb-8 font-sans leading-relaxed">
                 Transforming Nigeria into a global healthcare frontier. Your centralized
