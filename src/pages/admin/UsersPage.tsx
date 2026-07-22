@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Search, Plus, MoreHorizontal, RefreshCw, UserCheck, UserX,
-  Trash2, Pencil, X, Copy, Check, KeyRound, LayoutDashboard, Lock
+  Trash2, Pencil, X, Copy, Check, KeyRound, LayoutDashboard, Lock, ListFilter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -229,6 +229,8 @@ export default function UsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [loginFilter, setLoginFilter] = useState<'all' | 'pending' | 'never' | 'signed-in'>('all');
+  const [sortBy, setSortBy] = useState<'joined-desc' | 'joined-asc' | 'login-desc' | 'login-asc' | 'name'>('joined-desc');
   const [globalError, setGlobalError] = useState('');
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -248,12 +250,54 @@ export default function UsersPage() {
 
   useEffect(() => { load(); }, []);
 
-  const filtered = users.filter(
-    (u) =>
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase()) ||
-      u.role.toLowerCase().includes(search.toLowerCase())
-  );
+  const isPending = (u: AdminUser) => u.isFirstLogin && u.authProvider !== 'azure';
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    let result = users.filter(
+      (u) =>
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.role.toLowerCase().includes(q)
+    );
+
+    if (loginFilter === 'pending') result = result.filter(isPending);
+    else if (loginFilter === 'never') result = result.filter((u) => !u.lastSignInAt);
+    else if (loginFilter === 'signed-in') result = result.filter((u) => !!u.lastSignInAt);
+
+    const withTime = (d: string | null) => (d ? new Date(d).getTime() : null);
+
+    return [...result].sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'joined-asc':
+          return withTime(a.createdAt)! - withTime(b.createdAt)!;
+        case 'login-desc': {
+          const at = withTime(a.lastSignInAt);
+          const bt = withTime(b.lastSignInAt);
+          if (at === null && bt === null) return 0;
+          if (at === null) return 1;
+          if (bt === null) return -1;
+          return bt - at;
+        }
+        case 'login-asc': {
+          const at = withTime(a.lastSignInAt);
+          const bt = withTime(b.lastSignInAt);
+          if (at === null && bt === null) return 0;
+          if (at === null) return -1;
+          if (bt === null) return 1;
+          return at - bt;
+        }
+        case 'joined-desc':
+        default:
+          return withTime(b.createdAt)! - withTime(a.createdAt)!;
+      }
+    });
+  }, [users, search, loginFilter, sortBy]);
+
+  const filtersActive = loginFilter !== 'all' || sortBy !== 'joined-desc';
+  const clearFilters = () => { setLoginFilter('all'); setSortBy('joined-desc'); };
 
   const handleToggleActive = async (u: AdminUser) => {
     setActionLoading(u.id);
@@ -304,7 +348,11 @@ export default function UsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-foreground">Users</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">{users.length} total account{users.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {filtered.length === users.length
+              ? `${users.length} total account${users.length !== 1 ? 's' : ''}`
+              : `${filtered.length} of ${users.length} accounts`}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={load} disabled={loading} className="gap-2">
@@ -327,15 +375,48 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, email, or role…"
-          className="pl-9"
-        />
+      {/* Search & filters */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, email, or role…"
+            className="pl-9"
+          />
+        </div>
+        <Select value={loginFilter} onValueChange={(v) => setLoginFilter(v as typeof loginFilter)}>
+          <SelectTrigger className="sm:w-48 shrink-0">
+            <SelectValue placeholder="Login status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All login statuses</SelectItem>
+            <SelectItem value="pending">Pending first login</SelectItem>
+            <SelectItem value="never">Never signed in</SelectItem>
+            <SelectItem value="signed-in">Signed in</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+          <SelectTrigger className="sm:w-56 shrink-0">
+            <span className="flex items-center gap-1.5 truncate">
+              <ListFilter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Sort by" />
+            </span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="joined-desc">Date joined — newest first</SelectItem>
+            <SelectItem value="joined-asc">Date joined — oldest first</SelectItem>
+            <SelectItem value="login-desc">Last login — most recent</SelectItem>
+            <SelectItem value="login-asc">Last login — least recent</SelectItem>
+            <SelectItem value="name">Name (A–Z)</SelectItem>
+          </SelectContent>
+        </Select>
+        {filtersActive && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1.5 text-xs shrink-0">
+            <X className="h-3.5 w-3.5" /> Clear
+          </Button>
+        )}
       </div>
 
       {/* Table */}

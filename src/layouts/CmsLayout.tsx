@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Newspaper, BookOpen, CalendarDays, GraduationCap, Images, LogOut, PenSquare, Menu, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ModeToggle } from '@/components/ModeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { clearAzureSession } from '@/services/authService';
 import { useInactivityLogout } from '@/hooks/useInactivityLogout';
@@ -162,7 +163,10 @@ export function CmsLayout() {
               <Menu className="h-5 w-5" />
             </Button>
           </div>
-          <span className="hidden sm:block text-xs text-muted-foreground">Iwosan Integration Hub</span>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:block text-xs text-muted-foreground">Iwosan Integration Hub</span>
+            <ModeToggle />
+          </div>
         </header>
 
         {/* Page content */}

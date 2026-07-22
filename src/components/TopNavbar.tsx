@@ -3,6 +3,7 @@ import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, LayoutDashboa
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModeToggle } from "@/components/ModeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -226,6 +227,8 @@ export function TopNavbar() {
           >
             <Search className="h-4 w-4" />
           </Button>
+
+          <ModeToggle />
 
           {/* Auth: user menu or sign-in button */}
           {!loading && (
