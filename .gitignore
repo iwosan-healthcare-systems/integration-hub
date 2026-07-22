@@ -33,6 +33,7 @@ schema.sql
 scripts/bulk-create-users.mjs
 user-passwords.csv
 ProductionKey.pem
+netlify.toml
 
 # Local backups of uploaded CMS images
 cms-images-backup/
