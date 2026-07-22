@@ -4,7 +4,7 @@ import iwosanIcon from "@/assets/iwosan_icon.webp";
 
 export function Footer() {
   return (
-    <footer className="bg-iwosan-navy border-t border-white/10">
+    <footer className="bg-iwosan-navy dark:bg-background border-t border-white/10">
       <div className="max-w-6xl mx-auto px-8 lg:px-16 py-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
 
         {/* Brand */}

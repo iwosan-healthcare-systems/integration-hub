@@ -76,7 +76,7 @@ const AboutPage = () => {
         <div className="mt-10 sm:mt-12 lg:mt-14 grid gap-4 sm:gap-5 md:grid-cols-3 lg:gap-8">
           {visionItems.map((item, i) => (
             <AnimateOnScroll key={i} delay={i * 0.12} className="h-full">
-              <div className={`group relative flex h-full min-h-[9rem] flex-row items-center gap-4 rounded-3xl bg-slate-50/70 p-5 text-left transition duration-500 hover:-translate-y-1 hover:bg-slate-100 sm:min-h-[10rem] sm:p-6 md:min-h-[19rem] md:flex-col md:justify-start md:gap-8 md:pt-14 md:text-center lg:min-h-[24rem] lg:gap-9 lg:rounded-[2.5rem] lg:p-8 lg:pt-20`}>
+              <div className={`group relative flex h-full min-h-[9rem] flex-row items-center gap-4 rounded-3xl bg-slate-50 p-5 text-left transition duration-500 hover:-translate-y-1 hover:bg-slate-100 sm:min-h-[10rem] sm:p-6 md:min-h-[19rem] md:flex-col md:justify-start md:gap-8 md:pt-14 md:text-center lg:min-h-[24rem] lg:gap-9 lg:rounded-[2.5rem] lg:p-8 lg:pt-20`}>
                 <div className={`relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-50 shadow-xl transition-transform duration-500 group-hover:scale-105 md:h-24 md:w-24 lg:h-28 lg:w-28 ${item.iconRing}`}>
                   <img src={item.image} alt="Vision icon" className="h-full w-full rounded-full object-cover" loading="lazy" />
                 </div>
@@ -122,7 +122,7 @@ const AboutPage = () => {
           <h2 className="text-2xl sm:text-3xl font-bold mb-2">Our Core Values</h2>
           <div className="section-divider mb-8 sm:mb-10 lg:mb-12" />
         </AnimateOnScroll>
-        <div className="space-y-4 sm:space-y-5 lg:space-y-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
           {coreValues.map((value, i) => {
             const Icon = valueIcons[value.icon] || Heart;
             const isExpanded = expandedValues[value.title];
@@ -130,27 +130,25 @@ const AboutPage = () => {
             const preview = shouldTruncate && !isExpanded ? `${value.description.slice(0, 170).trim()}...` : value.description;
 
             return (
-              <AnimateOnScroll key={value.title} delay={i * 0.1}>
-                <div className="flex flex-col gap-4 rounded-3xl border border-slate-200/70 bg-white/95 p-5 transition duration-300 hover:-translate-y-1 hover:shadow-lg sm:flex-row sm:items-start sm:p-6 lg:rounded-[2rem]">
+              <AnimateOnScroll key={value.title} delay={i * 0.1} className="h-full">
+                <div className="flex h-full flex-col gap-4 rounded-3xl border border-slate-200/70 bg-white/95 p-5 transition duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-6 lg:rounded-[2rem]">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent/10 transition-transform duration-500 hover:scale-105 sm:h-14 sm:w-14">
                     <Icon className="h-6 w-6 text-accent" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="font-sans font-semibold text-lg text-foreground">{value.title}</p>
-                      {shouldTruncate ? (
-                        <button
-                          type="button"
-                          onClick={() => toggleReadMore(value.title)}
-                          className="self-start text-sm font-semibold text-accent underline-offset-4 transition hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:shrink-0"
-                        >
-                          {isExpanded ? "Read less" : "Read more"}
-                        </button>
-                      ) : null}
-                    </div>
+                    <p className="font-sans font-semibold text-lg text-foreground">{value.title}</p>
                     <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-7">
                       {preview}
                     </p>
+                    {shouldTruncate ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleReadMore(value.title)}
+                        className="mt-3 text-sm font-semibold text-accent underline-offset-4 transition hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                      >
+                        {isExpanded ? "Read less" : "Read more"}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               </AnimateOnScroll>
