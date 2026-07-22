@@ -320,6 +320,48 @@ input:-webkit-autofill:active {
   animation: float 4s ease-in-out infinite;
 }
 
+/* Typewriter cursor */
+.typewriter-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 0.85em;
+  margin-left: 2px;
+  background: currentColor;
+  vertical-align: text-bottom;
+  animation: blink 0.9s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* One-time shine sweep once the heading finishes typing */
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .shine-text {
+    background-image: linear-gradient(
+      100deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.92) 42%,
+      #ffffff 50%,
+      hsl(var(--accent)) 53%,
+      rgba(255, 255, 255, 0.92) 60%,
+      rgba(255, 255, 255, 0.92) 100%
+    );
+    background-size: 250% 100%;
+    background-position: 250% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: shineSweep 2.4s ease-in-out 1;
+  }
+}
+
+@keyframes shineSweep {
+  0% { background-position: 250% 0; }
+  100% { background-position: -60% 0; }
+}
+
 /* Underline link */
 .link-underline {
   position: relative;

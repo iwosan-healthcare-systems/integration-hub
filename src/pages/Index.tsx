@@ -1,5 +1,5 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
-import { ArrowRight, Heart, Stethoscope, BookOpen, ChevronDown } from "lucide-react";
+import { ArrowRight, Heart, Stethoscope, BookOpen, ChevronDown, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import heroBannerMobileImg from "@/assets/hero-hub-mobile.webp";
@@ -9,6 +9,8 @@ import innovationImg from "@/assets/innovation-bg.webp";
 import { subsidiaries } from "@/data/hub-data";
 import { getNews, type NewsItem } from "@/services/cmsService";
 import { Seo } from "@/components/Seo";
+import { TypewriterHeading } from "@/components/TypewriterHeading";
+import { CountUpStat } from "@/components/CountUpStat";
 
 const faqs = [
   {
@@ -81,14 +83,16 @@ const Index = () => {
         <div className="relative z-10 w-full px-6 sm:px-8 md:px-10 lg:px-16 py-16 md:py-20">
           <div className="max-w-3xl">
             <AnimateOnScroll>
-              <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs mb-4 font-medium">
+              <p className="inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 font-sans uppercase tracking-[0.25em] text-accent text-sm sm:text-base font-semibold mb-5">
+                <Sparkles className="h-4 w-4 animate-pulse" />
                 Welcome to the Hub
               </p>
             </AnimateOnScroll>
             <AnimateOnScroll delay={0.1}>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-[1.1] mb-5 md:mb-6">
-                Iwosan Integration Hub
-              </h1>
+              <TypewriterHeading
+                text="Iwosan Integration Hub"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-[1.1] mb-5 md:mb-6"
+              />
             </AnimateOnScroll>
             <AnimateOnScroll delay={0.2}>
               <p className="text-white/70 text-base sm:text-lg md:text-xl max-w-xl mb-7 md:mb-8 font-sans leading-relaxed">
@@ -127,7 +131,7 @@ const Index = () => {
           ].map((stat, i) => (
             <AnimateOnScroll key={stat.label} delay={i * 0.1}>
               <div className="text-white">
-                <p className="text-3xl md:text-4xl font-bold font-serif">{stat.value}</p>
+                <CountUpStat value={stat.value} className="block text-3xl md:text-4xl font-bold font-serif" />
                 <p className="text-sm font-sans text-white/60 mt-1">{stat.label}</p>
               </div>
             </AnimateOnScroll>

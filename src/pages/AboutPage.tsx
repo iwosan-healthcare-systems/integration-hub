@@ -3,6 +3,13 @@ import { useState } from "react";
 import { coreValues, milestones } from "@/data/hub-data";
 import { Seo } from "@/components/Seo";
 import { Heart, Shield, BookOpen, Lightbulb, Globe } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import hospitalImg from "@/assets/hospital-interior.webp";
 import visionIcon1 from "@/assets/vision-icon-1.png";
 import visionIcon2 from "@/assets/vision-icon-2.png";
@@ -11,8 +18,10 @@ import visionIcon3 from "@/assets/vision-icon-3.png";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const valueIcons: Record<string, any> = { Heart, Shield, BookOpen, Lightbulb, Globe };
 
+const CORE_VALUE_PREVIEW_LENGTH = 90;
+
 const AboutPage = () => {
-  const [expandedValues, setExpandedValues] = useState<Record<string, boolean>>({});
+  const [openValueTitle, setOpenValueTitle] = useState<string | null>(null);
 
   const visionItems = [
     {
@@ -35,12 +44,8 @@ const AboutPage = () => {
     },
   ];
 
-  const toggleReadMore = (title: string) => {
-    setExpandedValues((prev) => ({
-      ...prev,
-      [title]: !prev[title],
-    }));
-  };
+  const openValue = coreValues.find((v) => v.title === openValueTitle);
+  const OpenValueIcon = openValue ? valueIcons[openValue.icon] || Heart : Heart;
 
   return (
     <>
@@ -125,9 +130,10 @@ const AboutPage = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-6 lg:gap-6">
           {coreValues.map((value, i) => {
             const Icon = valueIcons[value.icon] || Heart;
-            const isExpanded = expandedValues[value.title];
-            const shouldTruncate = value.description.length > 170;
-            const preview = shouldTruncate && !isExpanded ? `${value.description.slice(0, 170).trim()}...` : value.description;
+            const shouldTruncate = value.description.length > CORE_VALUE_PREVIEW_LENGTH;
+            const preview = shouldTruncate
+              ? `${value.description.slice(0, CORE_VALUE_PREVIEW_LENGTH).trim()}...`
+              : value.description;
             // First 3 cards fill the top row; the remaining cards are offset
             // to sit centered underneath, in the gaps of the row above.
             // (Tailwind needs these written out as literal classes to detect them.)
@@ -154,10 +160,10 @@ const AboutPage = () => {
                     {shouldTruncate ? (
                       <button
                         type="button"
-                        onClick={() => toggleReadMore(value.title)}
+                        onClick={() => setOpenValueTitle(value.title)}
                         className="mt-3 text-sm font-semibold text-accent underline-offset-4 transition hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
                       >
-                        {isExpanded ? "Read less" : "Read more"}
+                        Read more
                       </button>
                     ) : null}
                   </div>
@@ -166,6 +172,20 @@ const AboutPage = () => {
             );
           })}
         </div>
+
+        <Dialog open={!!openValue} onOpenChange={(open) => !open && setOpenValueTitle(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 mb-2">
+                <OpenValueIcon className="h-6 w-6 text-accent" />
+              </div>
+              <DialogTitle>{openValue?.title}</DialogTitle>
+              <DialogDescription className="text-sm sm:text-base leading-7 pt-2">
+                {openValue?.description}
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
       </section>
 
       {/* Timeline */}
