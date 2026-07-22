@@ -42,7 +42,7 @@ const NewsPage = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
   const [page, setPage] = useState(1);
-  const listRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     getNews().then(({ news: data }) => {
@@ -66,7 +66,7 @@ const NewsPage = () => {
   const goToPage = (p: number) => {
     if (p < 1 || p > totalPages || p === currentPage) return;
     setPage(p);
-    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   if (loading) {
@@ -111,7 +111,7 @@ const NewsPage = () => {
         </div>
       </section>
 
-      <section className="py-12 px-6 sm:px-8 lg:px-16 max-w-6xl mx-auto">
+      <section ref={sectionRef} className="py-12 px-6 sm:px-8 lg:px-16 max-w-6xl mx-auto scroll-mt-24">
         <div className="flex flex-wrap gap-2 mb-10">
           {categories.map((cat) => (
             <button
@@ -157,7 +157,7 @@ const NewsPage = () => {
         )}
 
         {/* Grid */}
-        <div ref={listRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 scroll-mt-24">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {pageItems.map((item, i) => (
             <AnimateOnScroll key={item.id} delay={i * 0.1}>
               <ArticleLink item={item} className="group block">
