@@ -97,6 +97,26 @@
   }
 }
 
+/* Respect the OS-level "reduce motion" preference across every animation and
+   transition added throughout the hub, rather than handling each one individually. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Loading spinners communicate an active process, not decoration —
+     keep them moving (just slower) instead of freezing mid-spin. */
+  .animate-spin {
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+
 /* Neutralize the browser's forced yellow autofill background so inputs keep
    their own design instead of Chrome/Edge's native highlight. */
 input:-webkit-autofill,

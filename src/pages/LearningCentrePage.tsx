@@ -166,7 +166,7 @@ const LearningCentrePage = () => {
 
                 return (
                   <AnimateOnScroll key={path.id} delay={i * 0.1}>
-                    <div className="flex flex-col h-full rounded-2xl border border-border bg-card p-6 hover:shadow-md transition-all duration-200">
+                    <div className="flex flex-col h-full rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-1">
                       {/* Icon + title */}
                       <div className="flex items-start gap-4 mb-4">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
@@ -281,7 +281,7 @@ const LearningCentrePage = () => {
                 .map((course, i) => {
                   const CatIcon = categoryIcon[course.category] ?? BookOpen;
                   const cardContent = (
-                    <div className="flex flex-col h-full rounded-2xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-md group">
+                    <div className="flex flex-col h-full rounded-2xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-1 group">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -374,7 +374,7 @@ const LearningCentrePage = () => {
 
                 return (
                   <AnimateOnScroll key={session.id} delay={i * 0.1}>
-                    <div className="flex flex-col h-full rounded-2xl border border-border bg-card p-6 hover:shadow-md transition-all duration-200">
+                    <div className="flex flex-col h-full rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-1">
                       {/* Date block */}
                       <div className="flex items-center gap-4 mb-5">
                         <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-primary text-primary-foreground shrink-0">

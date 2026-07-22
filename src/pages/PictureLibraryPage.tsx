@@ -82,7 +82,7 @@ const PictureLibraryPage = () => {
                   onClick={() => openAlbum(pic)}
                   className="group block w-full text-left"
                 >
-                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 img-zoom bg-muted">
+                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 img-zoom bg-muted transition-shadow duration-300 group-hover:shadow-lg">
                     <img src={pic.images[0]} alt={pic.title} className="w-full h-full object-cover" loading="lazy" />
                     {pic.images.length > 1 && (
                       <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5">
