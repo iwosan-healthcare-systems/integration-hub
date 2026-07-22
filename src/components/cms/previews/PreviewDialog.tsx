@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface PreviewDialogProps {
   open: boolean;
@@ -14,7 +15,7 @@ interface PreviewDialogProps {
 export function PreviewDialog({ open, onOpenChange, children, className }: PreviewDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={className ?? "sm:max-w-md"}>
+      <DialogContent className={cn("max-h-[85vh] overflow-y-auto", className ?? "sm:max-w-md")}>
         <DialogTitle className="flex items-center gap-2 text-xs font-sans font-semibold uppercase tracking-widest text-muted-foreground">
           <Eye className="h-3.5 w-3.5" />
           Preview — unsaved changes

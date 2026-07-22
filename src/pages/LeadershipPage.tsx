@@ -78,7 +78,7 @@ const LeadershipPage = () => {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                       {category.items.map((member, i) => (
                         <AnimateOnScroll key={member.name} delay={i * 0.08}>
                           <div className="group text-center px-2 py-3 transition-transform duration-300 hover:-translate-y-1">

@@ -348,7 +348,7 @@ const Index = () => {
                     </span>
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 ${openFaq === i ? "max-h-96" : "max-h-0"}`}
+                    className={`transition-all duration-300 ${openFaq === i ? "max-h-96 overflow-y-auto" : "max-h-0 overflow-hidden"}`}
                   >
                     <p className="px-5 pb-4 pl-12 text-sm font-sans text-muted-foreground leading-relaxed">{faq.answer}</p>
                   </div>

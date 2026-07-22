@@ -66,7 +66,12 @@ const NewsPage = () => {
   const goToPage = (p: number) => {
     if (p < 1 || p > totalPages || p === currentPage) return;
     setPage(p);
-    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const container = document.getElementById("main-scroll");
+    if (container && sectionRef.current) {
+      container.scrollTo({ top: sectionRef.current.offsetTop, behavior: "smooth" });
+    } else {
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   if (loading) {

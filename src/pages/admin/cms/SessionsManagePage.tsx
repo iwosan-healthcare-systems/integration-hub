@@ -78,7 +78,7 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Session' : 'Add Session'}</DialogTitle>
         </DialogHeader>

@@ -81,7 +81,7 @@ function CreateUserModal({ open, onClose, onCreated }: CreateUserModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onClose(); } }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
         </DialogHeader>
@@ -131,7 +131,7 @@ function PasswordModal({ password, name, onClose }: { password: string; name: st
   };
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>User Created</DialogTitle>
         </DialogHeader>
@@ -184,7 +184,7 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
@@ -432,7 +432,7 @@ export default function UsersPage() {
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">User</span>
           </div>
           {/* Role & Status */}
-          <div className="hidden sm:block shrink-0 w-32">
+          <div className="hidden sm:block shrink-0 w-40">
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Role & Status</span>
           </div>
           {/* Auth */}
