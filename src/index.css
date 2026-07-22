@@ -97,6 +97,31 @@
   }
 }
 
+/* Neutralize the browser's forced yellow autofill background so inputs keep
+   their own design instead of Chrome/Edge's native highlight. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: hsl(var(--foreground));
+  -webkit-box-shadow: 0 0 0px 1000px hsl(var(--background)) inset;
+  box-shadow: 0 0 0px 1000px hsl(var(--background)) inset;
+  caret-color: hsl(var(--foreground));
+  transition: background-color 600000s ease-in-out 0s;
+}
+
+/* Login page sits on a dark video backdrop regardless of site theme, so its
+   glass inputs need their own fixed (not theme-based) autofill colors. */
+.login-input:-webkit-autofill,
+.login-input:-webkit-autofill:hover,
+.login-input:-webkit-autofill:focus,
+.login-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #fff;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.1) inset;
+  box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.1) inset;
+  caret-color: #fff;
+}
+
 /* Page loader */
 .page-loader {
   position: fixed;

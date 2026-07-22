@@ -112,10 +112,10 @@ const ResourcesPage = () => {
             </AnimateOnScroll>
 
             <AnimateOnScroll direction="right" delay={0.1}>
-              <div className="rounded-lg bg-primary p-6 sm:p-8 text-primary-foreground">
+              <div className="rounded-lg bg-iwosan-navy p-6 sm:p-8 text-white">
                 <p className="font-sans uppercase tracking-[0.2em] text-accent text-[10px] font-medium mb-3">SharePoint Access</p>
                 <h2 className="text-2xl font-bold mb-4">Open the SOP folder</h2>
-                <p className="font-sans text-sm text-primary-foreground/65 leading-relaxed mb-6">
+                <p className="font-sans text-sm text-white/65 leading-relaxed mb-6">
                   Use the SharePoint folder to view SOP documents, review current process guidance, and access subsidiary-specific procedure files when needed.
                 </p>
                 <a

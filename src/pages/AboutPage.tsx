@@ -122,16 +122,27 @@ const AboutPage = () => {
           <h2 className="text-2xl sm:text-3xl font-bold mb-2">Our Core Values</h2>
           <div className="section-divider mb-8 sm:mb-10 lg:mb-12" />
         </AnimateOnScroll>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-6 lg:gap-6">
           {coreValues.map((value, i) => {
             const Icon = valueIcons[value.icon] || Heart;
             const isExpanded = expandedValues[value.title];
             const shouldTruncate = value.description.length > 170;
             const preview = shouldTruncate && !isExpanded ? `${value.description.slice(0, 170).trim()}...` : value.description;
+            // First 3 cards fill the top row; the remaining cards are offset
+            // to sit centered underneath, in the gaps of the row above.
+            // (Tailwind needs these written out as literal classes to detect them.)
+            const gridPositions = [
+              "lg:col-span-2",
+              "lg:col-span-2",
+              "lg:col-span-2",
+              "lg:col-span-2 lg:col-start-2",
+              "lg:col-span-2 lg:col-start-4",
+            ];
+            const gridPosition = gridPositions[i] ?? "lg:col-span-2";
 
             return (
-              <AnimateOnScroll key={value.title} delay={i * 0.1} className="h-full">
-                <div className="flex h-full flex-col gap-4 rounded-3xl border border-slate-200/70 bg-white/95 p-5 transition duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-6 lg:rounded-[2rem]">
+              <AnimateOnScroll key={value.title} delay={i * 0.1} className={`h-full ${gridPosition}`}>
+                <div className="flex h-full flex-col gap-4 rounded-3xl border border-border bg-card p-5 transition duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-6 lg:rounded-[2rem]">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent/10 transition-transform duration-500 hover:scale-105 sm:h-14 sm:w-14">
                     <Icon className="h-6 w-6 text-accent" />
                   </div>

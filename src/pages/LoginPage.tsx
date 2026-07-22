@@ -160,7 +160,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 autoFocus
                 {...register('email')}
-                className={`h-11 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus-visible:border-white/50 focus-visible:ring-white/20 ${errors.email ? 'border-red-400/60' : ''}`}
+                className={`login-input h-11 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus-visible:border-white/50 focus-visible:ring-white/20 ${errors.email ? 'border-red-400/60' : ''}`}
               />
               {errors.email && (
                 <p className="text-xs text-red-300">{errors.email.message}</p>
@@ -177,7 +177,7 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   {...register('password')}
-                  className={`h-11 pr-10 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus-visible:border-white/50 focus-visible:ring-white/20 ${errors.password ? 'border-red-400/60' : ''}`}
+                  className={`login-input h-11 pr-10 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus-visible:border-white/50 focus-visible:ring-white/20 ${errors.password ? 'border-red-400/60' : ''}`}
                 />
                 <button
                   type="button"
