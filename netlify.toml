@@ -22,6 +22,10 @@
   VITE_AZURE_ORG3_CLIENT_ID = ""
   VITE_AZURE_ORG3_TENANT_ID = ""
 
+# ── UAT (develop branch) — overrides VITE_API_BASE_URL for this branch only ─
+[context.develop.environment]
+  VITE_API_BASE_URL = "https://iwosan-innovation-hub-production.up.railway.app"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
