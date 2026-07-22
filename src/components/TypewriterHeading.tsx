@@ -1,43 +1,32 @@
-import { useEffect, useState } from "react";
+import { useTypewriterLoop } from "@/hooks/useTypewriterLoop";
 
 export function TypewriterHeading({
   text,
   className,
   startDelay = 300,
-  speed = 55,
+  typeSpeed = 55,
+  deleteSpeed = 28,
+  pauseDuration = 2500,
 }: {
   text: string;
   className?: string;
   startDelay?: number;
-  speed?: number;
+  typeSpeed?: number;
+  deleteSpeed?: number;
+  pauseDuration?: number;
 }) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    let frame = 0;
-    let interval: ReturnType<typeof setInterval>;
-
-    const startTimeout = setTimeout(() => {
-      interval = setInterval(() => {
-        frame += 1;
-        setCount(frame);
-        if (frame >= text.length) clearInterval(interval);
-      }, speed);
-    }, startDelay);
-
-    return () => {
-      clearTimeout(startTimeout);
-      clearInterval(interval);
-    };
-  }, [text, startDelay, speed]);
-
-  const done = count >= text.length;
+  const { count, fullyTyped } = useTypewriterLoop(text, {
+    startDelay,
+    typeSpeed,
+    deleteSpeed,
+    pauseDuration,
+  });
 
   return (
     <h1 className={className}>
-      <span aria-hidden="true" className={done ? "shine-text" : undefined}>
+      <span aria-hidden="true" className={fullyTyped ? "shine-text" : undefined}>
         {text.slice(0, count)}
-        {!done && <span className="typewriter-cursor" />}
+        {!fullyTyped && <span className="typewriter-cursor" />}
       </span>
       <span className="sr-only">{text}</span>
     </h1>

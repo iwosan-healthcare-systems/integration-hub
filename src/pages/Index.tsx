@@ -9,8 +9,12 @@ import innovationImg from "@/assets/innovation-bg.webp";
 import { subsidiaries } from "@/data/hub-data";
 import { getNews, type NewsItem } from "@/services/cmsService";
 import { Seo } from "@/components/Seo";
-import { TypewriterHeading } from "@/components/TypewriterHeading";
 import { CountUpStat } from "@/components/CountUpStat";
+import { useTypewriterLoop } from "@/hooks/useTypewriterLoop";
+
+const HERO_EYEBROW = "You're welcome to the";
+const HERO_TITLE = "Iwosan Integration Hub";
+const HERO_FULL_TEXT = `${HERO_EYEBROW} ${HERO_TITLE}`;
 
 const faqs = [
   {
@@ -58,12 +62,18 @@ const faqs = [
 const Index = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
+  const { count: heroCount, fullyTyped: heroFullyTyped } = useTypewriterLoop(HERO_FULL_TEXT);
 
   useEffect(() => {
     getNews().then(({ news }) => {
       if (news) setLatestNews(news.slice(0, 3));
     });
   }, []);
+
+  const heroEyebrowShown = HERO_FULL_TEXT.slice(0, Math.min(heroCount, HERO_EYEBROW.length));
+  const heroTitleShown =
+    heroCount > HERO_EYEBROW.length ? HERO_FULL_TEXT.slice(HERO_EYEBROW.length + 1, heroCount) : "";
+  const heroTypingEyebrow = heroCount <= HERO_EYEBROW.length;
 
   return (
     <>
@@ -83,16 +93,23 @@ const Index = () => {
         <div className="relative z-10 w-full px-6 sm:px-8 md:px-10 lg:px-16 py-16 md:py-20">
           <div className="max-w-3xl">
             <AnimateOnScroll>
-              <p className="inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 font-sans uppercase tracking-[0.25em] text-accent text-sm sm:text-base font-semibold mb-5">
-                <Sparkles className="h-4 w-4 animate-pulse" />
-                Welcome to the Hub
+              <p className="inline-flex items-center gap-2 font-sans uppercase tracking-[0.2em] text-accent text-sm sm:text-base font-bold mb-5 [text-shadow:0_0_16px_hsl(var(--accent)/0.6)]">
+                <Sparkles className="h-4 w-4 animate-pulse" aria-hidden="true" />
+                <span aria-hidden="true">
+                  {heroEyebrowShown}
+                  {!heroFullyTyped && heroTypingEyebrow && <span className="typewriter-cursor" />}
+                </span>
+                <span className="sr-only">{HERO_EYEBROW}</span>
               </p>
             </AnimateOnScroll>
             <AnimateOnScroll delay={0.1}>
-              <TypewriterHeading
-                text="Iwosan Integration Hub"
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-[1.1] mb-5 md:mb-6"
-              />
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-[1.1] mb-5 md:mb-6">
+                <span aria-hidden="true" className={heroFullyTyped ? "shine-text" : undefined}>
+                  {heroTitleShown}
+                  {!heroFullyTyped && !heroTypingEyebrow && <span className="typewriter-cursor" />}
+                </span>
+                <span className="sr-only">{HERO_TITLE}</span>
+              </h1>
             </AnimateOnScroll>
             <AnimateOnScroll delay={0.2}>
               <p className="text-white/70 text-base sm:text-lg md:text-xl max-w-xl mb-7 md:mb-8 font-sans leading-relaxed">
