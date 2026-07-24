@@ -53,7 +53,7 @@ const PictureLibraryPage = () => {
       {/* Gallery */}
       <section className="py-12 px-6 sm:px-8 lg:px-16 max-w-6xl mx-auto">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="space-y-2">
                 <div className="aspect-[4/3] rounded-xl bg-muted animate-pulse" />
@@ -64,7 +64,7 @@ const PictureLibraryPage = () => {
         ) : pictures.length === 0 ? (
           <p className="text-center text-muted-foreground py-16">No pictures have been added yet.</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {pictures.map((pic, i) => {
               const cover = pic.images.find(isOwnUploadUrl);
               return (
@@ -74,7 +74,7 @@ const PictureLibraryPage = () => {
                     onClick={() => navigate(`/album/${slugify(pic.title)}`)}
                     className="group block w-full text-left"
                   >
-                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 img-zoom bg-muted transition-shadow duration-300 group-hover:shadow-lg">
+                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-4 img-zoom bg-muted transition-shadow duration-300 group-hover:shadow-lg">
                       {cover
                         ? <img src={cover} alt={pic.title} className="w-full h-full object-cover" loading="lazy" />
                         : <div className="w-full h-full flex items-center justify-center"><ExternalLink className="h-6 w-6 text-muted-foreground/40" /></div>}
@@ -84,11 +84,11 @@ const PictureLibraryPage = () => {
                         </span>
                       )}
                     </div>
-                    <h3 className="font-serif font-semibold text-sm leading-snug mb-1 group-hover:text-accent transition-colors line-clamp-1">
+                    <h3 className="font-serif font-semibold text-base leading-snug mb-1.5 group-hover:text-accent transition-colors line-clamp-1">
                       {pic.title}
                     </h3>
                     {pic.description && (
-                      <p className="text-xs font-sans text-muted-foreground leading-relaxed line-clamp-2">
+                      <p className="text-sm font-sans text-muted-foreground leading-relaxed line-clamp-3">
                         {pic.description}
                       </p>
                     )}

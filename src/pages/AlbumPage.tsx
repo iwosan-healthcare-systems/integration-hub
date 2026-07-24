@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, Download, ExternalLink, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Download, ExternalLink, Images, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { useZoomPan } from "@/hooks/useZoomPan";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getPictureLibrary, type PictureLibraryItem } from "@/services/cmsService";
 import { slugify, isOwnUploadUrl } from "@/lib/utils";
 import { downloadUrl, downloadImagesAsZip, filenameFromUrl } from "@/lib/download";
 import { Seo } from "@/components/Seo";
+
+const PAGE_SIZE_OPTIONS = [20, 50, 100];
 
 const AlbumPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -20,11 +23,15 @@ const AlbumPage = () => {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [zipping, setZipping] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  const [page, setPage] = useState(1);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     setLoading(true);
     setNotFound(false);
     setSelected(new Set());
+    setPage(1);
     getPictureLibrary().then(({ pictures }) => {
       const found = pictures?.find((p) => slugify(p.title) === slug) ?? null;
       if (!found) setNotFound(true);
@@ -107,6 +114,24 @@ const AlbumPage = () => {
     }
   };
 
+  const totalPages = album ? Math.max(1, Math.ceil(album.images.length / pageSize)) : 1;
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * pageSize;
+  const pageItems = album
+    ? album.images.map((src, i) => ({ src, i })).slice(pageStart, pageStart + pageSize)
+    : [];
+  const isLastPage = currentPage === totalPages;
+
+  function goToPage(p: number) {
+    setPage(p);
+    titleRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function changePageSize(size: number) {
+    setPageSize(size);
+    setPage(1);
+  }
+
   if (loading) {
     return (
       <section className="py-12 px-6 sm:px-8 lg:px-16 max-w-6xl mx-auto">
@@ -144,7 +169,7 @@ const AlbumPage = () => {
 
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold mb-2">{album.title}</h1>
+            <h1 ref={titleRef} className="text-2xl sm:text-3xl font-serif font-bold mb-2 scroll-mt-6">{album.title}</h1>
             {album.description && <p className="text-muted-foreground max-w-2xl">{album.description}</p>}
           </div>
           <Button type="button" variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={copyAlbumLink}>
@@ -152,9 +177,11 @@ const AlbumPage = () => {
           </Button>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="sticky top-16 z-20 -mx-6 sm:-mx-8 lg:-mx-16 px-6 sm:px-8 lg:px-16 py-3 mb-4 bg-background/95 backdrop-blur-md border-b border-border/60 shadow-sm flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            {album.images.length} photo{album.images.length !== 1 ? "s" : ""}
+            {totalPages > 1
+              ? `Showing ${pageStart + 1}-${Math.min(pageStart + pageSize, album.images.length)} of ${album.images.length} photos`
+              : `${album.images.length} photo${album.images.length !== 1 ? "s" : ""}`}
             {selected.size > 0 ? ` · ${selected.size} selected` : ""}
           </p>
           <div className="flex items-center gap-2">
@@ -177,7 +204,7 @@ const AlbumPage = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {album.images.map((src, i) => {
+          {pageItems.map(({ src, i }) => {
             const own = isOwnUploadUrl(src);
             const isSelected = selected.has(i);
             return (
@@ -205,6 +232,48 @@ const AlbumPage = () => {
             );
           })}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-6">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Show</span>
+              <Select value={String(pageSize)} onValueChange={(v) => changePageSize(Number(v))}>
+                <SelectTrigger className="h-8 w-[72px] text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>per page</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled={currentPage <= 1} onClick={() => goToPage(currentPage - 1)}>
+                <ChevronLeft className="h-3.5 w-3.5" />Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
+              <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled={currentPage >= totalPages} onClick={() => goToPage(currentPage + 1)}>
+                Next<ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {isLastPage && (
+          <div className="mt-12 pt-10 border-t border-border/60 text-center">
+            <p className="font-serif text-lg sm:text-xl font-semibold text-foreground mb-2">
+              Thanks for taking a look through {album.title}
+            </p>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+              We're glad you stopped by — there are more moments from across the Iwosan network waiting to be seen.
+            </p>
+            <Button type="button" className="gap-2" onClick={() => navigate("/picture-library")}>
+              <Images className="h-4 w-4" />View more albums
+            </Button>
+          </div>
+        )}
       </section>
 
       {/* Single-image viewer */}
