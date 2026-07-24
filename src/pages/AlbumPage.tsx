@@ -177,30 +177,16 @@ const AlbumPage = () => {
           </Button>
         </div>
 
-        <div className="sticky top-16 z-20 -mx-6 sm:-mx-8 lg:-mx-16 px-6 sm:px-8 lg:px-16 py-3 mb-4 bg-background/95 backdrop-blur-md border-b border-border/60 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <p className="text-sm text-muted-foreground">
             {totalPages > 1
               ? `Showing ${pageStart + 1}-${Math.min(pageStart + pageSize, album.images.length)} of ${album.images.length} photos`
               : `${album.images.length} photo${album.images.length !== 1 ? "s" : ""}`}
             {selected.size > 0 ? ` · ${selected.size} selected` : ""}
           </p>
-          <div className="flex items-center gap-2">
-            {selected.size > 0 ? (
-              <>
-                <Button type="button" variant="ghost" size="sm" onClick={clearSelection}>Clear</Button>
-                <Button type="button" size="sm" className="gap-1.5" onClick={handleDownloadSelected} disabled={zipping}>
-                  {zipping
-                    ? <span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    : <Download className="h-3.5 w-3.5" />}
-                  Download {selected.size}
-                </Button>
-              </>
-            ) : (
-              album.images.length > 1 && (
-                <Button type="button" variant="ghost" size="sm" onClick={selectAll}>Select all</Button>
-              )
-            )}
-          </div>
+          {selected.size === 0 && album.images.length > 1 && (
+            <Button type="button" variant="ghost" size="sm" onClick={selectAll}>Select all</Button>
+          )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -232,6 +218,19 @@ const AlbumPage = () => {
             );
           })}
         </div>
+
+        {selected.size > 0 && (
+          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 rounded-full border border-border/60 bg-background/95 backdrop-blur-md shadow-lg px-4 py-2.5">
+            <span className="text-sm font-medium px-1">{selected.size} selected</span>
+            <Button type="button" variant="ghost" size="sm" onClick={clearSelection}>Clear</Button>
+            <Button type="button" size="sm" className="gap-1.5" onClick={handleDownloadSelected} disabled={zipping}>
+              {zipping
+                ? <span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                : <Download className="h-3.5 w-3.5" />}
+              Download {selected.size}
+            </Button>
+          </div>
+        )}
 
         {totalPages > 1 && (
           <div className="flex flex-wrap items-center justify-between gap-3 mt-6">
