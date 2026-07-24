@@ -5,8 +5,8 @@ const TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'] as const;
 
 /**
- * Logs out Azure-authenticated users after 1 hour of inactivity.
- * Only active when `enabled` is true (i.e. user.authProvider === 'azure').
+ * Logs out the current user after 1 hour of inactivity.
+ * Only active when `enabled` is true (i.e. a user is signed in).
  */
 export function useInactivityLogout(onTimeout: () => void, enabled: boolean) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

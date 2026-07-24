@@ -158,7 +158,7 @@ const AlbumPage = () => {
         path={`/album/${slug}`}
       />
 
-      <section className="py-10 px-6 sm:px-8 lg:px-16 max-w-6xl mx-auto">
+      <section className={`py-10 px-6 sm:px-8 lg:px-16 max-w-6xl mx-auto ${selected.size > 0 ? "pb-24" : ""}`}>
         <button
           type="button"
           onClick={() => navigate("/picture-library")}
@@ -220,7 +220,7 @@ const AlbumPage = () => {
         </div>
 
         {selected.size > 0 && (
-          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 rounded-full border border-border/60 bg-background/95 backdrop-blur-md shadow-lg px-4 py-2.5">
+          <div className="fixed bottom-5 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-30 mx-auto flex max-w-sm flex-wrap items-center justify-center gap-2 sm:gap-3 rounded-2xl border border-border/60 bg-background/95 backdrop-blur-md shadow-lg px-3 sm:px-4 py-2 sm:py-2.5">
             <span className="text-sm font-medium px-1">{selected.size} selected</span>
             <Button type="button" variant="ghost" size="sm" onClick={clearSelection}>Clear</Button>
             <Button type="button" size="sm" className="gap-1.5" onClick={handleDownloadSelected} disabled={zipping}>
@@ -233,7 +233,7 @@ const AlbumPage = () => {
         )}
 
         {totalPages > 1 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 mt-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-3 mt-6">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Show</span>
               <Select value={String(pageSize)} onValueChange={(v) => changePageSize(Number(v))}>
@@ -248,11 +248,11 @@ const AlbumPage = () => {
               </Select>
               <span>per page</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled={currentPage <= 1} onClick={() => goToPage(currentPage - 1)}>
                 <ChevronLeft className="h-3.5 w-3.5" />Previous
               </Button>
-              <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
+              <span className="text-sm text-muted-foreground whitespace-nowrap">Page {currentPage} of {totalPages}</span>
               <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled={currentPage >= totalPages} onClick={() => goToPage(currentPage + 1)}>
                 Next<ChevronRight className="h-3.5 w-3.5" />
               </Button>

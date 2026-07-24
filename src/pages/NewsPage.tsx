@@ -197,26 +197,33 @@ const NewsPage = () => {
                   className={currentPage === 1 ? "pointer-events-none opacity-40" : ""}
                 />
               </PaginationItem>
-              {getPageNumbers(currentPage, totalPages).map((p, i) =>
-                p === "ellipsis" ? (
-                  <PaginationItem key={`ellipsis-${i}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={p}>
-                    <PaginationLink
-                      href="#"
-                      isActive={p === currentPage}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        goToPage(p);
-                      }}
-                    >
-                      {p}
-                    </PaginationLink>
-                  </PaginationItem>
-                ),
-              )}
+              <PaginationItem className="sm:hidden">
+                <span className="px-3 text-sm text-muted-foreground whitespace-nowrap">
+                  Page {currentPage} of {totalPages}
+                </span>
+              </PaginationItem>
+              <div className="hidden sm:contents">
+                {getPageNumbers(currentPage, totalPages).map((p, i) =>
+                  p === "ellipsis" ? (
+                    <PaginationItem key={`ellipsis-${i}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={p}>
+                      <PaginationLink
+                        href="#"
+                        isActive={p === currentPage}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          goToPage(p);
+                        }}
+                      >
+                        {p}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ),
+                )}
+              </div>
               <PaginationItem>
                 <PaginationNext
                   href="#"

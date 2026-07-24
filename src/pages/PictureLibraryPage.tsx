@@ -53,7 +53,7 @@ const PictureLibraryPage = () => {
       {/* Gallery */}
       <section className="py-12 px-6 sm:px-8 lg:px-16 max-w-6xl mx-auto">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="space-y-2">
                 <div className="aspect-[4/3] rounded-xl bg-muted animate-pulse" />
@@ -64,7 +64,7 @@ const PictureLibraryPage = () => {
         ) : pictures.length === 0 ? (
           <p className="text-center text-muted-foreground py-16">No pictures have been added yet.</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {pictures.map((pic, i) => {
               const cover = pic.images.find(isOwnUploadUrl);
               return (
