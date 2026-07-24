@@ -242,7 +242,7 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '30mb' }));
 app.use(cookieParser());
 
 // Serve uploaded images from the database at /uploads/*
@@ -964,8 +964,10 @@ router.post('/admin/cms/upload', requireAuth, async (req, res) => {
   const ext = mimeToExt[match[1]] ?? 'jpg';
   const base64Data = match[3];
 
-  // Sanity-check size (~7.5 MB decoded limit)
-  if (base64Data.length > 10 * 1024 * 1024) return res.status(400).json({ error: 'Image too large. Max 7.5 MB.' });
+  // Sanity-check size (~20 MB decoded limit — the client compresses/resizes
+  // before upload, this is just headroom for files that don't shrink much,
+  // e.g. GIFs, which are uploaded uncompressed to preserve animation)
+  if (base64Data.length > 27 * 1024 * 1024) return res.status(400).json({ error: 'Image too large. Max 20 MB.' });
 
   try {
     const filename = `${Date.now()}-${randomBytes(6).toString('hex')}.${ext}`;

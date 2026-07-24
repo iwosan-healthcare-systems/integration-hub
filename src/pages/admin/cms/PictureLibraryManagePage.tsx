@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, X, ImageIcon, Images, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, X, ImageIcon, Images, Eye, Link as LinkIcon } from 'lucide-react';
+import { toast } from 'sonner';
+import { slugify } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,7 +83,7 @@ function PictureFormModal({ item, onClose, onSaved }: PictureFormProps) {
             value={form.images}
             onChange={(v) => set('images', v)}
             label="Pictures"
-            hint="all photos uploaded here are shown together under this title"
+            hint="all photos uploaded here are shown together under this title — you can also paste an external link (e.g. a Drive share link)"
             addButtonLabel="Upload picture"
             enableLibraryPicker={false}
           />
@@ -148,6 +150,14 @@ export default function PictureLibraryManagePage() {
       const idx = prev.findIndex((p) => p.id === saved.id);
       return idx >= 0 ? prev.map((p) => (p.id === saved.id ? saved : p)) : [saved, ...prev];
     });
+  };
+
+  const copyAlbumLink = (pic: PictureLibraryItem) => {
+    const url = `${window.location.origin}/album/${slugify(pic.title)}`;
+    navigator.clipboard.writeText(url).then(
+      () => toast.success('Album link copied to clipboard'),
+      () => toast.error('Could not copy link')
+    );
   };
 
   const handleDelete = async () => {
@@ -220,6 +230,9 @@ export default function PictureLibraryManagePage() {
                       <div className="w-full p-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <p className="text-xs font-medium text-white truncate">{pic.title}</p>
                         <div className="flex items-center gap-1 mt-1.5">
+                          <Button aria-label="Copy album link" variant="secondary" size="icon" className="h-6 w-6" onClick={() => copyAlbumLink(pic)} disabled={actionLoading === pic.id}>
+                            <LinkIcon className="h-3 w-3" />
+                          </Button>
                           <Button aria-label="Edit album" variant="secondary" size="icon" className="h-6 w-6" onClick={() => setFormTarget(pic)} disabled={actionLoading === pic.id}>
                             <Pencil className="h-3 w-3" />
                           </Button>

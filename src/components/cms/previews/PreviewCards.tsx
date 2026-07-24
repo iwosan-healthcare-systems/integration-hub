@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Course, CourseInput, SessionInput, LearningPathInput, PictureLibraryInput } from "@/services/cmsService";
-import { fmtFormDate } from "@/lib/utils";
+import { fmtFormDate, isOwnUploadUrl } from "@/lib/utils";
 
 // Mirrors the style maps in LearningCentrePage.tsx / SessionsManagePage.tsx so
 // previews match production exactly.
@@ -179,8 +179,10 @@ export function PicturePreviewCard({ picture }: { picture: PictureLibraryInput }
   return (
     <div className="rounded-xl overflow-hidden border border-border bg-card">
       <div className="relative aspect-[4/3] bg-muted flex items-center justify-center">
-        {cover ? (
+        {cover && isOwnUploadUrl(cover) ? (
           <img src={cover} alt={picture.title} className="w-full h-full object-cover" />
+        ) : cover ? (
+          <ExternalLink className="h-8 w-8 text-muted-foreground/40" />
         ) : (
           <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
         )}

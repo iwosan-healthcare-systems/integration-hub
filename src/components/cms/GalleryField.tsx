@@ -1,10 +1,15 @@
 import { useRef, useState } from "react";
-import { Plus, Upload, X, ImageIcon, Library } from "lucide-react";
+import { Plus, Upload, X, ImageIcon, ExternalLink, Library } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/services/cmsService";
+import { isOwnUploadUrl } from "@/lib/utils";
+import { compressImageFile } from "@/lib/imageCompression";
 import { PictureLibraryPickerDialog } from "./PictureLibraryPickerDialog";
+
+const MAX_UPLOAD_BATCH = 50;
 
 interface GalleryFieldProps {
   value: string[];
@@ -50,6 +55,12 @@ export function GalleryField({
 
   async function handleUpload(files: FileList) {
     const fileList = Array.from(files);
+    if (fileList.length > MAX_UPLOAD_BATCH) {
+      const message = `You can only upload ${MAX_UPLOAD_BATCH} images at a time. You selected ${fileList.length}.`;
+      setError(message);
+      toast.error(message);
+      return;
+    }
     setUploading(true);
     setUploadTotal(fileList.length);
     setError("");
@@ -58,7 +69,8 @@ export function GalleryField({
     const results = await Promise.all(
       fileList.map(async (file) => {
         try {
-          const base64 = await readAsDataUrl(file);
+          const compressed = await compressImageFile(file);
+          const base64 = await readAsDataUrl(compressed);
           return await uploadImage(base64);
         } catch {
           return { url: null, error: "Failed to read file" };
@@ -70,9 +82,12 @@ export function GalleryField({
     const uploaded = results.filter((r): r is { url: string; error: null } => !!r.url).map((r) => `${apiBase}${r.url}`);
     if (uploaded.length > 0) onChange([...value, ...uploaded]);
 
-    const failedCount = results.length - uploaded.length;
-    if (failedCount > 0) {
-      setError(`${failedCount} of ${results.length} image${results.length !== 1 ? "s" : ""} failed to upload.`);
+    const failed = results.filter((r) => !r.url);
+    if (failed.length > 0) {
+      const reasons = Array.from(new Set(failed.map((r) => r.error || "Upload failed")));
+      const message = `${failed.length} of ${results.length} image${results.length !== 1 ? "s" : ""} failed to upload: ${reasons.join(" ")}`;
+      setError(message);
+      toast.error(message);
     }
   }
 
@@ -85,24 +100,41 @@ export function GalleryField({
 
       {value.length > 0 && (
         <div className="space-y-2">
-          {value.map((url, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded overflow-hidden bg-muted/30 border border-border/60 shrink-0 flex items-center justify-center">
-                {url
-                  ? <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  : <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/40" />}
+          {value.map((url, i) => {
+            const external = !!url && !isOwnUploadUrl(url);
+            return (
+              <div key={i} className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded overflow-hidden bg-muted/30 border border-border/60 shrink-0 flex items-center justify-center">
+                  {external
+                    ? <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/60" />
+                    : url
+                      ? <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      : <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                </div>
+                <Input
+                  value={url}
+                  onChange={(e) => updateAt(i, e.target.value)}
+                  placeholder="https://… (e.g. a Drive share link)"
+                  className="flex-1"
+                />
+                {external && (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Open link in new tab"
+                    title="Open link in new tab"
+                    className="h-8 w-8 shrink-0 flex items-center justify-center text-muted-foreground hover:text-accent"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                <Button type="button" aria-label="Remove image" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeAt(i)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
-              <Input
-                value={url}
-                onChange={(e) => updateAt(i, e.target.value)}
-                placeholder="https://…"
-                className="flex-1"
-              />
-              <Button type="button" aria-label="Remove image" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeAt(i)}>
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -142,6 +174,7 @@ export function GalleryField({
           }}
         />
       </div>
+      <p className="text-[10px] text-muted-foreground">Large photos are automatically resized before upload — up to 20MB per file.</p>
       {error && <p className="text-xs text-destructive">{error}</p>}
 
       {enableLibraryPicker && (
