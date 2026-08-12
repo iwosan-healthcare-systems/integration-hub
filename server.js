@@ -327,6 +327,31 @@ const AZURE_ORGS = {
   },
 };
 
+// In-memory cache of Microsoft's public signing keys, per tenant. Without
+// this, every single Azure login made a live network call to Microsoft's
+// discovery endpoint on the hot path — any transient blip there (slow DNS,
+// a cold outbound connection right after a deploy, etc.) failed the whole
+// login. Keys rotate rarely, so a long TTL is safe, and a stale cache is
+// still served if a refresh fails rather than failing the login outright.
+const JWKS_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+const jwksCache = new Map(); // tenantId -> { keys, fetchedAt }
+
+async function getMicrosoftSigningKeys(tenantId) {
+  const cached = jwksCache.get(tenantId);
+  if (cached && Date.now() - cached.fetchedAt < JWKS_CACHE_TTL_MS) return cached.keys;
+
+  try {
+    const jwksRes = await fetch(`https://login.microsoftonline.com/${tenantId}/discovery/v2.0/keys`);
+    if (!jwksRes.ok) throw new Error(`Microsoft signing keys request failed (${jwksRes.status})`);
+    const { keys } = await jwksRes.json();
+    jwksCache.set(tenantId, { keys, fetchedAt: Date.now() });
+    return keys;
+  } catch (err) {
+    if (cached) return cached.keys; // serve stale keys rather than fail the login
+    throw err;
+  }
+}
+
 // POST /api/auth/azure  — validate Microsoft ID token and issue session
 router.post('/auth/azure', async (req, res) => {
   const { idToken, orgId } = req.body ?? {};
@@ -349,13 +374,16 @@ router.post('/auth/azure', async (req, res) => {
     if (parts.length !== 3) return res.status(401).json({ error: 'Invalid token format' });
     const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
 
-    // 2. Fetch Microsoft's public signing keys for this tenant
-    const jwksRes = await fetch(
-      `https://login.microsoftonline.com/${tenantId}/discovery/v2.0/keys`
-    );
-    if (!jwksRes.ok) throw new Error('Failed to fetch Microsoft signing keys');
-    const { keys } = await jwksRes.json();
-    const jwk = keys.find((k) => k.kid === header.kid && k.use === 'sig');
+    // 2. Fetch (or reuse cached) Microsoft public signing keys for this tenant
+    let keys = await getMicrosoftSigningKeys(tenantId);
+    let jwk = keys.find((k) => k.kid === header.kid && k.use === 'sig');
+    if (!jwk) {
+      // Not found — could be a genuine key rotation. Force one fresh fetch
+      // before giving up, rather than failing on a stale cache alone.
+      jwksCache.delete(tenantId);
+      keys = await getMicrosoftSigningKeys(tenantId);
+      jwk = keys.find((k) => k.kid === header.kid && k.use === 'sig');
+    }
     if (!jwk) return res.status(401).json({ error: 'Token signing key not recognized' });
 
     // 3. Convert JWK → Node KeyObject and verify signature + standard claims
