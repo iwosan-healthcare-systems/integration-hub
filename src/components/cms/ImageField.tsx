@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { uploadImage } from "@/services/cmsService";
+import { compressImageFile } from "@/lib/imageCompression";
 import { PictureLibraryPickerDialog } from "./PictureLibraryPickerDialog";
 
 interface ImageFieldProps {
@@ -22,12 +23,21 @@ export function ImageField({ label = "Image", value, onChange, enableLibraryPick
   const [error, setError] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  function readAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function handleUpload(file: File) {
     setUploading(true);
     setError("");
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target?.result as string;
+    try {
+      const compressed = await compressImageFile(file);
+      const base64 = await readAsDataUrl(compressed);
       const { url, error: uploadError } = await uploadImage(base64);
       setUploading(false);
       if (uploadError) { setError(`Image upload failed: ${uploadError}`); return; }
@@ -36,8 +46,10 @@ export function ImageField({ label = "Image", value, onChange, enableLibraryPick
         const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
         onChange(`${apiBase}${url}`);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      setUploading(false);
+      setError("Failed to read file");
+    }
   }
 
   return (
@@ -75,7 +87,7 @@ export function ImageField({ label = "Image", value, onChange, enableLibraryPick
             <Library className="h-3.5 w-3.5" />Choose from library
           </Button>
         )}
-        <span className="text-[10px] text-muted-foreground">JPG, PNG, WebP or GIF · max 7.5 MB</span>
+        <span className="text-[10px] text-muted-foreground">JPG, PNG, WebP or GIF · resized automatically · max 20 MB</span>
         <input
           ref={fileRef}
           type="file"

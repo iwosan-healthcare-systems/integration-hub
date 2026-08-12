@@ -65,8 +65,8 @@ export function ChangePasswordModal() {
 
   return (
     /* Full-screen overlay — cannot be dismissed until password is changed */
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-background shadow-2xl">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-background/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-background shadow-2xl">
         {/* Header */}
         <div className="flex items-start gap-3 border-b border-border/60 p-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10">

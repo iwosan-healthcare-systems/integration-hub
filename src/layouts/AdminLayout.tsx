@@ -139,7 +139,7 @@ export function AdminLayout() {
     toast.info('You were logged out after 1 hour of inactivity.');
   }, [user, logout, navigate]);
 
-  useInactivityLogout(handleInactivityTimeout, user?.authProvider === 'azure');
+  useInactivityLogout(handleInactivityTimeout, !!user);
 
   const handleLogout = () => {
     logout();

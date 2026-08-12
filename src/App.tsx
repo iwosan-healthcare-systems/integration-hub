@@ -25,6 +25,7 @@ const NewsArticlePage      = lazy(() => import("./pages/NewsArticlePage"));
 const LeadershipPage       = lazy(() => import("./pages/LeadershipPage"));
 const LearningCentrePage   = lazy(() => import("./pages/LearningCentrePage"));
 const PictureLibraryPage   = lazy(() => import("./pages/PictureLibraryPage"));
+const AlbumPage            = lazy(() => import("./pages/AlbumPage"));
 const AdminDashboard          = lazy(() => import("./pages/admin/AdminDashboard"));
 const UsersPage               = lazy(() => import("./pages/admin/UsersPage"));
 const NewsManagePage          = lazy(() => import("./pages/admin/cms/NewsManagePage"));
@@ -140,6 +141,7 @@ const App = () => (
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/learning" element={<LearningCentrePage />} />
                 <Route path="/picture-library" element={<PictureLibraryPage />} />
+                <Route path="/album/:slug" element={<AlbumPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

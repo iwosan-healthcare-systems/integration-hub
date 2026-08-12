@@ -25,7 +25,7 @@ export function HubLayout() {
     toast.info('You were logged out after 1 hour of inactivity.');
   }, [user, logout, navigate]);
 
-  useInactivityLogout(handleInactivityTimeout, user?.authProvider === 'azure');
+  useInactivityLogout(handleInactivityTimeout, !!user);
 
   return (
     <SidebarProvider>

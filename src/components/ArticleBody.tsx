@@ -96,7 +96,7 @@ export function ArticleBody({ title, image, category, date, excerpt, content, im
               block.type === "paragraphs" ? (
                 <div key={bi} className="font-sans text-foreground/90 leading-relaxed text-[15px] sm:text-base space-y-5">
                   {block.items.map((p, i) => (
-                    <p key={i} className="whitespace-pre-line text-justify">{p}</p>
+                    <p key={i} className="whitespace-pre-line text-left">{p}</p>
                   ))}
                 </div>
               ) : (
@@ -119,7 +119,7 @@ export function ArticleBody({ title, image, category, date, excerpt, content, im
             )}
           </div>
         ) : (
-          <p className="font-sans text-muted-foreground leading-relaxed text-justify">{excerpt}</p>
+          <p className="font-sans text-muted-foreground leading-relaxed text-left">{excerpt}</p>
         )}
 
         {url && (

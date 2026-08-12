@@ -66,7 +66,14 @@ const NewsPage = () => {
   const goToPage = (p: number) => {
     if (p < 1 || p > totalPages || p === currentPage) return;
     setPage(p);
-    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const container = document.getElementById("main-scroll");
+    if (container && sectionRef.current) {
+      const containerTop = container.getBoundingClientRect().top;
+      const sectionTop = sectionRef.current.getBoundingClientRect().top;
+      container.scrollTo({ top: container.scrollTop + (sectionTop - containerTop), behavior: "smooth" });
+    } else {
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   if (loading) {
@@ -190,26 +197,33 @@ const NewsPage = () => {
                   className={currentPage === 1 ? "pointer-events-none opacity-40" : ""}
                 />
               </PaginationItem>
-              {getPageNumbers(currentPage, totalPages).map((p, i) =>
-                p === "ellipsis" ? (
-                  <PaginationItem key={`ellipsis-${i}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={p}>
-                    <PaginationLink
-                      href="#"
-                      isActive={p === currentPage}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        goToPage(p);
-                      }}
-                    >
-                      {p}
-                    </PaginationLink>
-                  </PaginationItem>
-                ),
-              )}
+              <PaginationItem className="sm:hidden">
+                <span className="px-3 text-sm text-muted-foreground whitespace-nowrap">
+                  Page {currentPage} of {totalPages}
+                </span>
+              </PaginationItem>
+              <div className="hidden sm:contents">
+                {getPageNumbers(currentPage, totalPages).map((p, i) =>
+                  p === "ellipsis" ? (
+                    <PaginationItem key={`ellipsis-${i}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={p}>
+                      <PaginationLink
+                        href="#"
+                        isActive={p === currentPage}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          goToPage(p);
+                        }}
+                      >
+                        {p}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ),
+                )}
+              </div>
               <PaginationItem>
                 <PaginationNext
                   href="#"

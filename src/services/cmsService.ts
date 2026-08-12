@@ -6,9 +6,10 @@ async function apiFetch<T>(
   path: string,
   options?: RequestInit
 ): Promise<{ data: T | null; error: string | null }> {
+  let res: Response;
   try {
     const token = getStoredToken();
-    const res = await fetch(`${API_BASE}/api${path}`, {
+    res = await fetch(`${API_BASE}/api${path}`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -16,12 +17,22 @@ async function apiFetch<T>(
       credentials: 'include',
       ...options,
     });
-    const json = await res.json();
-    if (!res.ok) return { data: null, error: json.error || 'Request failed' };
-    return { data: json as T, error: null };
-  } catch {
+  } catch (err) {
+    console.error(`apiFetch: network error for ${path}`, err);
     return { data: null, error: 'Network error. Please try again.' };
   }
+
+  let json: any = null;
+  try {
+    json = await res.json();
+  } catch (err) {
+    console.error(`apiFetch: failed to parse response for ${path} (status ${res.status})`, err);
+  }
+
+  if (!res.ok) {
+    return { data: null, error: json?.error || `Request failed (${res.status})` };
+  }
+  return { data: json as T, error: null };
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────

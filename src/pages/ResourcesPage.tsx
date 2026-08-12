@@ -60,7 +60,7 @@ const ResourcesPage = () => {
             </div>
           </AnimateOnScroll>
 
-          <div className="grid gap-8 md:grid-cols-3 md:gap-12 mb-14">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12 mb-14">
             {sopFocusAreas.map((area, i) => (
               <AnimateOnScroll key={area.title} delay={i * 0.15}>
                 <div className="text-center md:text-left">
@@ -74,7 +74,7 @@ const ResourcesPage = () => {
             ))}
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
             <AnimateOnScroll direction="left">
               <div className="rounded-lg border border-border/60 bg-muted/30 p-6 sm:p-8">
                 <div className="flex items-center gap-3 mb-6">

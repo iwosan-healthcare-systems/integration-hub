@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, ImageIcon, LayoutGrid, List } from "lucide-react";
+import { Check, ExternalLink, ImageIcon, LayoutGrid, List } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getPictureLibrary, type PictureLibraryItem } from "@/services/cmsService";
+import { isOwnUploadUrl } from "@/lib/utils";
 
 interface PictureLibraryPickerDialogProps {
   open: boolean;
@@ -147,11 +148,11 @@ export function PictureLibraryPickerDialog({ open, onOpenChange, onSelect, multi
                         isSelected ? "border-accent" : "border-border/60 group-hover:border-accent/60"
                       }`}
                     >
-                      {photo.url ? (
+                      {photo.url && isOwnUploadUrl(photo.url) ? (
                         <img src={photo.url} alt={photo.albumTitle} className="w-full h-full object-cover" loading="lazy" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <ImageIcon className="h-5 w-5 text-muted-foreground/40" />
+                          {photo.url ? <ExternalLink className="h-5 w-5 text-muted-foreground/40" /> : <ImageIcon className="h-5 w-5 text-muted-foreground/40" />}
                         </div>
                       )}
                       {multiple && (
@@ -185,8 +186,10 @@ export function PictureLibraryPickerDialog({ open, onOpenChange, onSelect, multi
                     }`}
                   >
                     <div className="h-10 w-10 rounded overflow-hidden bg-muted border border-border/60 shrink-0 flex items-center justify-center">
-                      {photo.url ? (
+                      {photo.url && isOwnUploadUrl(photo.url) ? (
                         <img src={photo.url} alt={photo.albumTitle} className="w-full h-full object-cover" loading="lazy" />
+                      ) : photo.url ? (
+                        <ExternalLink className="h-4 w-4 text-muted-foreground/40" />
                       ) : (
                         <ImageIcon className="h-4 w-4 text-muted-foreground/40" />
                       )}
