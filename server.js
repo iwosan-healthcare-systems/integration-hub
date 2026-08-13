@@ -1344,14 +1344,18 @@ router.delete('/admin/cms/learning-paths/:id', requireAuth, async (req, res) => 
 // only, since `entity = NULL` never matches in SQL.
 router.get('/sessions', requireAuth, async (req, res) => {
   try {
-    const editor = isCmsEditor(req.authUser);
+    // CMS editors, and staff belonging to the general entity itself
+    // (Iwosan Healthcare Systems — the parent company), see every session
+    // regardless of entity. Everyone else only sees their own entity's
+    // sessions plus ones explicitly tagged general.
+    const seesAll = isCmsEditor(req.authUser) || req.authUser.entity === GENERAL_ENTITY;
     const rows = await db(
-      editor
+      seesAll
         ? `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entities, image
            FROM live_sessions WHERE is_active = true ORDER BY session_date ASC`
         : `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entities, image
            FROM live_sessions WHERE is_active = true AND ($1 = ANY(entities) OR $2 = ANY(entities)) ORDER BY session_date ASC`,
-      editor ? [] : [req.authUser.entity, GENERAL_ENTITY]
+      seesAll ? [] : [req.authUser.entity, GENERAL_ENTITY]
     );
     return res.json({
       sessions: rows.map((r) => ({
