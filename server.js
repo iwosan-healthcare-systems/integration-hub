@@ -343,6 +343,11 @@ const ENTITIES = {
 };
 const GENERAL_ENTITY = 'iwosan-healthcare';
 
+// The root seed admin is a super-admin account, not tied to any one
+// subsidiary — it must never carry an entity value, regardless of what's
+// passed to the create/update user routes.
+const ENTITY_EXEMPT_EMAILS = new Set(['admin@iwosaninnovationhub.com']);
+
 // In-memory cache of Microsoft's public signing keys, per tenant. Without
 // this, every single Azure login made a live network call to Microsoft's
 // discovery endpoint on the hot path — any transient blip there (slow DNS,
@@ -538,7 +543,7 @@ router.post('/admin/create-user', requireAuth, async (req, res) => {
     return res.status(403).json({ error: 'Access required' });
   }
 
-  const { email, name, role = 'user', entity = null } = req.body ?? {};
+  const { email, name, role = 'user', entity: rawEntity = null } = req.body ?? {};
   if (!email || !name) {
     return res.status(400).json({ error: 'Email and name are required' });
   }
@@ -546,6 +551,7 @@ router.post('/admin/create-user', requireAuth, async (req, res) => {
   if (!validRoles.includes(String(role))) {
     return res.status(400).json({ error: isAdmin(authUser) ? 'Role must be: admin, user, or manager' : 'Managers can only create user or manager accounts' });
   }
+  const entity = ENTITY_EXEMPT_EMAILS.has(String(email).toLowerCase().trim()) ? null : rawEntity;
   if (entity !== null && !(entity in ENTITIES)) {
     return res.status(400).json({ error: 'Invalid entity' });
   }
@@ -664,15 +670,20 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
 
   const { name, role, isActive, canEditCms, entity } = req.body ?? {};
 
+  const targetRows = await db('SELECT email, role FROM users WHERE id = $1', [userId]);
+  const targetEmail = targetRows[0]?.email;
+
   // Managers cannot touch admin accounts or promote anyone to admin
   if (!isAdmin(authUser)) {
-    const target = await db('SELECT role FROM users WHERE id = $1', [userId]);
-    if (target.length > 0 && target[0].role === 'admin') {
+    if (targetRows.length > 0 && targetRows[0].role === 'admin') {
       return res.status(403).json({ error: 'Managers cannot modify admin accounts' });
     }
     if (role === 'admin') {
       return res.status(403).json({ error: 'Managers cannot assign the admin role' });
     }
+  }
+  if (entity !== undefined && entity !== null && targetEmail && ENTITY_EXEMPT_EMAILS.has(targetEmail)) {
+    return res.status(400).json({ error: 'This account is not tied to any entity' });
   }
   const setClauses = [];
   const params = [];

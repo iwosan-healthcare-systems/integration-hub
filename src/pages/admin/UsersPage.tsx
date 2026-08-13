@@ -191,6 +191,7 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const isAzure = user.authProvider === 'azure';
+  const isEntityExempt = user.email === 'admin@iwosaninnovationhub.com';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,7 +238,7 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="e-entity">Entity</Label>
-            <Select value={entity} onValueChange={setEntity} disabled={isAzure}>
+            <Select value={entity} onValueChange={setEntity} disabled={isAzure || isEntityExempt}>
               <SelectTrigger id="e-entity">
                 <SelectValue />
               </SelectTrigger>
@@ -249,7 +250,9 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
               </SelectContent>
             </Select>
             <p className="text-[10px] text-muted-foreground">
-              {isAzure
+              {isEntityExempt
+                ? "This account is a super-admin and is never tied to an entity."
+                : isAzure
                 ? "Set automatically from the Microsoft org this account signs in through — can't be edited here."
                 : "Which entity's sessions this user can see."}
             </p>

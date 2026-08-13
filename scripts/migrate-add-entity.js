@@ -6,7 +6,9 @@
  *
  * Usage: node scripts/migrate-add-entity.js
  * Reads the same DB env vars as the app (DATABASE_URL, or DB_HOST/DB_PORT/
- * DB_NAME/DB_USER/DB_PASSWORD/DB_SSL), loading .env.local if present.
+ * DB_NAME/DB_USER/DB_PASSWORD/DB_SSL) — loads .env then .env.local if
+ * present, exactly like server.js does, so it works the same way whether
+ * it's run on the AWS box (.env) or locally (.env.local).
  */
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -15,21 +17,23 @@ import pg from 'pg';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-try {
-  const env = readFileSync(resolve(__dirname, '../.env.local'), 'utf-8');
-  for (const line of env.split('\n')) {
-    const t = line.trim();
-    if (!t || t.startsWith('#')) continue;
-    const eq = t.indexOf('=');
-    if (eq > 0) {
-      const key = t.slice(0, eq).trim();
-      const val = t.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
-      if (!process.env[key]) process.env[key] = val;
+for (const name of ['.env', '.env.local']) {
+  try {
+    const content = readFileSync(resolve(__dirname, '..', name), 'utf-8');
+    for (const line of content.split('\n')) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const eq = t.indexOf('=');
+      if (eq > 0) {
+        const key = t.slice(0, eq).trim();
+        const val = t.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
+        if (!process.env[key]) process.env[key] = val;
+      }
     }
+    console.log(`✓ Loaded ${name}`);
+  } catch {
+    console.log(`Note: ${name} not found — skipping.`);
   }
-  console.log('✓ Loaded .env.local');
-} catch {
-  console.log('Note: .env.local not found — using system environment variables.');
 }
 
 const { Pool } = pg;
