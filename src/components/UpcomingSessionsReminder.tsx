@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, X } from "lucide-react";
 import { getSessions, type LiveSession } from "@/services/cmsService";
-import { isPastSession, SESSIONS_REMINDER_DISMISSED_KEY } from "@/lib/sessions";
+import { hasSessionStarted, SESSIONS_REMINDER_DISMISSED_KEY } from "@/lib/sessions";
 
 export function UpcomingSessionsReminder() {
   const [sessions, setSessions] = useState<LiveSession[]>([]);
@@ -13,7 +13,7 @@ export function UpcomingSessionsReminder() {
   useEffect(() => {
     if (dismissed) return;
     getSessions().then(({ sessions: data }) => {
-      setSessions((data ?? []).filter((s) => !isPastSession(s)));
+      setSessions((data ?? []).filter((s) => !hasSessionStarted(s)));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
