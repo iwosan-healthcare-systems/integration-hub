@@ -20,7 +20,7 @@ import type { LucideIcon } from "lucide-react";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { getCourses, getLearningPaths, getSessions, type Course, type LearningPath, type LiveSession } from "@/services/cmsService";
 import { isOwnUploadUrl } from "@/lib/utils";
-import { isPastSession } from "@/lib/sessions";
+import { isPastSession, formatSessionTime } from "@/lib/sessions";
 import { Seo } from "@/components/Seo";
 
 // ─── Config maps ────────────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
           <div className="space-y-2 flex-1">
             <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
               <CalendarDays className="h-4 w-4 shrink-0" />
-              <span>{session.date} · {session.time}</span>
+              <span>{session.date} · {formatSessionTime(session.time)}</span>
             </div>
             <div className="flex items-start gap-2 text-sm font-sans text-muted-foreground">
               <MapPin className="h-4 w-4 shrink-0 mt-0.5" />

@@ -13,13 +13,12 @@ export function isPastSession(session: LiveSession): boolean {
   return d.getTime() < today.getTime();
 }
 
-// Best-effort parse of the free-text `time` field ("10:00 AM", "2:30pm",
-// "14:00", "10am" …) into an hour/minute on the session's date. Returns
-// null if it can't make sense of it, so callers can fall back safely.
-function parseSessionDateTime(session: LiveSession): Date | null {
-  const day = new Date(session.date);
-  if (isNaN(day.getTime())) return null;
-  const match = session.time.match(/(\d{1,2})(?::(\d{2}))?\s*([AaPp][Mm])?/);
+// Parses either the "HH:MM" (24h) value the <input type="time"> field now
+// produces, or a legacy free-text time ("10:00 AM", "2:30pm" …) still
+// sitting on sessions saved before that field existed. Returns null if it
+// can't make sense of it, so callers can fall back safely.
+function parseTimeString(time: string): { hour: number; minute: number } | null {
+  const match = time.match(/(\d{1,2})(?::(\d{2}))?\s*([AaPp][Mm])?/);
   if (!match) return null;
   let hour = parseInt(match[1], 10);
   const minute = match[2] ? parseInt(match[2], 10) : 0;
@@ -27,8 +26,38 @@ function parseSessionDateTime(session: LiveSession): Date | null {
   if (meridiem === "pm" && hour < 12) hour += 12;
   if (meridiem === "am" && hour === 12) hour = 0;
   if (hour > 23 || minute > 59) return null;
-  day.setHours(hour, minute, 0, 0);
+  return { hour, minute };
+}
+
+function parseSessionDateTime(session: LiveSession): Date | null {
+  const day = new Date(session.date);
+  if (isNaN(day.getTime())) return null;
+  const parsed = parseTimeString(session.time);
+  if (!parsed) return null;
+  day.setHours(parsed.hour, parsed.minute, 0, 0);
   return day;
+}
+
+// Display formatting: "14:05" -> "2:05 PM". Legacy free-text values that
+// aren't in the time-input's HH:MM shape are already human-readable, so
+// they're returned unchanged rather than mangled.
+export function formatSessionTime(time: string): string {
+  if (!/^\d{1,2}:\d{2}$/.test(time)) return time;
+  const parsed = parseTimeString(time);
+  if (!parsed) return time;
+  const period = parsed.hour >= 12 ? "PM" : "AM";
+  const hour12 = parsed.hour % 12 || 12;
+  return `${hour12}:${String(parsed.minute).padStart(2, "0")} ${period}`;
+}
+
+// For populating <input type="time" value={...}> when editing a session
+// that still has a legacy free-text time — converts to the "HH:MM" (24h,
+// zero-padded) shape the input requires. Returns "" if unparseable, which
+// the input just treats as empty rather than erroring.
+export function toTimeInputValue(time: string): string {
+  const parsed = parseTimeString(time);
+  if (!parsed) return "";
+  return `${String(parsed.hour).padStart(2, "0")}:${String(parsed.minute).padStart(2, "0")}`;
 }
 
 // For the homepage reminder specifically: a session should stop being

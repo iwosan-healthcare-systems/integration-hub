@@ -5,6 +5,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { Course, CourseInput, SessionInput, LearningPathInput, PictureLibraryInput } from "@/services/cmsService";
 import { fmtFormDate, isOwnUploadUrl } from "@/lib/utils";
+import { formatSessionTime } from "@/lib/sessions";
 
 // Mirrors the style maps in LearningCentrePage.tsx / SessionsManagePage.tsx so
 // previews match production exactly.
@@ -115,7 +116,7 @@ export function SessionPreviewCard({ session }: { session: SessionInput }) {
         <div className="space-y-2 flex-1">
           <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
             <CalendarDays className="h-4 w-4 shrink-0" />
-            <span>{displayDate} · {session.time || "—"}</span>
+            <span>{displayDate} · {session.time ? formatSessionTime(session.time) : "—"}</span>
           </div>
           <div className="flex items-start gap-2 text-sm font-sans text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0 mt-0.5" />

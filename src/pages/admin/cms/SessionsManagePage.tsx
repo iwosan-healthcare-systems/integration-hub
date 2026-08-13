@@ -18,6 +18,7 @@ import {
   type LiveSession, type SessionInput,
 } from '@/services/cmsService';
 import { ENTITIES, GENERAL_ENTITY, entityName } from '@/lib/entities';
+import { formatSessionTime, toTimeInputValue } from '@/lib/sessions';
 
 const FORMAT_OPTIONS = ['Virtual', 'In-Person', 'Hybrid'] as const;
 
@@ -52,7 +53,7 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
   const [form, setForm] = useState<SessionInput>({
     title: item?.title ?? '',
     date: item ? toIsoDate(item.date) : '',
-    time: item?.time ?? '',
+    time: item ? toTimeInputValue(item.time) : '',
     format: item?.format ?? 'Virtual',
     venue: item?.venue ?? '',
     host: item?.host ?? '',
@@ -108,7 +109,7 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="s-time">Time</Label>
-              <Input id="s-time" value={form.time} onChange={(e) => set('time', e.target.value)} placeholder="e.g. 10:00 AM" required />
+              <Input id="s-time" type="time" value={form.time} onChange={(e) => set('time', e.target.value)} required />
             </div>
           </div>
           <div className="space-y-1.5">
@@ -332,7 +333,7 @@ export default function SessionsManagePage() {
                       {/* Date & Time */}
                       <div className="text-center">
                         <p className="text-xs text-muted-foreground">{s.date}</p>
-                        <p className="text-xs text-muted-foreground/60">{s.time}</p>
+                        <p className="text-xs text-muted-foreground/60">{formatSessionTime(s.time)}</p>
                       </div>
 
                       {/* Actions */}
