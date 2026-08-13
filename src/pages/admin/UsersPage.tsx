@@ -24,6 +24,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { listUsers, updateUser, deleteUser, createUser, resetUserPassword, type AdminUser } from '@/services/authService';
 import { useAuth } from '@/contexts/AuthContext';
+import { ENTITIES, entityName } from '@/lib/entities';
+
+const UNASSIGNED = 'unassigned';
 
 function roleBadge(role: string) {
   if (role === 'admin') return <Badge className="bg-accent/20 text-accent border-accent/30 text-[10px]">Admin</Badge>;
@@ -57,16 +60,19 @@ function CreateUserModal({ open, onClose, onCreated }: CreateUserModalProps) {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState('user');
+  const [entity, setEntity] = useState(UNASSIGNED);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const reset = () => { setEmail(''); setName(''); setRole('user'); setError(''); };
+  const reset = () => { setEmail(''); setName(''); setRole('user'); setEntity(UNASSIGNED); setError(''); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const { user, temporaryPassword, error: err } = await createUser(email.trim(), name.trim(), role);
+    const { user, temporaryPassword, error: err } = await createUser(
+      email.trim(), name.trim(), role, entity === UNASSIGNED ? null : entity
+    );
     setLoading(false);
     if (err) { setError(err); return; }
     if (user && temporaryPassword) {
@@ -106,6 +112,21 @@ function CreateUserModal({ open, onClose, onCreated }: CreateUserModalProps) {
                 <SelectItem value="admin">Admin — Full control</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="c-entity">Entity</Label>
+            <Select value={entity} onValueChange={setEntity}>
+              <SelectTrigger id="c-entity">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                {ENTITIES.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">Which entity's sessions this user can see. Ignored for Microsoft sign-in accounts — theirs is set automatically from the org they sign in through.</p>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
@@ -166,18 +187,22 @@ interface EditModalProps {
 function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
   const [name, setName] = useState(user.name);
   const [role, setRole] = useState(user.role);
+  const [entity, setEntity] = useState(user.entity ?? UNASSIGNED);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const isAzure = user.authProvider === 'azure';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const { user: updated, error: err } = await updateUser(user.id, { name: name.trim(), role });
+    const { user: updated, error: err } = await updateUser(user.id, {
+      name: name.trim(), role, entity: entity === UNASSIGNED ? null : entity,
+    });
     setLoading(false);
     if (err) { setError(err); return; }
     if (updated) {
-      onSaved({ ...user, name: updated.name, role: updated.role });
+      onSaved({ ...user, name: updated.name, role: updated.role, entity: updated.entity });
       onClose();
     }
   };
@@ -209,6 +234,25 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
                 <SelectItem value="admin">Admin — Full control</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="e-entity">Entity</Label>
+            <Select value={entity} onValueChange={setEntity} disabled={isAzure}>
+              <SelectTrigger id="e-entity">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                {ENTITIES.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">
+              {isAzure
+                ? "Set automatically from the Microsoft org this account signs in through — can't be edited here."
+                : "Which entity's sessions this user can see."}
+            </p>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>

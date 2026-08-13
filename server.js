@@ -112,12 +112,12 @@ async function requireAuth(req, res, next) {
   if (!decoded) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const rows = await db(
-      'SELECT id, role, is_active, can_edit_cms FROM users WHERE id = $1',
+      'SELECT id, role, is_active, can_edit_cms, entity FROM users WHERE id = $1',
       [decoded.userId]
     );
     if (!rows[0] || !rows[0].is_active)
       return res.status(403).json({ error: 'Account deactivated' });
-    req.authUser = { ...decoded, role: rows[0].role, canEditCms: rows[0].can_edit_cms };
+    req.authUser = { ...decoded, role: rows[0].role, canEditCms: rows[0].can_edit_cms, entity: rows[0].entity };
     next();
   } catch (err) {
     console.error('requireAuth error:', err);
@@ -276,7 +276,7 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
   }
   try {
     const rows = await db(
-      'SELECT id, email, password_hash, name, role, is_first_login, is_active, auth_provider, can_edit_cms FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, name, role, is_first_login, is_active, auth_provider, can_edit_cms, entity FROM users WHERE email = $1',
       [String(email).toLowerCase().trim()]
     );
     const user = rows[0];
@@ -303,6 +303,7 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
         isActive: user.is_active,
         authProvider: user.auth_provider,
         canEditCms: user.can_edit_cms,
+        entity: user.entity,
       },
     });
   } catch (err) {
@@ -326,6 +327,21 @@ const AZURE_ORGS = {
     tenantId: process.env.AZURE_EURACARE_TENANT_ID,
   },
 };
+
+// Entities that CMS content (e.g. Sessions) can be scoped to. The 3 with
+// Azure SSO reuse their AZURE_ORGS key as the entity value, so a user's
+// entity is set directly from the org they authenticate through — no
+// separate mapping needed. Paelon Memorial has no Azure app registration
+// yet, so its users are local accounts with entity assigned manually.
+// 'iwosan-healthcare' doubles as the "general" entity: content tagged to it
+// is visible to every entity, not just Iwosan Healthcare's own users.
+const ENTITIES = {
+  'iwosan-lagoon': 'Lagoon Hospitals',
+  'euracare': 'Euracare',
+  'paelon-memorial': 'Paelon Memorial',
+  'iwosan-healthcare': 'Iwosan Healthcare Systems',
+};
+const GENERAL_ENTITY = 'iwosan-healthcare';
 
 // In-memory cache of Microsoft's public signing keys, per tenant. Without
 // this, every single Azure login made a live network call to Microsoft's
@@ -408,10 +424,10 @@ router.post('/auth/azure', async (req, res) => {
     if (rows.length === 0) {
       const unusableHash = await bcrypt.hash(randomBytes(32).toString('hex'), 10);
       rows = await db(
-        `INSERT INTO users (email, name, password_hash, role, is_first_login, is_active, auth_provider)
-         VALUES ($1, $2, $3, 'user', false, true, 'azure')
-         RETURNING id, email, name, role, is_first_login, is_active, auth_provider`,
-        [email, name, unusableHash]
+        `INSERT INTO users (email, name, password_hash, role, is_first_login, is_active, auth_provider, entity)
+         VALUES ($1, $2, $3, 'user', false, true, 'azure', $4)
+         RETURNING id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, entity`,
+        [email, name, unusableHash, orgId]
       );
       console.log(`Azure [${orgId}]: auto-created user id=${rows[0].id}`);
     }
@@ -421,7 +437,9 @@ router.post('/auth/azure', async (req, res) => {
       return res.status(403).json({ error: 'Your account has been deactivated. Contact an administrator.' });
     }
 
-    await db('UPDATE users SET last_sign_in_at = NOW() WHERE id = $1', [user.id]);
+    // Keep entity in sync with whichever org they're signing in through —
+    // self-heals accounts created before entity scoping existed.
+    await db('UPDATE users SET last_sign_in_at = NOW(), entity = $2 WHERE id = $1', [user.id, orgId]);
 
     // 6. Issue our standard JWT session cookie
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
@@ -437,6 +455,7 @@ router.post('/auth/azure', async (req, res) => {
         isActive: user.is_active,
         authProvider: user.auth_provider,
         canEditCms: user.can_edit_cms,
+        entity: orgId,
       },
     });
   } catch (err) {
@@ -460,7 +479,7 @@ router.get('/auth/me', async (req, res) => {
   if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const rows = await db(
-      'SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms FROM users WHERE id = $1',
+      'SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, entity FROM users WHERE id = $1',
       [authUser.userId]
     );
     const u = rows[0];
@@ -476,6 +495,7 @@ router.get('/auth/me', async (req, res) => {
         isActive: u.is_active,
         authProvider: u.auth_provider,
         canEditCms: u.can_edit_cms,
+        entity: u.entity,
       },
     });
   } catch (err) {
@@ -518,13 +538,16 @@ router.post('/admin/create-user', requireAuth, async (req, res) => {
     return res.status(403).json({ error: 'Access required' });
   }
 
-  const { email, name, role = 'user' } = req.body ?? {};
+  const { email, name, role = 'user', entity = null } = req.body ?? {};
   if (!email || !name) {
     return res.status(400).json({ error: 'Email and name are required' });
   }
   const validRoles = isAdmin(authUser) ? ['admin', 'user', 'manager'] : ['user', 'manager'];
   if (!validRoles.includes(String(role))) {
     return res.status(400).json({ error: isAdmin(authUser) ? 'Role must be: admin, user, or manager' : 'Managers can only create user or manager accounts' });
+  }
+  if (entity !== null && !(entity in ENTITIES)) {
+    return res.status(400).json({ error: 'Invalid entity' });
   }
 
   try {
@@ -539,14 +562,14 @@ router.post('/admin/create-user', requireAuth, async (req, res) => {
     const hash = await bcrypt.hash(plainPassword, 12);
 
     const rows = await db(
-      `INSERT INTO users (email, name, password_hash, role, is_first_login, is_active)
-       VALUES ($1, $2, $3, $4, true, true) RETURNING id, email`,
-      [String(email).toLowerCase().trim(), String(name).trim(), hash, String(role)]
+      `INSERT INTO users (email, name, password_hash, role, is_first_login, is_active, entity)
+       VALUES ($1, $2, $3, $4, true, true, $5) RETURNING id, email`,
+      [String(email).toLowerCase().trim(), String(name).trim(), hash, String(role), entity]
     );
 
     return res.status(201).json({
       message: 'User created successfully',
-      user: { id: rows[0].id, email: rows[0].email, name: String(name).trim(), role: String(role) },
+      user: { id: rows[0].id, email: rows[0].email, name: String(name).trim(), role: String(role), entity },
       temporaryPassword: plainPassword,
       note: 'Share this password securely. It will not be shown again.',
     });
@@ -601,7 +624,7 @@ router.get('/admin/users', requireAuth, async (req, res) => {
   }
   try {
     const rows = await db(
-      `SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, last_sign_in_at, created_at, updated_at
+      `SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, entity, last_sign_in_at, created_at, updated_at
        FROM users ORDER BY created_at DESC`,
       []
     );
@@ -615,6 +638,7 @@ router.get('/admin/users', requireAuth, async (req, res) => {
         isActive: u.is_active,
         authProvider: u.auth_provider,
         canEditCms: u.can_edit_cms,
+        entity: u.entity,
         lastSignInAt: u.last_sign_in_at,
         createdAt: u.created_at,
         updatedAt: u.updated_at,
@@ -638,7 +662,7 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Cannot modify your own account via the admin panel' });
   }
 
-  const { name, role, isActive, canEditCms } = req.body ?? {};
+  const { name, role, isActive, canEditCms, entity } = req.body ?? {};
 
   // Managers cannot touch admin accounts or promote anyone to admin
   if (!isAdmin(authUser)) {
@@ -677,6 +701,13 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
     setClauses.push(`can_edit_cms = $${idx++}`);
     params.push(Boolean(canEditCms));
   }
+  if (entity !== undefined) {
+    if (entity !== null && !(entity in ENTITIES)) {
+      return res.status(400).json({ error: 'Invalid entity' });
+    }
+    setClauses.push(`entity = $${idx++}`);
+    params.push(entity);
+  }
   if (setClauses.length === 0) {
     return res.status(400).json({ error: 'No fields to update' });
   }
@@ -686,7 +717,7 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${idx}
-       RETURNING id, email, name, role, is_first_login, is_active, can_edit_cms`,
+       RETURNING id, email, name, role, is_first_login, is_active, can_edit_cms, entity`,
       params
     );
     if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
@@ -700,6 +731,7 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
         isFirstLogin: u.is_first_login,
         isActive: u.is_active,
         canEditCms: u.can_edit_cms,
+        entity: u.entity,
       },
     });
   } catch (err) {
@@ -1295,17 +1327,26 @@ router.delete('/admin/cms/learning-paths/:id', requireAuth, async (req, res) => 
 // ── CMS: Live Sessions (public read, admin write) ─────────────────────────
 
 // GET /api/sessions
+// CMS editors see every entity's sessions (they manage content for the
+// whole group). Everyone else only sees their own entity's sessions plus
+// the general entity's — a user with no entity assigned yet sees general
+// only, since `entity = NULL` never matches in SQL.
 router.get('/sessions', requireAuth, async (req, res) => {
   try {
+    const editor = isCmsEditor(req.authUser);
     const rows = await db(
-      `SELECT id, title, session_date, session_time, format, venue, host, meeting_url
-       FROM live_sessions WHERE is_active = true ORDER BY session_date ASC`,
-      []
+      editor
+        ? `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entity, image
+           FROM live_sessions WHERE is_active = true ORDER BY session_date ASC`
+        : `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entity, image
+           FROM live_sessions WHERE is_active = true AND (entity = $1 OR entity = $2) ORDER BY session_date ASC`,
+      editor ? [] : [req.authUser.entity, GENERAL_ENTITY]
     );
     return res.json({
       sessions: rows.map((r) => ({
         id: r.id, title: r.title, date: fmtDate(r.session_date),
         time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url,
+        entity: r.entity, image: r.image,
       })),
     });
   } catch (err) {
@@ -1317,20 +1358,21 @@ router.get('/sessions', requireAuth, async (req, res) => {
 // POST /api/admin/cms/sessions
 router.post('/admin/cms/sessions', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
-  const { title, date, time, format, venue = '', host = '', meetingUrl = '' } = req.body ?? {};
+  const { title, date, time, format, venue = '', host = '', meetingUrl = '', entity, image = '' } = req.body ?? {};
   if (!title || !date || !time || !format) return res.status(400).json({ error: 'title, date, time, and format are required' });
   const validFormats = ['Virtual', 'In-Person', 'Hybrid'];
   if (!validFormats.includes(format)) return res.status(400).json({ error: 'format must be Virtual, In-Person, or Hybrid' });
   if (!validateUrl(meetingUrl)) return res.status(400).json({ error: 'meetingUrl must be an http or https URL' });
+  if (!entity || !(entity in ENTITIES)) return res.status(400).json({ error: 'A valid entity is required' });
   try {
     const rows = await db(
-      `INSERT INTO live_sessions (title, session_date, session_time, format, venue, host, meeting_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [title, date, time, format, venue, host, meetingUrl]
+      `INSERT INTO live_sessions (title, session_date, session_time, format, venue, host, meeting_url, entity, image)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      [title, date, time, format, venue, host, meetingUrl, entity, image]
     );
     const r = rows[0];
     return res.status(201).json({
-      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url },
+      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url, entity: r.entity, image: r.image },
     });
   } catch (err) {
     console.error('POST /admin/cms/sessions error:', err);
@@ -1343,9 +1385,10 @@ router.patch('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
-  const { title, date, time, format, venue, host, meetingUrl } = req.body ?? {};
+  const { title, date, time, format, venue, host, meetingUrl, entity, image } = req.body ?? {};
   if (format !== undefined && !['Virtual','In-Person','Hybrid'].includes(format)) return res.status(400).json({ error: 'Invalid format' });
   if (meetingUrl !== undefined && !validateUrl(meetingUrl)) return res.status(400).json({ error: 'meetingUrl must be an http or https URL' });
+  if (entity !== undefined && !(entity in ENTITIES)) return res.status(400).json({ error: 'A valid entity is required' });
   const set = []; const params = []; let i = 1;
   if (title !== undefined)      { set.push(`title=$${i++}`);        params.push(title); }
   if (date !== undefined)       { set.push(`session_date=$${i++}`); params.push(date); }
@@ -1354,6 +1397,8 @@ router.patch('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
   if (venue !== undefined)      { set.push(`venue=$${i++}`);        params.push(venue); }
   if (host !== undefined)       { set.push(`host=$${i++}`);         params.push(host); }
   if (meetingUrl !== undefined) { set.push(`meeting_url=$${i++}`);  params.push(meetingUrl); }
+  if (entity !== undefined)     { set.push(`entity=$${i++}`);       params.push(entity); }
+  if (image !== undefined)      { set.push(`image=$${i++}`);        params.push(image); }
   if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
   set.push(`updated_at=NOW()`); params.push(id);
   try {
@@ -1361,7 +1406,7 @@ router.patch('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const r = rows[0];
     return res.json({
-      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url },
+      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url, entity: r.entity, image: r.image },
     });
   } catch (err) {
     console.error('PATCH /admin/cms/sessions error:', err);

@@ -85,41 +85,48 @@ export function SessionPreviewCard({ session }: { session: SessionInput }) {
   const [month, day, year] = displayDate.replace(",", "").split(" ");
 
   return (
-    <div className="flex flex-col rounded-2xl border border-border bg-card p-6">
-      <div className="flex items-center gap-4 mb-5">
-        <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-primary text-primary-foreground shrink-0">
-          <span className="text-[10px] font-sans font-semibold uppercase tracking-wide opacity-70 leading-none">{month}</span>
-          <span className="text-2xl font-bold leading-tight">{day ?? "—"}</span>
-          <span className="text-[10px] font-sans opacity-60 leading-none">{year}</span>
+    <div className="flex flex-col rounded-2xl border border-border bg-card overflow-hidden">
+      {session.image && isOwnUploadUrl(session.image) && (
+        <div className="aspect-[16/9] bg-muted">
+          <img src={session.image} alt={session.title} className="w-full h-full object-cover" />
         </div>
-        <div>
-          <h3 className="font-serif text-base font-semibold text-foreground leading-snug">
-            {session.title || "Untitled Session"}
-          </h3>
-          <span className={`inline-flex items-center gap-1 mt-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-sans font-semibold ${fmtCfg.color}`}>
-            <FmtIcon className="h-3 w-3" />
-            {session.format}
-          </span>
+      )}
+      <div className="flex flex-col p-6">
+        <div className="flex items-center gap-4 mb-5">
+          <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-primary text-primary-foreground shrink-0">
+            <span className="text-[10px] font-sans font-semibold uppercase tracking-wide opacity-70 leading-none">{month}</span>
+            <span className="text-2xl font-bold leading-tight">{day ?? "—"}</span>
+            <span className="text-[10px] font-sans opacity-60 leading-none">{year}</span>
+          </div>
+          <div>
+            <h3 className="font-serif text-base font-semibold text-foreground leading-snug">
+              {session.title || "Untitled Session"}
+            </h3>
+            <span className={`inline-flex items-center gap-1 mt-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-sans font-semibold ${fmtCfg.color}`}>
+              <FmtIcon className="h-3 w-3" />
+              {session.format}
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-2 flex-1">
-        <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
-          <CalendarDays className="h-4 w-4 shrink-0" />
-          <span>{displayDate} · {session.time || "—"}</span>
+        <div className="space-y-2 flex-1">
+          <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
+            <CalendarDays className="h-4 w-4 shrink-0" />
+            <span>{displayDate} · {session.time || "—"}</span>
+          </div>
+          <div className="flex items-start gap-2 text-sm font-sans text-muted-foreground">
+            <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>{session.venue || "No venue set"}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
+            <Users className="h-4 w-4 shrink-0" />
+            <span>{session.host || "No host set"}</span>
+          </div>
         </div>
-        <div className="flex items-start gap-2 text-sm font-sans text-muted-foreground">
-          <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
-          <span>{session.venue || "No venue set"}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
-          <Users className="h-4 w-4 shrink-0" />
-          <span>{session.host || "No host set"}</span>
-        </div>
-      </div>
 
-      <div className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-sans font-semibold text-accent">
-        {session.meetingUrl ? "Join" : "Contact HR"}
+        <div className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-sans font-semibold text-accent">
+          {session.meetingUrl ? "Join" : "Contact HR"}
+        </div>
       </div>
     </div>
   );

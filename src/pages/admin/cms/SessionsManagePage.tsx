@@ -11,10 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PreviewDialog } from '@/components/cms/previews/PreviewDialog';
 import { SessionPreviewCard } from '@/components/cms/previews/PreviewCards';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
+import { ImageField } from '@/components/cms/ImageField';
 import {
   getSessions, createSession, updateSession, deleteSession,
   type LiveSession, type SessionInput,
 } from '@/services/cmsService';
+import { ENTITIES, GENERAL_ENTITY, entityName } from '@/lib/entities';
 
 const FORMAT_OPTIONS = ['Virtual', 'In-Person', 'Hybrid'] as const;
 
@@ -54,6 +56,8 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
     venue: item?.venue ?? '',
     host: item?.host ?? '',
     meetingUrl: item?.meetingUrl ?? '',
+    entity: item?.entity ?? GENERAL_ENTITY,
+    image: item?.image ?? '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -87,6 +91,14 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
             <Label htmlFor="s-title">Session Title</Label>
             <Input id="s-title" value={form.title} onChange={(e) => set('title', e.target.value)} required />
           </div>
+
+          <ImageField
+            label="Banner Image"
+            value={form.image}
+            onChange={(v) => set('image', v)}
+            enableLibraryPicker
+          />
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="s-date">Date</Label>
@@ -105,6 +117,20 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
                 {FORMAT_OPTIONS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="s-entity">Entity</Label>
+            <Select value={form.entity} onValueChange={(v) => set('entity', v)}>
+              <SelectTrigger id="s-entity"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ENTITIES.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.id === GENERAL_ENTITY ? `${e.name} (General — visible to everyone)` : e.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Only staff from this entity will see this session — unless you pick the general one, which everyone sees.</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="s-venue">Venue</Label>
@@ -167,7 +193,8 @@ export default function SessionsManagePage() {
     const q = search.trim().toLowerCase();
     if (!q) return true;
     return s.title.toLowerCase().includes(q) || s.venue.toLowerCase().includes(q)
-      || s.host.toLowerCase().includes(q) || s.format.toLowerCase().includes(q);
+      || s.host.toLowerCase().includes(q) || s.format.toLowerCase().includes(q)
+      || entityName(s.entity).toLowerCase().includes(q);
   });
 
   const load = async () => {
@@ -228,9 +255,10 @@ export default function SessionsManagePage() {
 
       <Card className="border-border/60 overflow-hidden">
         <div className="overflow-x-auto">
-          <div className="min-w-[500px]">
-            <div className="grid grid-cols-[1fr_7rem_10rem_4.5rem] gap-3 px-5 py-2.5 border-b border-border/60 bg-muted/50 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          <div className="min-w-[620px]">
+            <div className="grid grid-cols-[1fr_9rem_7rem_10rem_4.5rem] gap-3 px-5 py-2.5 border-b border-border/60 bg-muted/50 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
               <span>Session</span>
+              <span className="text-center">Entity</span>
               <span className="text-center">Format</span>
               <span className="text-center">Date & Time</span>
               <span className="text-right">Actions</span>
@@ -256,7 +284,7 @@ export default function SessionsManagePage() {
                   {filtered.map((s, idx) => (
                     <div
                       key={s.id}
-                      className={`grid grid-cols-[1fr_7rem_10rem_4.5rem] gap-3 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
+                      className={`grid grid-cols-[1fr_9rem_7rem_10rem_4.5rem] gap-3 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
                     >
                       {/* Session info */}
                       <div className="min-w-0">
@@ -267,6 +295,13 @@ export default function SessionsManagePage() {
                             <Link className="h-2.5 w-2.5" /> Meeting link
                           </a>
                         )}
+                      </div>
+
+                      {/* Entity badge */}
+                      <div className="flex justify-center">
+                        <Badge variant={s.entity === GENERAL_ENTITY ? 'default' : 'secondary'} className="text-[10px] truncate max-w-full">
+                          {s.entity === GENERAL_ENTITY ? 'General' : entityName(s.entity)}
+                        </Badge>
                       </div>
 
                       {/* Format badge */}
