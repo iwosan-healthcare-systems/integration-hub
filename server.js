@@ -1347,17 +1347,17 @@ router.get('/sessions', requireAuth, async (req, res) => {
     const editor = isCmsEditor(req.authUser);
     const rows = await db(
       editor
-        ? `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entity, image
+        ? `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entities, image
            FROM live_sessions WHERE is_active = true ORDER BY session_date ASC`
-        : `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entity, image
-           FROM live_sessions WHERE is_active = true AND (entity = $1 OR entity = $2) ORDER BY session_date ASC`,
+        : `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entities, image
+           FROM live_sessions WHERE is_active = true AND ($1 = ANY(entities) OR $2 = ANY(entities)) ORDER BY session_date ASC`,
       editor ? [] : [req.authUser.entity, GENERAL_ENTITY]
     );
     return res.json({
       sessions: rows.map((r) => ({
         id: r.id, title: r.title, date: fmtDate(r.session_date),
         time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url,
-        entity: r.entity, image: r.image,
+        entities: r.entities, image: r.image,
       })),
     });
   } catch (err) {
@@ -1369,21 +1369,23 @@ router.get('/sessions', requireAuth, async (req, res) => {
 // POST /api/admin/cms/sessions
 router.post('/admin/cms/sessions', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
-  const { title, date, time, format, venue = '', host = '', meetingUrl = '', entity, image = '' } = req.body ?? {};
+  const { title, date, time, format, venue = '', host = '', meetingUrl = '', entities, image = '' } = req.body ?? {};
   if (!title || !date || !time || !format) return res.status(400).json({ error: 'title, date, time, and format are required' });
   const validFormats = ['Virtual', 'In-Person', 'Hybrid'];
   if (!validFormats.includes(format)) return res.status(400).json({ error: 'format must be Virtual, In-Person, or Hybrid' });
   if (!validateUrl(meetingUrl)) return res.status(400).json({ error: 'meetingUrl must be an http or https URL' });
-  if (!entity || !(entity in ENTITIES)) return res.status(400).json({ error: 'A valid entity is required' });
+  if (!Array.isArray(entities) || entities.length === 0 || !entities.every((e) => e in ENTITIES)) {
+    return res.status(400).json({ error: 'At least one valid entity is required' });
+  }
   try {
     const rows = await db(
-      `INSERT INTO live_sessions (title, session_date, session_time, format, venue, host, meeting_url, entity, image)
+      `INSERT INTO live_sessions (title, session_date, session_time, format, venue, host, meeting_url, entities, image)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-      [title, date, time, format, venue, host, meetingUrl, entity, image]
+      [title, date, time, format, venue, host, meetingUrl, entities, image]
     );
     const r = rows[0];
     return res.status(201).json({
-      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url, entity: r.entity, image: r.image },
+      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url, entities: r.entities, image: r.image },
     });
   } catch (err) {
     console.error('POST /admin/cms/sessions error:', err);
@@ -1396,10 +1398,12 @@ router.patch('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
-  const { title, date, time, format, venue, host, meetingUrl, entity, image } = req.body ?? {};
+  const { title, date, time, format, venue, host, meetingUrl, entities, image } = req.body ?? {};
   if (format !== undefined && !['Virtual','In-Person','Hybrid'].includes(format)) return res.status(400).json({ error: 'Invalid format' });
   if (meetingUrl !== undefined && !validateUrl(meetingUrl)) return res.status(400).json({ error: 'meetingUrl must be an http or https URL' });
-  if (entity !== undefined && !(entity in ENTITIES)) return res.status(400).json({ error: 'A valid entity is required' });
+  if (entities !== undefined && (!Array.isArray(entities) || entities.length === 0 || !entities.every((e) => e in ENTITIES))) {
+    return res.status(400).json({ error: 'At least one valid entity is required' });
+  }
   const set = []; const params = []; let i = 1;
   if (title !== undefined)      { set.push(`title=$${i++}`);        params.push(title); }
   if (date !== undefined)       { set.push(`session_date=$${i++}`); params.push(date); }
@@ -1408,7 +1412,7 @@ router.patch('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
   if (venue !== undefined)      { set.push(`venue=$${i++}`);        params.push(venue); }
   if (host !== undefined)       { set.push(`host=$${i++}`);         params.push(host); }
   if (meetingUrl !== undefined) { set.push(`meeting_url=$${i++}`);  params.push(meetingUrl); }
-  if (entity !== undefined)     { set.push(`entity=$${i++}`);       params.push(entity); }
+  if (entities !== undefined)   { set.push(`entities=$${i++}`);     params.push(entities); }
   if (image !== undefined)      { set.push(`image=$${i++}`);        params.push(image); }
   if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
   set.push(`updated_at=NOW()`); params.push(id);
@@ -1417,7 +1421,7 @@ router.patch('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const r = rows[0];
     return res.json({
-      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url, entity: r.entity, image: r.image },
+      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url, entities: r.entities, image: r.image },
     });
   } catch (err) {
     console.error('PATCH /admin/cms/sessions error:', err);

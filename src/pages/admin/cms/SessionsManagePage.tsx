@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -56,7 +57,7 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
     venue: item?.venue ?? '',
     host: item?.host ?? '',
     meetingUrl: item?.meetingUrl ?? '',
-    entity: item?.entity ?? GENERAL_ENTITY,
+    entities: item?.entities?.length ? item.entities : [GENERAL_ENTITY],
     image: item?.image ?? '',
   });
   const [loading, setLoading] = useState(false);
@@ -69,6 +70,7 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (form.entities.length === 0) { setError('Select at least one entity.'); return; }
     setLoading(true);
     setError('');
     const result = isEdit
@@ -119,18 +121,28 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="s-entity">Entity</Label>
-            <Select value={form.entity} onValueChange={(v) => set('entity', v)}>
-              <SelectTrigger id="s-entity"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {ENTITIES.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>
-                    {e.id === GENERAL_ENTITY ? `${e.name} (General — visible to everyone)` : e.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">Only staff from this entity will see this session — unless you pick the general one, which everyone sees.</p>
+            <Label>Entities</Label>
+            <div className="space-y-2.5 rounded-md border border-input px-3 py-2.5">
+              {ENTITIES.map((e) => {
+                const checked = form.entities.includes(e.id);
+                return (
+                  <label key={e.id} htmlFor={`s-entity-${e.id}`} className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <Checkbox
+                      id={`s-entity-${e.id}`}
+                      checked={checked}
+                      onCheckedChange={(v) =>
+                        set('entities', v ? [...form.entities, e.id] : form.entities.filter((id) => id !== e.id))
+                      }
+                    />
+                    <span className="text-sm text-foreground">
+                      {e.name}
+                      {e.id === GENERAL_ENTITY && <span className="text-muted-foreground"> (General — visible to everyone)</span>}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">Staff from any checked entity will see this session — check the general one too if everyone should see it.</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="s-venue">Venue</Label>
@@ -194,7 +206,7 @@ export default function SessionsManagePage() {
     if (!q) return true;
     return s.title.toLowerCase().includes(q) || s.venue.toLowerCase().includes(q)
       || s.host.toLowerCase().includes(q) || s.format.toLowerCase().includes(q)
-      || entityName(s.entity).toLowerCase().includes(q);
+      || s.entities.some((id) => entityName(id).toLowerCase().includes(q));
   });
 
   const load = async () => {
@@ -297,11 +309,16 @@ export default function SessionsManagePage() {
                         )}
                       </div>
 
-                      {/* Entity badge */}
-                      <div className="flex justify-center">
-                        <Badge variant={s.entity === GENERAL_ENTITY ? 'default' : 'secondary'} className="text-[10px] truncate max-w-full">
-                          {s.entity === GENERAL_ENTITY ? 'General' : entityName(s.entity)}
-                        </Badge>
+                      {/* Entity badges */}
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {s.entities.slice(0, 2).map((id) => (
+                          <Badge key={id} variant={id === GENERAL_ENTITY ? 'default' : 'secondary'} className="text-[9px] px-1.5 py-0 truncate max-w-full">
+                            {id === GENERAL_ENTITY ? 'General' : entityName(id)}
+                          </Badge>
+                        ))}
+                        {s.entities.length > 2 && (
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0">+{s.entities.length - 2}</Badge>
+                        )}
                       </div>
 
                       {/* Format badge */}

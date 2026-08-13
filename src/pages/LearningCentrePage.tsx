@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   BookOpen,
   Clock,
@@ -66,11 +67,12 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
   const fmtCfg = formatConfig[session.format];
   const FmtIcon = fmtCfg.icon;
   const [month, day, year] = session.date.replace(",", "").split(" ");
+  const hasImage = !!session.image && isOwnUploadUrl(session.image);
 
   return (
     <AnimateOnScroll delay={delay}>
       <div className={`flex flex-col h-full rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200 ${isPast ? "opacity-70" : "hover:shadow-md hover:-translate-y-1"}`}>
-        {session.image && isOwnUploadUrl(session.image) && (
+        {hasImage && (
           <div className="aspect-[16/9] bg-muted flex items-center justify-center">
             <img src={session.image} alt={session.title} className="w-full h-full object-contain" loading="lazy" />
           </div>
@@ -78,7 +80,9 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
         <div className="flex flex-col h-full p-6">
           {/* Date block */}
           <div className="flex items-center gap-4 mb-5">
-            <div className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl shrink-0 ${isPast ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"}`}>
+            <div
+              className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl shrink-0 shadow-lg ${hasImage ? "-mt-10 ring-4 ring-card" : ""} ${isPast ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"}`}
+            >
               <span className="text-[10px] font-sans font-semibold uppercase tracking-wide opacity-70 leading-none">
                 {month}
               </span>
@@ -143,6 +147,7 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 const LearningCentrePage = () => {
+  const { hash } = useLocation();
   const [courses, setCourses] = useState<Course[]>([]);
   const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
   const [sessions, setSessions] = useState<LiveSession[]>([]);
@@ -159,6 +164,15 @@ const LearningCentrePage = () => {
       }
     );
   }, []);
+
+  // React Router's client-side navigation doesn't trigger the browser's
+  // native #hash scroll — do it ourselves once the target section exists.
+  useEffect(() => {
+    if (!hash) return;
+    const id = hash.slice(1);
+    const el = document.getElementById(id);
+    if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }, [hash, loading]);
 
   const mandatoryCount = courses.filter((c) => c.mandatory).length;
   const upcomingSessions = sessions.filter((s) => !isPastSession(s));
@@ -428,7 +442,7 @@ const LearningCentrePage = () => {
       </section>
 
       {/* ── Upcoming Live Sessions ── */}
-      <section className="px-6 py-14 sm:px-8 lg:px-16 bg-muted/30 border-t border-border">
+      <section id="sessions" className="px-6 py-14 sm:px-8 lg:px-16 bg-muted/30 border-t border-border scroll-mt-20">
         <div className="max-w-6xl mx-auto">
           <AnimateOnScroll>
             <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-2">

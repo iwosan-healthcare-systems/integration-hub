@@ -83,17 +83,20 @@ export function SessionPreviewCard({ session }: { session: SessionInput }) {
   const FmtIcon = fmtCfg.icon;
   const displayDate = fmtFormDate(session.date);
   const [month, day, year] = displayDate.replace(",", "").split(" ");
+  const hasImage = !!session.image && isOwnUploadUrl(session.image);
 
   return (
     <div className="flex flex-col rounded-2xl border border-border bg-card overflow-hidden">
-      {session.image && isOwnUploadUrl(session.image) && (
+      {hasImage && (
         <div className="aspect-[16/9] bg-muted flex items-center justify-center">
           <img src={session.image} alt={session.title} className="w-full h-full object-contain" />
         </div>
       )}
       <div className="flex flex-col p-6">
         <div className="flex items-center gap-4 mb-5">
-          <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-primary text-primary-foreground shrink-0">
+          <div
+            className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-primary text-primary-foreground shrink-0 shadow-lg ${hasImage ? "-mt-10 ring-4 ring-card" : ""}`}
+          >
             <span className="text-[10px] font-sans font-semibold uppercase tracking-wide opacity-70 leading-none">{month}</span>
             <span className="text-2xl font-bold leading-tight">{day ?? "—"}</span>
             <span className="text-[10px] font-sans opacity-60 leading-none">{year}</span>

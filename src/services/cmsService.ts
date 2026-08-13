@@ -85,7 +85,7 @@ export interface LiveSession {
   venue: string;
   host: string;
   meetingUrl: string;
-  entity: string;
+  entities: string[];
   image: string;
 }
 
@@ -217,7 +217,7 @@ export async function deleteLearningPath(id: number): Promise<{ error: string | 
 export type SessionInput = {
   title: string; date: string; time: string;
   format: 'Virtual' | 'In-Person' | 'Hybrid'; venue: string; host: string; meetingUrl?: string;
-  entity: string; image: string;
+  entities: string[]; image: string;
 };
 
 export async function createSession(input: SessionInput): Promise<{ session: LiveSession | null; error: string | null }> {
