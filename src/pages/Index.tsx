@@ -11,6 +11,7 @@ import { getNews, type NewsItem } from "@/services/cmsService";
 import { Seo } from "@/components/Seo";
 import { CountUpStat } from "@/components/CountUpStat";
 import { useTypewriterLoop } from "@/hooks/useTypewriterLoop";
+import { UpcomingSessionsReminder } from "@/components/UpcomingSessionsReminder";
 
 const HERO_EYEBROW = "You're welcome to the";
 const HERO_TITLE = "Iwosan Integration Hub";
@@ -70,6 +71,8 @@ const Index = () => {
         description="Transforming Nigeria into a global healthcare frontier. Your centralized platform for tools, resources, and collaboration across the Iwosan network."
         path="/"
       />
+
+      <UpcomingSessionsReminder />
 
       {/* Hero */}
       <section className="relative min-h-[88svh] sm:min-h-[82svh] md:min-h-[75vh] flex items-center overflow-hidden">

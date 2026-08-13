@@ -172,7 +172,7 @@ export default function PictureLibraryManagePage() {
 
   return (
     <div className="space-y-5 max-w-5xl">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-foreground">Picture Library</h2>
           <p className="text-sm text-muted-foreground mt-0.5">{pictures.length} album{pictures.length !== 1 ? 's' : ''}</p>

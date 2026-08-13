@@ -19,6 +19,7 @@ import type { LucideIcon } from "lucide-react";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { getCourses, getLearningPaths, getSessions, type Course, type LearningPath, type LiveSession } from "@/services/cmsService";
 import { isOwnUploadUrl } from "@/lib/utils";
+import { isPastSession } from "@/lib/sessions";
 import { Seo } from "@/components/Seo";
 
 // ─── Config maps ────────────────────────────────────────────────────────────
@@ -59,6 +60,86 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-muted animate-pulse rounded ${className}`} />;
 }
 
+// ─── Session card ───────────────────────────────────────────────────────────
+
+function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast: boolean; delay: number }) {
+  const fmtCfg = formatConfig[session.format];
+  const FmtIcon = fmtCfg.icon;
+  const [month, day, year] = session.date.replace(",", "").split(" ");
+
+  return (
+    <AnimateOnScroll delay={delay}>
+      <div className={`flex flex-col h-full rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200 ${isPast ? "opacity-70" : "hover:shadow-md hover:-translate-y-1"}`}>
+        {session.image && isOwnUploadUrl(session.image) && (
+          <div className="aspect-[16/9] bg-muted flex items-center justify-center">
+            <img src={session.image} alt={session.title} className="w-full h-full object-contain" loading="lazy" />
+          </div>
+        )}
+        <div className="flex flex-col h-full p-6">
+          {/* Date block */}
+          <div className="flex items-center gap-4 mb-5">
+            <div className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl shrink-0 ${isPast ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"}`}>
+              <span className="text-[10px] font-sans font-semibold uppercase tracking-wide opacity-70 leading-none">
+                {month}
+              </span>
+              <span className="text-2xl font-bold leading-tight">{day}</span>
+              <span className="text-[10px] font-sans opacity-60 leading-none">{year}</span>
+            </div>
+            <div>
+              <h3 className="font-serif text-base font-semibold text-foreground leading-snug">
+                {session.title}
+              </h3>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-sans font-semibold ${fmtCfg.color}`}>
+                  <FmtIcon className="h-3 w-3" />
+                  {session.format}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
+              <CalendarDays className="h-4 w-4 shrink-0" />
+              <span>{session.date} · {session.time}</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm font-sans text-muted-foreground">
+              <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>{session.venue}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
+              <Users className="h-4 w-4 shrink-0" />
+              <span>{session.host}</span>
+            </div>
+          </div>
+
+          {isPast ? (
+            <div className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-border bg-muted/40 px-4 py-2 text-sm font-sans font-semibold text-muted-foreground">
+              Session ended
+            </div>
+          ) : session.meetingUrl ? (
+            <a
+              href={session.meetingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-sans font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              Join
+            </a>
+          ) : (
+            <a
+              href="mailto:HumanResources@iwosanhealth.com?subject=Live Session Registration"
+              className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-border bg-muted/50 px-4 py-2 text-sm font-sans font-semibold text-muted-foreground transition-colors hover:bg-muted"
+            >
+              Contact HR
+            </a>
+          )}
+        </div>
+      </div>
+    </AnimateOnScroll>
+  );
+}
+
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 const LearningCentrePage = () => {
@@ -80,6 +161,8 @@ const LearningCentrePage = () => {
   }, []);
 
   const mandatoryCount = courses.filter((c) => c.mandatory).length;
+  const upcomingSessions = sessions.filter((s) => !isPastSession(s));
+  const pastSessions = sessions.filter((s) => isPastSession(s));
 
   return (
     <>
@@ -110,7 +193,7 @@ const LearningCentrePage = () => {
                 { label: "Courses", value: loading ? "—" : courses.length.toString() },
                 { label: "Categories", value: "6" },
                 { label: "Learning Paths", value: loading ? "—" : learningPaths.length.toString() },
-                { label: "Upcoming Sessions", value: loading ? "—" : sessions.length.toString() },
+                { label: "Upcoming Sessions", value: loading ? "—" : upcomingSessions.length.toString() },
               ].map((s) => (
                 <div key={s.label} className="text-center">
                   <p className="text-2xl font-bold text-white">{s.value}</p>
@@ -364,87 +447,42 @@ const LearningCentrePage = () => {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-52" />)}
             </div>
-          ) : sessions.length === 0 ? (
+          ) : upcomingSessions.length === 0 ? (
             <p className="text-muted-foreground text-sm">No upcoming sessions scheduled.</p>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {sessions.map((session, i) => {
-                const fmtCfg = formatConfig[session.format];
-                const FmtIcon = fmtCfg.icon;
-                const [month, day, year] = session.date.replace(",", "").split(" ");
-
-                return (
-                  <AnimateOnScroll key={session.id} delay={i * 0.1}>
-                    <div className="flex flex-col h-full rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-1">
-                      {session.image && isOwnUploadUrl(session.image) && (
-                        <div className="aspect-[16/9] bg-muted">
-                          <img src={session.image} alt={session.title} className="w-full h-full object-cover" loading="lazy" />
-                        </div>
-                      )}
-                      <div className="flex flex-col h-full p-6">
-                        {/* Date block */}
-                        <div className="flex items-center gap-4 mb-5">
-                          <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-primary text-primary-foreground shrink-0">
-                            <span className="text-[10px] font-sans font-semibold uppercase tracking-wide opacity-70 leading-none">
-                              {month}
-                            </span>
-                            <span className="text-2xl font-bold leading-tight">{day}</span>
-                            <span className="text-[10px] font-sans opacity-60 leading-none">{year}</span>
-                          </div>
-                          <div>
-                            <h3 className="font-serif text-base font-semibold text-foreground leading-snug">
-                              {session.title}
-                            </h3>
-                            <div className="flex items-center gap-1.5 mt-1.5">
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-sans font-semibold ${fmtCfg.color}`}>
-                                <FmtIcon className="h-3 w-3" />
-                                {session.format}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 flex-1">
-                          <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
-                            <CalendarDays className="h-4 w-4 shrink-0" />
-                            <span>{session.date} · {session.time}</span>
-                          </div>
-                          <div className="flex items-start gap-2 text-sm font-sans text-muted-foreground">
-                            <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
-                            <span>{session.venue}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
-                            <Users className="h-4 w-4 shrink-0" />
-                            <span>{session.host}</span>
-                          </div>
-                        </div>
-
-                        {session.meetingUrl ? (
-                          <a
-                            href={session.meetingUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-sans font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
-                          >
-                            Join
-                          </a>
-                        ) : (
-                          <a
-                            href="mailto:HumanResources@iwosanhealth.com?subject=Live Session Registration"
-                            className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-border bg-muted/50 px-4 py-2 text-sm font-sans font-semibold text-muted-foreground transition-colors hover:bg-muted"
-                          >
-                            Contact HR
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </AnimateOnScroll>
-                );
-              })}
+              {upcomingSessions.map((session, i) => (
+                <SessionCard key={session.id} session={session} isPast={false} delay={i * 0.1} />
+              ))}
             </div>
           )}
         </div>
       </section>
+
+      {/* ── Past Sessions ── */}
+      {!loading && pastSessions.length > 0 && (
+        <section className="px-6 py-14 sm:px-8 lg:px-16 border-t border-border">
+          <div className="max-w-6xl mx-auto">
+            <AnimateOnScroll>
+              <p className="font-sans uppercase tracking-[0.2em] text-muted-foreground text-xs font-medium mb-2">
+                Live Training
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+                Past sessions
+              </h2>
+              <p className="font-sans text-muted-foreground max-w-xl mb-8">
+                Sessions that have already taken place.
+              </p>
+            </AnimateOnScroll>
+
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {pastSessions.map((session, i) => (
+                <SessionCard key={session.id} session={session} isPast delay={i * 0.05} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </>
   );
 };

@@ -99,7 +99,7 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
             enableLibraryPicker
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="s-date">Date</Label>
               <Input id="s-date" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} required />
@@ -227,7 +227,7 @@ export default function SessionsManagePage() {
 
   return (
     <div className="space-y-5 max-w-5xl">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-foreground">Live Sessions</h2>
           <p className="text-sm text-muted-foreground mt-0.5">{sessions.length} upcoming session{sessions.length !== 1 ? 's' : ''}</p>

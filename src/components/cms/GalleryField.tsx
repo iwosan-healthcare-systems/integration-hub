@@ -252,7 +252,7 @@ export function GalleryField({
           <DialogHeader>
             <DialogTitle>Uploaded images ({filled.length})</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-5 sm:grid-cols-6 gap-2 pt-1">
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 pt-1">
             {filled.map((e) => (
               <div key={e.i} className="relative group aspect-square rounded-md overflow-hidden bg-muted border border-border/60">
                 {isOwnUploadUrl(e.url)

@@ -280,6 +280,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [loginFilter, setLoginFilter] = useState<'all' | 'pending' | 'never' | 'signed-in'>('all');
+  const [entityFilter, setEntityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'joined-desc' | 'joined-asc' | 'login-desc' | 'login-asc' | 'name'>('joined-desc');
   const [globalError, setGlobalError] = useState('');
 
@@ -315,6 +316,9 @@ export default function UsersPage() {
     else if (loginFilter === 'never') result = result.filter((u) => !u.lastSignInAt);
     else if (loginFilter === 'signed-in') result = result.filter((u) => !!u.lastSignInAt);
 
+    if (entityFilter === 'unassigned') result = result.filter((u) => !u.entity);
+    else if (entityFilter !== 'all') result = result.filter((u) => u.entity === entityFilter);
+
     const withTime = (d: string | null) => (d ? new Date(d).getTime() : null);
 
     return [...result].sort((a, b) => {
@@ -344,10 +348,10 @@ export default function UsersPage() {
           return withTime(b.createdAt)! - withTime(a.createdAt)!;
       }
     });
-  }, [users, search, loginFilter, sortBy]);
+  }, [users, search, loginFilter, entityFilter, sortBy]);
 
-  const filtersActive = loginFilter !== 'all' || sortBy !== 'joined-desc';
-  const clearFilters = () => { setLoginFilter('all'); setSortBy('joined-desc'); };
+  const filtersActive = loginFilter !== 'all' || entityFilter !== 'all' || sortBy !== 'joined-desc';
+  const clearFilters = () => { setLoginFilter('all'); setEntityFilter('all'); setSortBy('joined-desc'); };
 
   const handleToggleActive = async (u: AdminUser) => {
     setActionLoading(u.id);
@@ -395,7 +399,7 @@ export default function UsersPage() {
   return (
     <div className="space-y-5 max-w-5xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-foreground">Users</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -446,6 +450,18 @@ export default function UsersPage() {
             <SelectItem value="signed-in">Signed in</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={entityFilter} onValueChange={setEntityFilter}>
+          <SelectTrigger className="sm:w-48 shrink-0">
+            <SelectValue placeholder="Entity" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All entities</SelectItem>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
+            {ENTITIES.map((e) => (
+              <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
           <SelectTrigger className="sm:w-56 shrink-0">
             <span className="flex items-center gap-1.5 truncate">
@@ -471,13 +487,14 @@ export default function UsersPage() {
       {/* Table */}
       <Card className="border-border/60 overflow-hidden">
         <div className="overflow-x-auto">
-          <div className="min-w-[860px]">
+          <div className="min-w-[960px]">
             {/* Column headings */}
-            <div className="grid grid-cols-[2rem_1fr_10rem_6rem_6rem_9rem_1.75rem] gap-4 items-center px-5 py-2.5 border-b border-border/60 bg-muted/50">
+            <div className="grid grid-cols-[2rem_1fr_10rem_6rem_8rem_6rem_9rem_1.75rem] gap-4 items-center px-5 py-2.5 border-b border-border/60 bg-muted/50">
               <span />
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">User</span>
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Role & Status</span>
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Auth</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Entity</span>
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest text-right">Joined</span>
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest text-right">Last Sign In</span>
               <span />
@@ -504,7 +521,7 @@ export default function UsersPage() {
                   {filtered.map((u, idx) => (
                     <div
                       key={u.id}
-                      className={`grid grid-cols-[2rem_1fr_10rem_6rem_6rem_9rem_1.75rem] gap-4 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
+                      className={`grid grid-cols-[2rem_1fr_10rem_6rem_8rem_6rem_9rem_1.75rem] gap-4 items-center px-5 py-3.5 hover:bg-muted/40 transition-colors ${idx < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
                     >
                       {/* Avatar */}
                       <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 font-semibold text-sm ${u.isActive ? 'bg-accent/15 text-accent' : 'bg-muted text-muted-foreground'}`}>
@@ -543,6 +560,17 @@ export default function UsersPage() {
                           <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/60">
                             Local
                           </Badge>
+                        )}
+                      </div>
+
+                      {/* Entity */}
+                      <div className="min-w-0">
+                        {u.email === 'admin@iwosaninnovationhub.com' ? (
+                          <span className="text-xs text-muted-foreground/50">—</span>
+                        ) : u.entity ? (
+                          <Badge variant="secondary" className="text-[10px] truncate max-w-full">{entityName(u.entity)}</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/50 italic">Unassigned</span>
                         )}
                       </div>
 

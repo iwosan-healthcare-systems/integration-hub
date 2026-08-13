@@ -101,7 +101,7 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="n-date">Date</Label>
               <Input id="n-date" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} required />
@@ -235,7 +235,7 @@ export default function NewsManagePage() {
 
   return (
     <div className="space-y-5 max-w-5xl">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-foreground">News & Announcements</h2>
           <p className="text-sm text-muted-foreground mt-0.5">{news.length} article{news.length !== 1 ? 's' : ''}</p>

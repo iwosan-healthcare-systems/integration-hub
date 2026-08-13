@@ -90,7 +90,7 @@ function PathFormModal({ item, courses, onClose, onSaved }: PathFormProps) {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="lp-aud">Audience</Label>
               <Input id="lp-aud" value={form.audience} onChange={(e) => set('audience', e.target.value)} placeholder="e.g. All New Staff" />
@@ -100,7 +100,7 @@ function PathFormModal({ item, courses, onClose, onSaved }: PathFormProps) {
               <Input id="lp-dur" value={form.totalDuration} onChange={(e) => set('totalDuration', e.target.value)} placeholder="e.g. 6h 30m" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="lp-icon">Icon</Label>
               <Select value={form.icon} onValueChange={(v) => set('icon', v)}>
@@ -213,7 +213,7 @@ export default function LearningPathsManagePage() {
 
   return (
     <div className="space-y-5 max-w-5xl">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-foreground">Learning Paths</h2>
           <p className="text-sm text-muted-foreground mt-0.5">{paths.length} path{paths.length !== 1 ? 's' : ''}</p>

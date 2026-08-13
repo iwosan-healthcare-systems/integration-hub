@@ -92,7 +92,7 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="c-cat">Category</Label>
               <Select value={form.category} onValueChange={(v) => set('category', v as Course['category'])}>
@@ -108,7 +108,7 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="c-dur">Duration</Label>
               <Input id="c-dur" value={form.duration} onChange={(e) => set('duration', e.target.value)} placeholder="e.g. 2h 30m" required />
@@ -128,7 +128,7 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
             </Label>
             <Input id="c-url" type="url" value={form.courseUrl ?? ''} onChange={(e) => set('courseUrl', e.target.value)} placeholder="https://…" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="c-order">Sort Order</Label>
               <Input id="c-order" type="number" min={0} value={form.sortOrder} onChange={(e) => set('sortOrder', parseInt(e.target.value) || 0)} />
@@ -221,7 +221,7 @@ export default function CoursesManagePage() {
 
   return (
     <div className="space-y-5 max-w-5xl">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-foreground">Courses</h2>
           <p className="text-sm text-muted-foreground mt-0.5">{courses.length} course{courses.length !== 1 ? 's' : ''}</p>

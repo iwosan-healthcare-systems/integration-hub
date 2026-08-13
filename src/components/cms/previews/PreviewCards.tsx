@@ -87,8 +87,8 @@ export function SessionPreviewCard({ session }: { session: SessionInput }) {
   return (
     <div className="flex flex-col rounded-2xl border border-border bg-card overflow-hidden">
       {session.image && isOwnUploadUrl(session.image) && (
-        <div className="aspect-[16/9] bg-muted">
-          <img src={session.image} alt={session.title} className="w-full h-full object-cover" />
+        <div className="aspect-[16/9] bg-muted flex items-center justify-center">
+          <img src={session.image} alt={session.title} className="w-full h-full object-contain" />
         </div>
       )}
       <div className="flex flex-col p-6">

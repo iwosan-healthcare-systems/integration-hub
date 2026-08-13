@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { getMe, logoutUser, type User } from '@/services/authService';
+import { SESSIONS_REMINDER_DISMISSED_KEY } from '@/lib/sessions';
 
 interface AuthContextValue {
   user: User | null;
@@ -32,6 +33,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserState(u);
     if (u) {
       localStorage.setItem(SESSION_HINT, '1');
+      // A fresh login (not a page-refresh session restore, which goes
+      // through refreshUser() below instead) — let dismissed reminders
+      // show again for this new session.
+      sessionStorage.removeItem(SESSIONS_REMINDER_DISMISSED_KEY);
     } else {
       localStorage.removeItem(SESSION_HINT);
     }
