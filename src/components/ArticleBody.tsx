@@ -1,4 +1,5 @@
 import { ArrowUpRight, Clock } from "lucide-react";
+import { ArticleVideoPlayer } from "@/components/ArticleVideoPlayer";
 
 const PARAGRAPHS_PER_GROUP = 4;
 const IMAGES_PER_BATCH = 3;
@@ -49,6 +50,7 @@ export interface ArticleBodyProps {
   excerpt: string;
   content: string;
   images: string[];
+  video?: string;
   url?: string;
 }
 
@@ -56,7 +58,7 @@ export interface ArticleBodyProps {
 // blocks, and the external-source link. Shared by the public article page and
 // the CMS "Preview" dialog so what an editor sees before publishing is exactly
 // what readers see after.
-export function ArticleBody({ title, image, category, date, excerpt, content, images, url }: ArticleBodyProps) {
+export function ArticleBody({ title, image, category, date, excerpt, content, images, video, url }: ArticleBodyProps) {
   const paragraphs = toParagraphs(content);
   const blocks = buildArticleBlocks(paragraphs, images);
 
@@ -89,6 +91,12 @@ export function ArticleBody({ title, image, category, date, excerpt, content, im
             <Clock className="h-3 w-3" /> {date}
           </span>
         </div>
+
+        {video && (
+          <div className="mb-8">
+            <ArticleVideoPlayer videoKey={video} title={title} />
+          </div>
+        )}
 
         {blocks.length > 0 ? (
           <div className="space-y-8">

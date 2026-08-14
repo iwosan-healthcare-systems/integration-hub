@@ -15,12 +15,15 @@ import {
   AlertCircle,
   ExternalLink,
   ShieldAlert,
+  Play,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { getCourses, getLearningPaths, getSessions, type Course, type LearningPath, type LiveSession } from "@/services/cmsService";
 import { isOwnUploadUrl } from "@/lib/utils";
 import { isPastSession, formatSessionTime } from "@/lib/sessions";
+import { ArticleVideoPlayer } from "@/components/ArticleVideoPlayer";
 import { Seo } from "@/components/Seo";
 
 // ─── Config maps ────────────────────────────────────────────────────────────
@@ -153,6 +156,7 @@ const LearningCentrePage = () => {
   const [sessions, setSessions] = useState<LiveSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [videoCourse, setVideoCourse] = useState<Course | null>(null);
 
   useEffect(() => {
     Promise.all([getCourses(), getLearningPaths(), getSessions()]).then(
@@ -415,11 +419,15 @@ const LearningCentrePage = () => {
                             <BookOpen className="h-3 w-3" />{course.modules} module{course.modules !== 1 ? 's' : ''}
                           </span>
                         </div>
-                        {course.courseUrl && (
+                        {course.courseUrl ? (
                           <span className="flex items-center gap-1 text-accent font-semibold">
                             Open <ExternalLink className="h-3 w-3" />
                           </span>
-                        )}
+                        ) : course.video ? (
+                          <span className="flex items-center gap-1 text-accent font-semibold">
+                            Watch <Play className="h-3 w-3" />
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   );
@@ -430,6 +438,10 @@ const LearningCentrePage = () => {
                         <a href={course.courseUrl} target="_blank" rel="noopener noreferrer" className="block h-full">
                           {cardContent}
                         </a>
+                      ) : course.video ? (
+                        <button type="button" onClick={() => setVideoCourse(course)} className="block h-full w-full text-left">
+                          {cardContent}
+                        </button>
                       ) : (
                         <div className="h-full">{cardContent}</div>
                       )}
@@ -497,6 +509,24 @@ const LearningCentrePage = () => {
           </div>
         </section>
       )}
+
+      {/* ── Course video dialog ── */}
+      <Dialog open={!!videoCourse} onOpenChange={(v) => { if (!v) setVideoCourse(null); }}>
+        <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden">
+          {videoCourse && (
+            <>
+              <DialogTitle className="sr-only">{videoCourse.title}</DialogTitle>
+              <ArticleVideoPlayer videoKey={videoCourse.video} title={videoCourse.title} className="rounded-none" />
+              <div className="p-6">
+                <h2 className="font-serif text-xl font-bold mb-2">{videoCourse.title}</h2>
+                {videoCourse.description && (
+                  <p className="font-sans text-sm text-muted-foreground leading-relaxed">{videoCourse.description}</p>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

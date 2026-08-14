@@ -1,6 +1,6 @@
 import {
   BookOpen, Clock, GraduationCap, Layers, Monitor, Rocket, Stethoscope,
-  Users, Video, MapPin, CalendarDays, ExternalLink, ShieldAlert, ImageIcon,
+  Users, Video, MapPin, CalendarDays, ExternalLink, ShieldAlert, ImageIcon, Play,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Course, CourseInput, SessionInput, LearningPathInput, PictureLibraryInput } from "@/services/cmsService";
@@ -67,11 +67,15 @@ export function CoursePreviewCard({ course }: { course: CourseInput }) {
           <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{course.duration || "—"}</span>
           <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{course.modules} module{course.modules !== 1 ? "s" : ""}</span>
         </div>
-        {course.courseUrl && (
+        {course.courseUrl ? (
           <span className="flex items-center gap-1 text-accent font-semibold">
             Open <ExternalLink className="h-3 w-3" />
           </span>
-        )}
+        ) : course.video ? (
+          <span className="flex items-center gap-1 text-accent font-semibold">
+            Watch <Play className="h-3 w-3" />
+          </span>
+        ) : null}
       </div>
     </div>
   );

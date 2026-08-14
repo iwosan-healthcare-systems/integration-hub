@@ -16,6 +16,8 @@ import { randomBytes, createPublicKey } from 'crypto';
 import { readFileSync } from 'fs';
 import { resolve, dirname, extname } from 'path';
 import { fileURLToPath } from 'url';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -76,6 +78,32 @@ async function db(text, params) {
   } finally {
     client.release();
   }
+}
+
+// ── S3 (Video Library) ───────────────────────────────────────────────────
+// Video files live in S3, not the DB — see AWS_REGION/S3_BUCKET/
+// S3_VIDEO_PREFIX env vars. The `videos` table only holds metadata + the
+// S3 key; playback and upload both go through short-lived presigned URLs
+// (the bucket blocks all public access).
+let s3Client = null;
+function getS3() {
+  if (!s3Client) s3Client = new S3Client({ region: process.env.AWS_REGION });
+  return s3Client;
+}
+const S3_BUCKET = process.env.S3_BUCKET;
+const S3_VIDEO_PREFIX = process.env.S3_VIDEO_PREFIX || 'videos/';
+const ALLOWED_VIDEO_TYPES = { 'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov' };
+const MAX_VIDEO_BYTES = 500 * 1024 * 1024; // 500 MB
+
+function mapVideoRow(r) {
+  return {
+    id: r.id, albumId: r.album_id, title: r.title, description: r.description, thumbnail: r.thumbnail,
+    duration: r.duration, fileSize: Number(r.file_size), sortOrder: r.sort_order,
+  };
+}
+
+function mapAlbumRow(r, videos = []) {
+  return { id: r.id, title: r.title, description: r.description, sortOrder: r.sort_order, videos };
 }
 
 // ── Auth helpers ──────────────────────────────────────────────────────────
@@ -1057,7 +1085,7 @@ router.post('/admin/cms/upload', requireAuth, async (req, res) => {
 router.get('/news', requireAuth, async (req, res) => {
   try {
     const rows = await db(
-      `SELECT id, title, excerpt, content, date, category, featured, image, images, url, sort_order
+      `SELECT id, title, excerpt, content, date, category, featured, image, images, video, url, sort_order
        FROM news WHERE is_active = true ORDER BY date DESC`,
       []
     );
@@ -1072,6 +1100,7 @@ router.get('/news', requireAuth, async (req, res) => {
         featured: r.featured,
         image: r.image,
         images: r.images ?? [],
+        video: r.video,
         url: r.url,
         sortOrder: r.sort_order,
       })),
@@ -1085,19 +1114,20 @@ router.get('/news', requireAuth, async (req, res) => {
 // POST /api/admin/cms/news
 router.post('/admin/cms/news', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
-  const { title, excerpt = '', content = '', date, category, featured = false, image = '', images = [], url = '', sortOrder = 0 } = req.body ?? {};
+  const { title, excerpt = '', content = '', date, category, featured = false, image = '', images = [], video = '', url = '', sortOrder = 0 } = req.body ?? {};
   if (!title || !date || !category) return res.status(400).json({ error: 'title, date, and category are required' });
   if (!validateUrl(url)) return res.status(400).json({ error: 'url must be an http or https URL' });
   if (!Array.isArray(images) || !images.every((u) => typeof u === 'string')) return res.status(400).json({ error: 'images must be an array of strings' });
+  if (video && !video.startsWith(S3_VIDEO_PREFIX)) return res.status(400).json({ error: 'Invalid video key' });
   try {
     const rows = await db(
-      `INSERT INTO news (title, excerpt, content, date, category, featured, image, images, url, sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-      [title, excerpt, content, date, category, Boolean(featured), image, images, url, Number(sortOrder)]
+      `INSERT INTO news (title, excerpt, content, date, category, featured, image, images, video, url, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [title, excerpt, content, date, category, Boolean(featured), image, images, video, url, Number(sortOrder)]
     );
     const r = rows[0];
     return res.status(201).json({
-      newsItem: { id: r.id, title: r.title, excerpt: r.excerpt, content: r.content, date: fmtDate(r.date), category: r.category, featured: r.featured, image: r.image, images: r.images ?? [], url: r.url, sortOrder: r.sort_order },
+      newsItem: { id: r.id, title: r.title, excerpt: r.excerpt, content: r.content, date: fmtDate(r.date), category: r.category, featured: r.featured, image: r.image, images: r.images ?? [], video: r.video, url: r.url, sortOrder: r.sort_order },
     });
   } catch (err) {
     console.error('POST /admin/cms/news error:', err);
@@ -1110,11 +1140,12 @@ router.patch('/admin/cms/news/:id', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
-  const { title, excerpt, content, date, category, featured, image, images, url, sortOrder } = req.body ?? {};
+  const { title, excerpt, content, date, category, featured, image, images, video, url, sortOrder } = req.body ?? {};
   if (url !== undefined && !validateUrl(url)) return res.status(400).json({ error: 'url must be an http or https URL' });
   if (images !== undefined && (!Array.isArray(images) || !images.every((u) => typeof u === 'string'))) {
     return res.status(400).json({ error: 'images must be an array of strings' });
   }
+  if (video && !video.startsWith(S3_VIDEO_PREFIX)) return res.status(400).json({ error: 'Invalid video key' });
   const set = []; const params = []; let i = 1;
   if (title !== undefined)     { set.push(`title=$${i++}`);       params.push(title); }
   if (excerpt !== undefined)   { set.push(`excerpt=$${i++}`);     params.push(excerpt); }
@@ -1124,6 +1155,7 @@ router.patch('/admin/cms/news/:id', requireAuth, async (req, res) => {
   if (featured !== undefined)  { set.push(`featured=$${i++}`);    params.push(Boolean(featured)); }
   if (image !== undefined)     { set.push(`image=$${i++}`);       params.push(image); }
   if (images !== undefined)    { set.push(`images=$${i++}`);      params.push(images); }
+  if (video !== undefined)     { set.push(`video=$${i++}`);       params.push(video); }
   if (url !== undefined)       { set.push(`url=$${i++}`);         params.push(url); }
   if (sortOrder !== undefined) { set.push(`sort_order=$${i++}`);  params.push(Number(sortOrder)); }
   if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
@@ -1133,7 +1165,7 @@ router.patch('/admin/cms/news/:id', requireAuth, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const r = rows[0];
     return res.json({
-      newsItem: { id: r.id, title: r.title, excerpt: r.excerpt, content: r.content, date: fmtDate(r.date), category: r.category, featured: r.featured, image: r.image, images: r.images ?? [], url: r.url, sortOrder: r.sort_order },
+      newsItem: { id: r.id, title: r.title, excerpt: r.excerpt, content: r.content, date: fmtDate(r.date), category: r.category, featured: r.featured, image: r.image, images: r.images ?? [], video: r.video, url: r.url, sortOrder: r.sort_order },
     });
   } catch (err) {
     console.error('PATCH /admin/cms/news error:', err);
@@ -1162,7 +1194,7 @@ router.delete('/admin/cms/news/:id', requireAuth, async (req, res) => {
 router.get('/courses', requireAuth, async (req, res) => {
   try {
     const rows = await db(
-      `SELECT id, title, description, category, level, duration, audience, modules, mandatory, course_url, sort_order
+      `SELECT id, title, description, category, level, duration, audience, modules, mandatory, course_url, video, sort_order
        FROM courses WHERE is_active = true ORDER BY sort_order ASC`,
       []
     );
@@ -1170,7 +1202,7 @@ router.get('/courses', requireAuth, async (req, res) => {
       courses: rows.map((r) => ({
         id: r.id, title: r.title, description: r.description, category: r.category,
         level: r.level, duration: r.duration, audience: r.audience,
-        modules: r.modules, mandatory: r.mandatory, courseUrl: r.course_url, sortOrder: r.sort_order,
+        modules: r.modules, mandatory: r.mandatory, courseUrl: r.course_url, video: r.video, sortOrder: r.sort_order,
       })),
     });
   } catch (err) {
@@ -1182,18 +1214,19 @@ router.get('/courses', requireAuth, async (req, res) => {
 // POST /api/admin/cms/courses
 router.post('/admin/cms/courses', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
-  const { id, title, description = '', category, level, duration, audience = '', modules = 1, mandatory = false, courseUrl = '', sortOrder = 0 } = req.body ?? {};
+  const { id, title, description = '', category, level, duration, audience = '', modules = 1, mandatory = false, courseUrl = '', video = '', sortOrder = 0 } = req.body ?? {};
   if (!id || !title || !category || !level || !duration) return res.status(400).json({ error: 'id, title, category, level, and duration are required' });
   if (!validateUrl(courseUrl)) return res.status(400).json({ error: 'courseUrl must be an http or https URL' });
+  if (video && !video.startsWith(S3_VIDEO_PREFIX)) return res.status(400).json({ error: 'Invalid video key' });
   try {
     const rows = await db(
-      `INSERT INTO courses (id,title,description,category,level,duration,audience,modules,mandatory,course_url,sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [id, title, description, category, level, duration, audience, Number(modules), Boolean(mandatory), courseUrl, Number(sortOrder)]
+      `INSERT INTO courses (id,title,description,category,level,duration,audience,modules,mandatory,course_url,video,sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [id, title, description, category, level, duration, audience, Number(modules), Boolean(mandatory), courseUrl, video, Number(sortOrder)]
     );
     const r = rows[0];
     return res.status(201).json({
-      course: { id: r.id, title: r.title, description: r.description, category: r.category, level: r.level, duration: r.duration, audience: r.audience, modules: r.modules, mandatory: r.mandatory, courseUrl: r.course_url, sortOrder: r.sort_order },
+      course: { id: r.id, title: r.title, description: r.description, category: r.category, level: r.level, duration: r.duration, audience: r.audience, modules: r.modules, mandatory: r.mandatory, courseUrl: r.course_url, video: r.video, sortOrder: r.sort_order },
     });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'A course with this ID already exists' });
@@ -1206,8 +1239,9 @@ router.post('/admin/cms/courses', requireAuth, async (req, res) => {
 router.patch('/admin/cms/courses/:id', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const courseId = req.params.id;
-  const { title, description, category, level, duration, audience, modules, mandatory, courseUrl, sortOrder } = req.body ?? {};
+  const { title, description, category, level, duration, audience, modules, mandatory, courseUrl, video, sortOrder } = req.body ?? {};
   if (courseUrl !== undefined && !validateUrl(courseUrl)) return res.status(400).json({ error: 'courseUrl must be an http or https URL' });
+  if (video && !video.startsWith(S3_VIDEO_PREFIX)) return res.status(400).json({ error: 'Invalid video key' });
   const set = []; const params = []; let i = 1;
   if (title !== undefined)       { set.push(`title=$${i++}`);       params.push(title); }
   if (description !== undefined) { set.push(`description=$${i++}`); params.push(description); }
@@ -1218,6 +1252,7 @@ router.patch('/admin/cms/courses/:id', requireAuth, async (req, res) => {
   if (modules !== undefined)     { set.push(`modules=$${i++}`);     params.push(Number(modules)); }
   if (mandatory !== undefined)   { set.push(`mandatory=$${i++}`);   params.push(Boolean(mandatory)); }
   if (courseUrl !== undefined)   { set.push(`course_url=$${i++}`);  params.push(courseUrl); }
+  if (video !== undefined)       { set.push(`video=$${i++}`);       params.push(video); }
   if (sortOrder !== undefined)   { set.push(`sort_order=$${i++}`);  params.push(Number(sortOrder)); }
   if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
   set.push(`updated_at=NOW()`); params.push(courseId);
@@ -1226,7 +1261,7 @@ router.patch('/admin/cms/courses/:id', requireAuth, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const r = rows[0];
     return res.json({
-      course: { id: r.id, title: r.title, description: r.description, category: r.category, level: r.level, duration: r.duration, audience: r.audience, modules: r.modules, mandatory: r.mandatory, courseUrl: r.course_url, sortOrder: r.sort_order },
+      course: { id: r.id, title: r.title, description: r.description, category: r.category, level: r.level, duration: r.duration, audience: r.audience, modules: r.modules, mandatory: r.mandatory, courseUrl: r.course_url, video: r.video, sortOrder: r.sort_order },
     });
   } catch (err) {
     console.error('PATCH /admin/cms/courses error:', err);
@@ -1531,6 +1566,240 @@ router.delete('/admin/cms/picture-library/:id', requireAuth, async (req, res) =>
     return res.json({ message: 'Deleted successfully' });
   } catch (err) {
     console.error('DELETE /admin/cms/picture-library error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── CMS: Video Library (public read, admin write) ──────────────────────────
+// No entity scoping — every logged-in user sees every video. A video may
+// optionally belong to an album (like Picture Library); one with no album
+// is a standalone upload.
+
+async function hardDeleteS3Key(key) {
+  if (!S3_BUCKET || !key) return;
+  try {
+    await getS3().send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: key }));
+  } catch (s3Err) {
+    console.error('Failed to remove S3 object', key, s3Err);
+  }
+}
+
+// GET /api/video-albums — every active album with its active videos nested
+router.get('/video-albums', requireAuth, async (req, res) => {
+  try {
+    const albums = await db(
+      `SELECT id, title, description, sort_order FROM video_albums
+       WHERE is_active = true ORDER BY sort_order ASC, created_at DESC`,
+      []
+    );
+    const videos = await db(
+      `SELECT id, album_id, title, description, thumbnail, duration, file_size, sort_order
+       FROM videos WHERE is_active = true AND album_id IS NOT NULL
+       ORDER BY sort_order ASC, created_at DESC`,
+      []
+    );
+    const byAlbum = new Map();
+    for (const v of videos) {
+      const list = byAlbum.get(v.album_id) ?? [];
+      list.push(mapVideoRow(v));
+      byAlbum.set(v.album_id, list);
+    }
+    return res.json({ albums: albums.map((a) => mapAlbumRow(a, byAlbum.get(a.id) ?? [])) });
+  } catch (err) {
+    console.error('GET /video-albums error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/videos — standalone videos only (no album)
+router.get('/videos', requireAuth, async (req, res) => {
+  try {
+    const rows = await db(
+      `SELECT id, album_id, title, description, thumbnail, duration, file_size, sort_order
+       FROM videos WHERE is_active = true AND album_id IS NULL
+       ORDER BY sort_order ASC, created_at DESC`,
+      []
+    );
+    return res.json({ videos: rows.map(mapVideoRow) });
+  } catch (err) {
+    console.error('GET /videos error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/videos/:id/play  — short-lived signed URL, minted on demand
+router.get('/videos/:id/play', requireAuth, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  if (!S3_BUCKET) return res.status(500).json({ error: 'Video storage is not configured' });
+  try {
+    const rows = await db('SELECT s3_key FROM videos WHERE id=$1 AND is_active = true', [id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    const command = new GetObjectCommand({ Bucket: S3_BUCKET, Key: rows[0].s3_key });
+    const url = await getSignedUrl(getS3(), command, { expiresIn: 60 * 60 * 4 }); // 4 hours
+    return res.json({ url });
+  } catch (err) {
+    console.error('GET /videos/:id/play error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/video-play-url?key=… — same signed-URL mint as above, but for
+// videos that live inline on another record (News article, Course) rather
+// than as a `videos` row, so there's no id to look up.
+router.get('/video-play-url', requireAuth, async (req, res) => {
+  const key = typeof req.query.key === 'string' ? req.query.key : '';
+  if (!key || !key.startsWith(S3_VIDEO_PREFIX)) return res.status(400).json({ error: 'Invalid video key' });
+  if (!S3_BUCKET) return res.status(500).json({ error: 'Video storage is not configured' });
+  try {
+    const command = new GetObjectCommand({ Bucket: S3_BUCKET, Key: key });
+    const url = await getSignedUrl(getS3(), command, { expiresIn: 60 * 60 * 4 }); // 4 hours
+    return res.json({ url });
+  } catch (err) {
+    console.error('GET /video-play-url error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/cms/videos/upload-url — mint a presigned PUT so the
+// browser uploads straight to S3 (the file never touches this server).
+// Reused for News/Courses inline video uploads too, not just Video Library.
+router.post('/admin/cms/videos/upload-url', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const { contentType, fileSize } = req.body ?? {};
+  const ext = ALLOWED_VIDEO_TYPES[contentType];
+  if (!ext) return res.status(400).json({ error: 'Unsupported video format. Use MP4, WebM, or MOV.' });
+  if (!Number.isFinite(fileSize) || fileSize <= 0) return res.status(400).json({ error: 'fileSize is required' });
+  if (fileSize > MAX_VIDEO_BYTES) return res.status(400).json({ error: 'Video too large. Max 500 MB.' });
+  if (!S3_BUCKET) return res.status(500).json({ error: 'Video storage is not configured' });
+  try {
+    const key = `${S3_VIDEO_PREFIX}${Date.now()}-${randomBytes(6).toString('hex')}.${ext}`;
+    const command = new PutObjectCommand({ Bucket: S3_BUCKET, Key: key, ContentType: contentType });
+    const uploadUrl = await getSignedUrl(getS3(), command, { expiresIn: 900 }); // 15 min
+    return res.json({ uploadUrl, key });
+  } catch (err) {
+    console.error('POST /admin/cms/videos/upload-url error:', err);
+    return res.status(500).json({ error: 'Could not prepare upload' });
+  }
+});
+
+// POST /api/admin/cms/video-albums
+router.post('/admin/cms/video-albums', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const { title, description = '', sortOrder = 0 } = req.body ?? {};
+  if (!title) return res.status(400).json({ error: 'title is required' });
+  try {
+    const rows = await db(
+      `INSERT INTO video_albums (title, description, sort_order) VALUES ($1,$2,$3) RETURNING *`,
+      [title, description, Number(sortOrder) || 0]
+    );
+    return res.status(201).json({ album: mapAlbumRow(rows[0], []) });
+  } catch (err) {
+    console.error('POST /admin/cms/video-albums error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/admin/cms/video-albums/:id
+router.patch('/admin/cms/video-albums/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  const { title, description, sortOrder } = req.body ?? {};
+  const set = []; const params = []; let i = 1;
+  if (title !== undefined)       { set.push(`title=$${i++}`);       params.push(title); }
+  if (description !== undefined) { set.push(`description=$${i++}`); params.push(description); }
+  if (sortOrder !== undefined)   { set.push(`sort_order=$${i++}`);  params.push(Number(sortOrder) || 0); }
+  if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+  set.push('updated_at=NOW()'); params.push(id);
+  try {
+    const rows = await db(`UPDATE video_albums SET ${set.join(',')} WHERE id=$${i} RETURNING *`, params);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    return res.json({ album: mapAlbumRow(rows[0], []) });
+  } catch (err) {
+    console.error('PATCH /admin/cms/video-albums error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/cms/video-albums/:id — soft-deletes the album and every
+// video inside it (hard-deleting their S3 objects), same policy as a
+// standalone video delete below.
+router.delete('/admin/cms/video-albums/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    const albumRows = await db('UPDATE video_albums SET is_active = false, updated_at = NOW() WHERE id=$1 AND is_active = true RETURNING id', [id]);
+    if (!albumRows[0]) return res.status(404).json({ error: 'Not found' });
+    const videoRows = await db('UPDATE videos SET is_active = false, updated_at = NOW() WHERE album_id=$1 AND is_active = true RETURNING s3_key', [id]);
+    for (const v of videoRows) await hardDeleteS3Key(v.s3_key);
+    return res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /admin/cms/video-albums error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/cms/videos — called after the browser finishes the S3 PUT
+router.post('/admin/cms/videos', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const { albumId = null, title, description = '', key, thumbnail = '', duration = '', fileSize = 0, sortOrder = 0 } = req.body ?? {};
+  if (!title || !key) return res.status(400).json({ error: 'title and key are required' });
+  if (!key.startsWith(S3_VIDEO_PREFIX)) return res.status(400).json({ error: 'Invalid video key' });
+  try {
+    const rows = await db(
+      `INSERT INTO videos (album_id, title, description, s3_key, thumbnail, duration, file_size, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [albumId ? Number(albumId) : null, title, description, key, thumbnail, duration, Number(fileSize) || 0, Number(sortOrder) || 0]
+    );
+    return res.status(201).json({ video: mapVideoRow(rows[0]) });
+  } catch (err) {
+    console.error('POST /admin/cms/videos error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/admin/cms/videos/:id — metadata only; to replace the file
+// itself, delete and re-add
+router.patch('/admin/cms/videos/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  const { albumId, title, description, thumbnail, duration, sortOrder } = req.body ?? {};
+  const set = []; const params = []; let i = 1;
+  if (albumId !== undefined)     { set.push(`album_id=$${i++}`);    params.push(albumId ? Number(albumId) : null); }
+  if (title !== undefined)       { set.push(`title=$${i++}`);       params.push(title); }
+  if (description !== undefined) { set.push(`description=$${i++}`); params.push(description); }
+  if (thumbnail !== undefined)   { set.push(`thumbnail=$${i++}`);   params.push(thumbnail); }
+  if (duration !== undefined)    { set.push(`duration=$${i++}`);    params.push(duration); }
+  if (sortOrder !== undefined)   { set.push(`sort_order=$${i++}`);  params.push(Number(sortOrder) || 0); }
+  if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+  set.push('updated_at=NOW()'); params.push(id);
+  try {
+    const rows = await db(`UPDATE videos SET ${set.join(',')} WHERE id=$${i} RETURNING *`, params);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    return res.json({ video: mapVideoRow(rows[0]) });
+  } catch (err) {
+    console.error('PATCH /admin/cms/videos error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/cms/videos/:id — soft-deletes the row (consistent with
+// the rest of the CMS) but hard-deletes the S3 object, since unlike a few
+// KB of image bytes, an orphaned video is real ongoing storage cost.
+router.delete('/admin/cms/videos/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    const rows = await db('UPDATE videos SET is_active = false, updated_at = NOW() WHERE id=$1 AND is_active = true RETURNING s3_key', [id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    await hardDeleteS3Key(rows[0].s3_key);
+    return res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /admin/cms/videos error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

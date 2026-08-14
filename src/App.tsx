@@ -26,6 +26,7 @@ const LeadershipPage       = lazy(() => import("./pages/LeadershipPage"));
 const LearningCentrePage   = lazy(() => import("./pages/LearningCentrePage"));
 const PictureLibraryPage   = lazy(() => import("./pages/PictureLibraryPage"));
 const AlbumPage            = lazy(() => import("./pages/AlbumPage"));
+const VideoLibraryPage     = lazy(() => import("./pages/VideoLibraryPage"));
 const AdminDashboard          = lazy(() => import("./pages/admin/AdminDashboard"));
 const UsersPage               = lazy(() => import("./pages/admin/UsersPage"));
 const NewsManagePage          = lazy(() => import("./pages/admin/cms/NewsManagePage"));
@@ -33,6 +34,7 @@ const CoursesManagePage       = lazy(() => import("./pages/admin/cms/CoursesMana
 const SessionsManagePage      = lazy(() => import("./pages/admin/cms/SessionsManagePage"));
 const LearningPathsManagePage = lazy(() => import("./pages/admin/cms/LearningPathsManagePage"));
 const PictureLibraryManagePage = lazy(() => import("./pages/admin/cms/PictureLibraryManagePage"));
+const VideoLibraryManagePage  = lazy(() => import("./pages/admin/cms/VideoLibraryManagePage"));
 const CmsDashboard            = lazy(() => import("./pages/cms/CmsDashboard"));
 const NotFound                = lazy(() => import("./pages/NotFound"));
 
@@ -105,6 +107,7 @@ const App = () => (
                 <Route path="/admin/cms/sessions" element={<SessionsManagePage />} />
                 <Route path="/admin/cms/learning-paths" element={<LearningPathsManagePage />} />
                 <Route path="/admin/cms/picture-library" element={<PictureLibraryManagePage />} />
+                <Route path="/admin/cms/videos" element={<VideoLibraryManagePage />} />
               </Route>
 
               {/* CMS editor panel — users with canEditCms permission */}
@@ -121,6 +124,7 @@ const App = () => (
                 <Route path="/cms/sessions" element={<SessionsManagePage />} />
                 <Route path="/cms/learning-paths" element={<LearningPathsManagePage />} />
                 <Route path="/cms/picture-library" element={<PictureLibraryManagePage />} />
+                <Route path="/cms/videos" element={<VideoLibraryManagePage />} />
               </Route>
 
               {/* Hub — authenticated users */}
@@ -142,6 +146,9 @@ const App = () => (
                 <Route path="/learning" element={<LearningCentrePage />} />
                 <Route path="/picture-library" element={<PictureLibraryPage />} />
                 <Route path="/album/:slug" element={<AlbumPage />} />
+                <Route path="/videos" element={<VideoLibraryPage />} />
+                <Route path="/videos/:slug" element={<VideoLibraryPage />} />
+                <Route path="/video-albums/:slug" element={<VideoLibraryPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

@@ -47,6 +47,7 @@ export interface NewsItem {
   featured: boolean;
   image: string;
   images: string[];
+  video: string;
   url: string;
   sortOrder: number;
 }
@@ -62,6 +63,7 @@ export interface Course {
   modules: number;
   mandatory: boolean;
   courseUrl: string;
+  video: string;
   sortOrder: number;
 }
 
@@ -97,6 +99,25 @@ export interface PictureLibraryItem {
   sortOrder: number;
 }
 
+export interface Video {
+  id: number;
+  albumId: number | null;
+  title: string;
+  description: string;
+  thumbnail: string;
+  duration: string;
+  fileSize: number;
+  sortOrder: number;
+}
+
+export interface VideoAlbum {
+  id: number;
+  title: string;
+  description: string;
+  sortOrder: number;
+  videos: Video[];
+}
+
 // ── Public reads ──────────────────────────────────────────────────────────
 
 export async function getNews(): Promise<{ news: NewsItem[] | null; error: string | null }> {
@@ -124,11 +145,36 @@ export async function getPictureLibrary(): Promise<{ pictures: PictureLibraryIte
   return { pictures: data?.pictures ?? null, error };
 }
 
+// Standalone videos only (no album) — for the Video Library's ungrouped section
+export async function getVideos(): Promise<{ videos: Video[] | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ videos: Video[] }>('/videos');
+  return { videos: data?.videos ?? null, error };
+}
+
+export async function getVideoAlbums(): Promise<{ albums: VideoAlbum[] | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ albums: VideoAlbum[] }>('/video-albums');
+  return { albums: data?.albums ?? null, error };
+}
+
+// Mints a short-lived signed URL to actually stream the video — fetched on
+// demand right before playing, not baked into the list response.
+export async function getVideoPlayUrl(id: number): Promise<{ url: string | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ url: string }>(`/videos/${id}/play`);
+  return { url: data?.url ?? null, error };
+}
+
+// Same as above, but for a video that lives inline on a News article or
+// Course (an S3 key with no `videos` row / id of its own).
+export async function getVideoPlayUrlByKey(key: string): Promise<{ url: string | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ url: string }>(`/video-play-url?key=${encodeURIComponent(key)}`);
+  return { url: data?.url ?? null, error };
+}
+
 // ── Admin: News ───────────────────────────────────────────────────────────
 
 export type NewsInput = {
   title: string; excerpt: string; content: string; date: string; category: string;
-  featured: boolean; image: string; images: string[]; url: string; sortOrder?: number;
+  featured: boolean; image: string; images: string[]; video?: string; url: string; sortOrder?: number;
 };
 
 // Generic CMS image upload — used by News, Picture Library, and any other
@@ -164,7 +210,7 @@ export async function deleteNews(id: number): Promise<{ error: string | null }> 
 export type CourseInput = {
   id: string; title: string; description: string; category: string;
   level: string; duration: string; audience: string; modules: number;
-  mandatory: boolean; courseUrl?: string; sortOrder?: number;
+  mandatory: boolean; courseUrl?: string; video?: string; sortOrder?: number;
 };
 
 export async function createCourse(input: CourseInput): Promise<{ course: Course | null; error: string | null }> {
@@ -261,5 +307,89 @@ export async function updatePicture(id: number, input: Partial<PictureLibraryInp
 
 export async function deletePicture(id: number): Promise<{ error: string | null }> {
   const { error } = await apiFetch(`/admin/cms/picture-library/${id}`, { method: 'DELETE' });
+  return { error };
+}
+
+// ── Admin: Video Library ─────────────────────────────────────────────────
+
+export type VideoAlbumInput = {
+  title: string; description: string; sortOrder?: number;
+};
+
+export async function createVideoAlbum(input: VideoAlbumInput): Promise<{ album: VideoAlbum | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ album: VideoAlbum }>('/admin/cms/video-albums', {
+    method: 'POST', body: JSON.stringify(input),
+  });
+  return { album: data?.album ?? null, error };
+}
+
+export async function updateVideoAlbum(id: number, input: Partial<VideoAlbumInput>): Promise<{ album: VideoAlbum | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ album: VideoAlbum }>(`/admin/cms/video-albums/${id}`, {
+    method: 'PATCH', body: JSON.stringify(input),
+  });
+  return { album: data?.album ?? null, error };
+}
+
+export async function deleteVideoAlbum(id: number): Promise<{ error: string | null }> {
+  const { error } = await apiFetch(`/admin/cms/video-albums/${id}`, { method: 'DELETE' });
+  return { error };
+}
+
+export type VideoInput = {
+  albumId?: number | null; title: string; description: string; thumbnail: string; duration: string; sortOrder?: number;
+};
+
+// Step 1 of uploading: ask the server for a presigned S3 PUT URL, then
+// PUT the file straight to S3 yourself — the file never touches our server.
+export async function requestVideoUploadUrl(
+  contentType: string,
+  fileSize: number
+): Promise<{ uploadUrl: string | null; key: string | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ uploadUrl: string; key: string }>('/admin/cms/videos/upload-url', {
+    method: 'POST', body: JSON.stringify({ contentType, fileSize }),
+  });
+  return { uploadUrl: data?.uploadUrl ?? null, key: data?.key ?? null, error };
+}
+
+export async function uploadVideoToS3(
+  uploadUrl: string,
+  file: File,
+  onProgress?: (percent: number) => void
+): Promise<{ error: string | null }> {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve({ error: null });
+      else resolve({ error: `Upload failed (${xhr.status})` });
+    };
+    xhr.onerror = () => resolve({ error: 'Network error during upload' });
+    xhr.send(file);
+  });
+}
+
+// Step 2: after the S3 upload succeeds, save the metadata + S3 key as a row
+export async function createVideo(
+  input: VideoInput & { key: string; fileSize: number }
+): Promise<{ video: Video | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ video: Video }>('/admin/cms/videos', {
+    method: 'POST', body: JSON.stringify(input),
+  });
+  return { video: data?.video ?? null, error };
+}
+
+export async function updateVideo(id: number, input: Partial<VideoInput>): Promise<{ video: Video | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ video: Video }>(`/admin/cms/videos/${id}`, {
+    method: 'PATCH', body: JSON.stringify(input),
+  });
+  return { video: data?.video ?? null, error };
+}
+
+export async function deleteVideo(id: number): Promise<{ error: string | null }> {
+  const { error } = await apiFetch(`/admin/cms/videos/${id}`, { method: 'DELETE' });
   return { error };
 }

@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageField } from '@/components/cms/ImageField';
 import { GalleryField } from '@/components/cms/GalleryField';
+import { VideoField } from '@/components/cms/VideoField';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import { ArticlePreviewDialog } from '@/components/cms/previews/ArticlePreviewDialog';
 import { fmtFormDate } from '@/lib/utils';
@@ -39,6 +40,7 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
     featured: item?.featured ?? false,
     image: item?.image ?? '',
     images: item?.images ?? [],
+    video: item?.video ?? '',
     url: item?.url ?? '',
     sortOrder: item?.sortOrder ?? 0,
   });
@@ -128,6 +130,8 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
             onChange={(v) => setForm((f) => ({ ...f, images: v }))}
           />
 
+          <VideoField value={form.video ?? ''} onChange={(v) => set('video', v)} />
+
           <div className="space-y-1.5">
             <Label htmlFor="n-url">Article URL <span className="text-[10px] font-normal text-muted-foreground">optional — leave blank for original content</span></Label>
             <Input id="n-url" value={form.url} onChange={(e) => set('url', e.target.value)} placeholder="https://…" />
@@ -172,6 +176,7 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
         excerpt={form.excerpt}
         content={form.content}
         images={form.images}
+        video={form.video}
         url={form.url}
       />
     </Dialog>

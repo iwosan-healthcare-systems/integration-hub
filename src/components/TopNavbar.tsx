@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, LayoutDashboard, GraduationCap, Images, PenSquare } from "lucide-react";
+import { Search, X, FileText, Newspaper, Building2, LogIn, LogOut, LayoutDashboard, GraduationCap, Images, Video as VideoIcon, PenSquare } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { subsidiaries } from "@/data/hub-data";
 import { subsidiaryPortals } from "@/data/subsidiary-data";
-import { getNews, getCourses, getLearningPaths, getSessions, getPictureLibrary, type NewsItem, type Course, type LearningPath, type LiveSession, type PictureLibraryItem } from "@/services/cmsService";
+import { getNews, getCourses, getLearningPaths, getSessions, getPictureLibrary, getVideos, type NewsItem, type Course, type LearningPath, type LiveSession, type PictureLibraryItem, type Video } from "@/services/cmsService";
 import iwosanIcon from "@/assets/iwosan_icon.webp";
 import { useAuth } from "@/contexts/AuthContext";
 import { slugify } from "@/lib/utils";
@@ -36,10 +36,11 @@ const navItems = [
   { title: "Leadership", url: "/leadership" },
   { title: "Learning Centre", url: "/learning" },
   { title: "Picture Library", url: "/picture-library" },
+  { title: "Video Library", url: "/videos" },
 ];
 
 type SearchItem = {
-  type: "page" | "news" | "subsidiary" | "course" | "learning-path" | "live-session" | "picture";
+  type: "page" | "news" | "subsidiary" | "course" | "learning-path" | "live-session" | "picture" | "video";
   title: string;
   url: string;
   external: boolean;
@@ -61,16 +62,18 @@ export function TopNavbar() {
   const [cmsPaths, setCmsPaths] = useState<LearningPath[]>([]);
   const [cmsSessions, setCmsSessions] = useState<LiveSession[]>([]);
   const [cmsPictures, setCmsPictures] = useState<PictureLibraryItem[]>([]);
+  const [cmsVideos, setCmsVideos] = useState<Video[]>([]);
 
   useEffect(() => {
     if (!searchOpen || cmsLoaded) return;
-    Promise.all([getNews(), getCourses(), getLearningPaths(), getSessions(), getPictureLibrary()]).then(
-      ([n, c, lp, s, p]) => {
+    Promise.all([getNews(), getCourses(), getLearningPaths(), getSessions(), getPictureLibrary(), getVideos()]).then(
+      ([n, c, lp, s, p, v]) => {
         setCmsNews(n.news ?? []);
         setCmsCourses(c.courses ?? []);
         setCmsPaths(lp.learningPaths ?? []);
         setCmsSessions(s.sessions ?? []);
         setCmsPictures(p.pictures ?? []);
+        setCmsVideos(v.videos ?? []);
         setCmsLoaded(true);
       }
     );
@@ -157,8 +160,18 @@ export function TopNavbar() {
         meta: "Picture Library",
         description: pic.description,
       })),
+
+      // Video Library
+      ...cmsVideos.map((video) => ({
+        type: "video" as const,
+        title: video.title,
+        url: "/videos",
+        external: false,
+        meta: video.duration ? `Video Library · ${video.duration}` : "Video Library",
+        description: video.description,
+      })),
     ],
-    [cmsNews, cmsCourses, cmsPaths, cmsSessions, cmsPictures],
+    [cmsNews, cmsCourses, cmsPaths, cmsSessions, cmsPictures, cmsVideos],
   );
 
   const results = useMemo(() => {
@@ -205,6 +218,7 @@ export function TopNavbar() {
     if (type === "course" || type === "learning-path" || type === "live-session")
       return <GraduationCap className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
     if (type === "picture") return <Images className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
+    if (type === "video") return <VideoIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
     return <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
   };
 

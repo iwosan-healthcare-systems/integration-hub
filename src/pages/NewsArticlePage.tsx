@@ -79,6 +79,7 @@ const NewsArticlePage = () => {
           excerpt={item.excerpt}
           content={item.content}
           images={item.images}
+          video={item.video}
           url={item.url}
         />
       </AnimateOnScroll>

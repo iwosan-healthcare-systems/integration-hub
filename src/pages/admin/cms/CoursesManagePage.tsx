@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PreviewDialog } from '@/components/cms/previews/PreviewDialog';
+import { VideoField } from '@/components/cms/VideoField';
 import { CoursePreviewCard } from '@/components/cms/previews/PreviewCards';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import {
@@ -40,6 +41,7 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
     modules: item?.modules ?? 1,
     mandatory: item?.mandatory ?? false,
     courseUrl: item?.courseUrl ?? '',
+    video: item?.video ?? '',
     sortOrder: item?.sortOrder ?? 0,
   });
   const [loading, setLoading] = useState(false);
@@ -55,7 +57,7 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
     setLoading(true);
     setError('');
     const result = isEdit
-      ? await updateCourse(item!.id, { title: form.title, description: form.description, category: form.category, level: form.level, duration: form.duration, audience: form.audience, modules: form.modules, mandatory: form.mandatory, courseUrl: form.courseUrl, sortOrder: form.sortOrder })
+      ? await updateCourse(item!.id, { title: form.title, description: form.description, category: form.category, level: form.level, duration: form.duration, audience: form.audience, modules: form.modules, mandatory: form.mandatory, courseUrl: form.courseUrl, video: form.video, sortOrder: form.sortOrder })
       : await createCourse(form);
     setLoading(false);
     if (result.error) { setError(result.error); return; }
@@ -128,6 +130,14 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
             </Label>
             <Input id="c-url" type="url" value={form.courseUrl ?? ''} onChange={(e) => set('courseUrl', e.target.value)} placeholder="https://…" />
           </div>
+
+          <VideoField
+            label="Course Video"
+            value={form.video ?? ''}
+            onChange={(v) => set('video', v)}
+          />
+          <p className="text-[10px] text-muted-foreground -mt-2.5">Alternative to the course link above, for courses with no external URL.</p>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="c-order">Sort Order</Label>

@@ -17,6 +17,8 @@
     "create-user": "node scripts/create-user.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1110.0",
+    "@aws-sdk/s3-request-presigner": "^3.1110.0",
     "@azure/msal-browser": "^4.30.0",
     "@azure/msal-node": "^5.2.1",
     "@hookform/resolvers": "^3.10.0",
