@@ -929,8 +929,9 @@ Centralized digital platform for the Iwosan network. Pages available to hub user
 - Resources & Knowledge — policies, SOPs, and reference documents
 - Learning Centre — courses, learning paths, and live/virtual training sessions
 - Picture Library — photo galleries from events and facilities across the network
+- Video Library — training and event videos, organized into albums or standalone; News articles and Courses can also carry their own uploaded video
 
-Staff with the right permissions can also manage this content directly through an admin/CMS panel (news, courses, learning paths, sessions, picture library).
+Staff with the right permissions can also manage this content directly through an admin/CMS panel (news, courses, learning paths, sessions, picture library, video library).
 
 ━━━ RESPONSE GUIDELINES ━━━
 
@@ -939,7 +940,72 @@ Staff with the right permissions can also manage this content directly through a
 - For medical emergencies, direct immediately to the nearest Iwosan facility or emergency services
 - If asked something outside this knowledge base, acknowledge honestly and direct to: info@iwosanhealth.com or +234 913 935 2779
 - Never fabricate information, staff details, or medical advice
-- You can suggest relevant hub pages: Home, About Iwosan, Subsidiaries, News & Updates, Leadership, Resources & Knowledge, Learning Centre, Picture Library`;
+- A "CURRENT HUB CONTENT" section may be appended below with live news, courses, and sessions pulled fresh from the database — when present, treat it as authoritative and current over anything you might otherwise assume; if it's absent or doesn't cover what's asked, say you don't have that specific detail rather than guessing
+- When pointing someone to a hub page, write it as a markdown link using ONLY these exact paths — never invent a path: [Home](/), [About Iwosan](/about), [Subsidiaries](/subsidiaries), [News & Updates](/news), [Leadership](/leadership), [Resources & Knowledge](/resources), [Learning Centre](/learning), [Picture Library](/picture-library), [Video Library](/videos)`;
+
+// Fresh news/courses/sessions/library content, rebuilt from the DB and
+// appended to Ivy's system prompt on each chat request — this is what lets
+// her answer accurately about actual site content without anyone having to
+// hand-edit CHAT_SYSTEM_PROMPT every time an article or course is added.
+// Cached briefly (keyed by session-visibility scope) so a back-and-forth
+// conversation doesn't re-query the DB on every single message.
+const contentDigestCache = new Map();
+const CONTENT_DIGEST_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+async function getLiveContentDigest(authUser) {
+  const seesAllSessions = isCmsEditor(authUser) || authUser.entity === GENERAL_ENTITY;
+  const cacheKey = seesAllSessions ? '__all__' : authUser.entity;
+  const cached = contentDigestCache.get(cacheKey);
+  if (cached && Date.now() < cached.expiresAt) return cached.text;
+
+  try {
+    const [news, courses, sessions, videoAlbums, videoCountRows, pictures] = await Promise.all([
+      db(`SELECT title, excerpt, date, category FROM news WHERE is_active = true ORDER BY date DESC LIMIT 5`, []),
+      db(`SELECT title, category, level, duration, mandatory FROM courses WHERE is_active = true ORDER BY sort_order ASC`, []),
+      db(
+        seesAllSessions
+          ? `SELECT title, session_date, session_time, format, venue FROM live_sessions
+             WHERE is_active = true AND session_date >= CURRENT_DATE ORDER BY session_date ASC LIMIT 8`
+          : `SELECT title, session_date, session_time, format, venue FROM live_sessions
+             WHERE is_active = true AND session_date >= CURRENT_DATE AND ($1 = ANY(entities) OR $2 = ANY(entities))
+             ORDER BY session_date ASC LIMIT 8`,
+        seesAllSessions ? [] : [authUser.entity, GENERAL_ENTITY]
+      ),
+      db(`SELECT title FROM video_albums WHERE is_active = true ORDER BY sort_order ASC LIMIT 10`, []),
+      db(`SELECT COUNT(*)::int AS count FROM videos WHERE is_active = true`, []),
+      db(`SELECT title FROM picture_library WHERE is_active = true ORDER BY sort_order ASC LIMIT 10`, []),
+    ]);
+
+    const lines = [
+      '━━━ CURRENT HUB CONTENT (live — pulled just now, treat as authoritative) ━━━',
+      '',
+      `Recent News${news.length ? ` (${news.length} most recent):` : ':'}`,
+      ...(news.length
+        ? news.map((n) => `- "${n.title}" (${n.category}, ${fmtDate(n.date)}) — ${n.excerpt}`)
+        : ['- No published articles yet.']),
+      '',
+      `Courses${courses.length ? ` (${courses.length} total):` : ':'}`,
+      ...(courses.length
+        ? courses.map((c) => `- ${c.title} — ${c.category}, ${c.level}, ${c.duration}${c.mandatory ? ', MANDATORY' : ''}`)
+        : ['- No courses published yet.']),
+      '',
+      `Upcoming Live Sessions${sessions.length ? ` (${sessions.length} shown):` : ':'}`,
+      ...(sessions.length
+        ? sessions.map((s) => `- ${s.title} — ${fmtDate(s.session_date)} ${s.session_time}, ${s.format}${s.venue ? `, ${s.venue}` : ''}`)
+        : ['- None scheduled right now.']),
+      '',
+      `Video Library: ${videoCountRows[0]?.count ?? 0} video(s) across ${videoAlbums.length} album(s)${videoAlbums.length ? ' — ' + videoAlbums.map((a) => a.title).join(', ') : ''}.`,
+      `Picture Library: ${pictures.length} album(s)${pictures.length ? ' — ' + pictures.map((p) => p.title).join(', ') : ''}.`,
+    ];
+
+    const text = lines.join('\n');
+    contentDigestCache.set(cacheKey, { text, expiresAt: Date.now() + CONTENT_DIGEST_TTL_MS });
+    return text;
+  } catch (err) {
+    console.error('[chat] Failed to build live content digest:', err);
+    return cached?.text ?? '';
+  }
+}
 
 // POST /api/chat — streaming SSE endpoint for the Ivy AI assistant (Groq)
 router.post('/chat', requireAuth, async (req, res) => {
@@ -972,6 +1038,9 @@ router.post('/chat', requireAuth, async (req, res) => {
   try {
     console.log('[chat] calling Groq for user:', req.authUser?.userId);
 
+    const liveDigest = await getLiveContentDigest(req.authUser);
+    const systemContent = liveDigest ? `${CHAT_SYSTEM_PROMPT}\n\n${liveDigest}` : CHAT_SYSTEM_PROMPT;
+
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -983,7 +1052,7 @@ router.post('/chat', requireAuth, async (req, res) => {
         max_tokens: 1024,
         stream: true,
         messages: [
-          { role: 'system', content: CHAT_SYSTEM_PROMPT },
+          { role: 'system', content: systemContent },
           ...validMessages,
         ],
       }),

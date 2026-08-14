@@ -2,7 +2,10 @@ import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { initGoogleAnalytics } from "@/lib/analytics";
 import "./index.css";
+
+initGoogleAnalytics();
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>

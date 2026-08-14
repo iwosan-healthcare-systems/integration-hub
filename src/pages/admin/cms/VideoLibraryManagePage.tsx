@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ImageField } from '@/components/cms/ImageField';
 import { AiAssistButton } from '@/components/cms/AiAssistButton';
@@ -193,10 +193,11 @@ function VideoFormModal({ item, albumId, onClose, onSaved }: VideoFormProps) {
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Video' : 'Add Video'}</DialogTitle>
+          <DialogDescription className="sr-only">{isEdit ? 'Edit this video\'s details' : 'Upload a new video and its details'}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="v-title">Title</Label>
               <AiAssistButton
                 contentType="video" field="title" value={form.title}
@@ -208,7 +209,7 @@ function VideoFormModal({ item, albumId, onClose, onSaved }: VideoFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="v-desc">Description</Label>
               <AiAssistButton
                 contentType="video" field="description" value={form.description}
@@ -343,10 +344,11 @@ function AlbumFormModal({ item, onClose, onSaved }: AlbumFormProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Album' : 'Add Album'}</DialogTitle>
+          <DialogDescription className="sr-only">{isEdit ? 'Edit this album\'s details' : 'Create a new video album'}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="va-title">Title</Label>
               <AiAssistButton
                 contentType="video-album" field="title" value={form.title}
@@ -357,7 +359,7 @@ function AlbumFormModal({ item, onClose, onSaved }: AlbumFormProps) {
             <Input id="va-title" value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="e.g. Annual Health Summit 2026" required />
           </div>
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="va-desc">Description</Label>
               <AiAssistButton
                 contentType="video-album" field="description" value={form.description}
@@ -578,24 +580,28 @@ export default function VideoLibraryManagePage() {
   if (activeAlbum) {
     return (
       <div className="space-y-5 max-w-5xl">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setActiveAlbumId(null)} aria-label="Back to albums">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="min-w-0">
-            <h2 className="text-xl font-bold text-foreground truncate">{activeAlbum.title}</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">{activeAlbum.videos.length} video{activeAlbum.videos.length !== 1 ? 's' : ''}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setActiveAlbumId(null)} aria-label="Back to albums">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="min-w-0">
+              <h2 className="text-xl font-bold text-foreground truncate">{activeAlbum.title}</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">{activeAlbum.videos.length} video{activeAlbum.videos.length !== 1 ? 's' : ''}</p>
+            </div>
           </div>
-          <div className="flex-1" />
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => copyAlbumLink(activeAlbum)}>
-            <LinkIcon className="h-3.5 w-3.5" />Copy link
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setAlbumFormTarget(activeAlbum)}>
-            <Pencil className="h-3.5 w-3.5" />Edit
-          </Button>
-          <Button size="sm" onClick={() => setVideoFormTarget('new')} className="gap-2">
-            <Plus className="h-4 w-4" />Add Video
-          </Button>
+          <div className="hidden sm:block sm:flex-1" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => copyAlbumLink(activeAlbum)}>
+              <LinkIcon className="h-3.5 w-3.5" />Copy link
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setAlbumFormTarget(activeAlbum)}>
+              <Pencil className="h-3.5 w-3.5" />Edit
+            </Button>
+            <Button size="sm" onClick={() => setVideoFormTarget('new')} className="gap-2">
+              <Plus className="h-4 w-4" />Add Video
+            </Button>
+          </div>
         </div>
 
         {globalError && (

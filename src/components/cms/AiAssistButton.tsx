@@ -92,7 +92,7 @@ export function AiAssistButton({ contentType, field, value, context = {}, onGene
   return (
     <Popover onOpenChange={(open) => { if (!open) { setPreview(null); setError(""); } }}>
       <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
-      <PopoverContent align="end" className="w-80 space-y-3">
+      <PopoverContent align="end" className="w-[calc(100vw-2rem)] max-w-80 space-y-3">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">AI suggestion</p>
         {loading ? (
           <div className="space-y-1.5">

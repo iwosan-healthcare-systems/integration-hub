@@ -64,7 +64,7 @@ function PictureFormModal({ item, onClose, onSaved }: PictureFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="p-title">Title</Label>
               <AiAssistButton
                 contentType="picture-album" field="title" value={form.title}
@@ -76,7 +76,7 @@ function PictureFormModal({ item, onClose, onSaved }: PictureFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="p-desc">Description</Label>
               <AiAssistButton
                 contentType="picture-album" field="description" value={form.description}

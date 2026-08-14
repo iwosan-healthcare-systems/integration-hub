@@ -82,7 +82,7 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
             </div>
           )}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="c-title">Title</Label>
               <AiAssistButton
                 contentType="course" field="title" value={form.title}
@@ -93,7 +93,7 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
             <Input id="c-title" value={form.title} onChange={(e) => set('title', e.target.value)} required />
           </div>
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="c-desc">Description</Label>
               <AiAssistButton
                 contentType="course" field="description" value={form.description}

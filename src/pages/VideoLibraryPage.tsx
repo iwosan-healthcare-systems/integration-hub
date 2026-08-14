@@ -4,7 +4,7 @@ import { Play, Video as VideoIcon, Clock, FolderOpen, Images, Link as LinkIcon, 
 import { toast } from "sonner";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { getVideos, getVideoAlbums, getVideoPlayUrl, type Video, type VideoAlbum } from "@/services/cmsService";
 import { slugify } from "@/lib/utils";
 import innovationImg from "@/assets/innovation-bg.webp";
@@ -136,6 +136,7 @@ function VideoPlayerDialog({
         {video && (
           <>
             <DialogTitle className="sr-only">{video.title}</DialogTitle>
+            <DialogDescription className="sr-only">{video.description || "Video player"}</DialogDescription>
             <div className="relative bg-black flex items-center justify-center aspect-video">
               {playError ? (
                 <p className="text-sm text-white/70 px-6 text-center">{playError}</p>
@@ -321,8 +322,8 @@ const VideoLibraryPage = () => {
         <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
           {openAlbum && (
             <>
-              <DialogTitle className="flex items-center justify-between gap-3 pr-6">
-                <span className="font-serif">{openAlbum.title}</span>
+              <DialogTitle className="flex items-start justify-between gap-3 pr-6">
+                <span className="font-serif min-w-0">{openAlbum.title}</span>
                 <Button
                   type="button"
                   variant="outline"
@@ -333,7 +334,9 @@ const VideoLibraryPage = () => {
                   <LinkIcon className="h-3.5 w-3.5" />Copy link
                 </Button>
               </DialogTitle>
-              {openAlbum.description && <p className="text-sm text-muted-foreground -mt-1">{openAlbum.description}</p>}
+              <DialogDescription className={openAlbum.description ? "text-sm text-muted-foreground -mt-1" : "sr-only"}>
+                {openAlbum.description || `Videos in the "${openAlbum.title}" album`}
+              </DialogDescription>
               {openAlbum.videos.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">No videos in this album yet.</p>
               ) : (

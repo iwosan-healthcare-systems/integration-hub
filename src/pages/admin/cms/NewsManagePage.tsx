@@ -73,7 +73,7 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="n-title">Title</Label>
               <AiAssistButton
                 contentType="news" field="title" value={form.title}
@@ -85,7 +85,7 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="n-excerpt">Description</Label>
               <AiAssistButton
                 contentType="news" field="excerpt" value={form.excerpt}
@@ -104,7 +104,7 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <Label htmlFor="n-content">
                 Article Content
                 <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">optional — for original articles not linking externally</span>

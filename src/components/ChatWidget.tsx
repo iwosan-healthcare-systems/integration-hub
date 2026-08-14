@@ -1,16 +1,31 @@
 import { useState, useRef, useEffect, Fragment } from "react";
+import { Link } from "react-router-dom";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 import iwosanIcon from "@/assets/iwosan_icon.webp";
 
+const LINK_STYLE = "text-accent underline underline-offset-2 hover:no-underline font-medium";
+
 function MessageContent({ text }: { text: string }) {
-  // Split on **bold** markers, then handle line breaks within each segment
-  const segments = text.split(/(\*\*[^*]+\*\*)/g);
+  // Split on **bold** and [label](url) markers, then handle line breaks
+  // within whatever plain-text segments remain.
+  const segments = text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)\s]+\))/g);
   return (
     <>
       {segments.map((seg, i) => {
         if (seg.startsWith("**") && seg.endsWith("**") && seg.length > 4) {
           return <strong key={i} className="font-semibold">{seg.slice(2, -2)}</strong>;
         }
+
+        const linkMatch = seg.match(/^\[([^\]]+)\]\(([^)\s]+)\)$/);
+        if (linkMatch) {
+          const [, label, url] = linkMatch;
+          return url.startsWith("/") ? (
+            <Link key={i} to={url} className={LINK_STYLE}>{label}</Link>
+          ) : (
+            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={LINK_STYLE}>{label}</a>
+          );
+        }
+
         return seg.split("\n").map((line, j, arr) => (
           <Fragment key={`${i}-${j}`}>
             {line}
@@ -21,6 +36,13 @@ function MessageContent({ text }: { text: string }) {
     </>
   );
 }
+
+const SUGGESTIONS = [
+  "What's the latest news?",
+  "Any upcoming live sessions?",
+  "What courses are available?",
+  "Tell me about our subsidiaries",
+];
 
 type Message = {
   role: "user" | "assistant";
@@ -62,10 +84,11 @@ export function ChatWidget() {
     el.style.height = Math.min(el.scrollHeight, 96) + "px";
   };
 
-  async function sendMessage() {
-    if (!input.trim() || isStreaming) return;
+  async function sendMessage(overrideText?: string) {
+    const text = (overrideText ?? input).trim();
+    if (!text || isStreaming) return;
 
-    const userMsg: Message = { role: "user", content: input.trim() };
+    const userMsg: Message = { role: "user", content: text };
     const history = [...messages, userMsg];
     setMessages(history);
     setInput("");
@@ -254,6 +277,22 @@ export function ChatWidget() {
               </div>
             </div>
           ))}
+
+          {messages.length === 1 && !isStreaming && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => sendMessage(s)}
+                  className="text-xs font-sans px-3 py-1.5 rounded-full border border-border text-foreground/80 hover:border-accent hover:text-accent transition-colors"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
@@ -280,7 +319,7 @@ export function ChatWidget() {
             />
             <button
               type="button"
-              onClick={sendMessage}
+              onClick={() => sendMessage()}
               disabled={!input.trim() || isStreaming}
               aria-label="Send message"
               className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center shrink-0 disabled:opacity-40 hover:opacity-80 transition-opacity"

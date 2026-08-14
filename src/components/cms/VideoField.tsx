@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Upload, X, Video as VideoIcon, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { requestVideoUploadUrl, uploadVideoToS3, getVideoPlayUrlByKey } from "@/services/cmsService";
 import { getVideoDurationSeconds } from "@/lib/videoDuration";
 
@@ -125,6 +125,7 @@ export function VideoField({ label = "Video", value, onChange, onDurationDetecte
       <Dialog open={!!previewUrl || previewLoading || !!previewError} onOpenChange={(v) => { if (!v) { setPreviewUrl(null); setPreviewError(""); } }}>
         <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden">
           <DialogTitle className="sr-only">Video preview</DialogTitle>
+          <DialogDescription className="sr-only">A preview of the uploaded video</DialogDescription>
           <div className="relative bg-black flex items-center justify-center aspect-video">
             {previewError ? (
               <p className="text-sm text-white/70 px-6 text-center">{previewError}</p>
