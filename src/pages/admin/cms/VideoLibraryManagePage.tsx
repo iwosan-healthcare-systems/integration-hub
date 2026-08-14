@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ImageField } from '@/components/cms/ImageField';
+import { AiAssistButton } from '@/components/cms/AiAssistButton';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import {
   getVideos, getVideoAlbums, requestVideoUploadUrl, uploadVideoToS3, createVideo, updateVideo, deleteVideo,
@@ -209,12 +210,26 @@ function VideoFormModal({ item, albumId, onClose, onSaved }: VideoFormProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
           <div className="space-y-1.5">
-            <Label htmlFor="v-title">Title</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="v-title">Title</Label>
+              <AiAssistButton
+                contentType="video" field="title" value={form.title}
+                context={{ description: form.description }}
+                onGenerated={(text) => set('title', text)}
+              />
+            </div>
             <Input id="v-title" value={form.title} onChange={(e) => set('title', e.target.value)} required />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="v-desc">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="v-desc">Description</Label>
+              <AiAssistButton
+                contentType="video" field="description" value={form.description}
+                context={{ title: form.title }}
+                onGenerated={(text) => set('description', text)}
+              />
+            </div>
             <textarea
               id="v-desc"
               value={form.description}
@@ -345,11 +360,25 @@ function AlbumFormModal({ item, onClose, onSaved }: AlbumFormProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
           <div className="space-y-1.5">
-            <Label htmlFor="va-title">Title</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="va-title">Title</Label>
+              <AiAssistButton
+                contentType="video-album" field="title" value={form.title}
+                context={{ description: form.description }}
+                onGenerated={(text) => set('title', text)}
+              />
+            </div>
             <Input id="va-title" value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="e.g. Annual Health Summit 2026" required />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="va-desc">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="va-desc">Description</Label>
+              <AiAssistButton
+                contentType="video-album" field="description" value={form.description}
+                context={{ title: form.title }}
+                onGenerated={(text) => set('description', text)}
+              />
+            </div>
             <textarea
               id="va-desc"
               value={form.description}

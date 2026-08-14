@@ -393,3 +393,21 @@ export async function deleteVideo(id: number): Promise<{ error: string | null }>
   const { error } = await apiFetch(`/admin/cms/videos/${id}`, { method: 'DELETE' });
   return { error };
 }
+
+// ── AI Assist (title/description generation + rewrite, used across CMS forms)
+
+export type AiAssistContentType = 'news' | 'course' | 'video' | 'video-album' | 'picture-album';
+export type AiAssistField = 'title' | 'excerpt' | 'content' | 'description';
+
+export async function aiAssist(input: {
+  contentType: AiAssistContentType;
+  field: AiAssistField;
+  mode: 'generate' | 'rewrite';
+  existingText?: string;
+  context?: Record<string, string>;
+}): Promise<{ text: string | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ text: string }>('/admin/cms/ai-assist', {
+    method: 'POST', body: JSON.stringify(input),
+  });
+  return { text: data?.text ?? null, error };
+}

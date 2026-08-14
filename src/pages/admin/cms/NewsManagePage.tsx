@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ImageField } from '@/components/cms/ImageField';
 import { GalleryField } from '@/components/cms/GalleryField';
 import { VideoField } from '@/components/cms/VideoField';
+import { AiAssistButton } from '@/components/cms/AiAssistButton';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import { ArticlePreviewDialog } from '@/components/cms/previews/ArticlePreviewDialog';
 import { fmtFormDate } from '@/lib/utils';
@@ -72,12 +73,26 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
 
           <div className="space-y-1.5">
-            <Label htmlFor="n-title">Title</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="n-title">Title</Label>
+              <AiAssistButton
+                contentType="news" field="title" value={form.title}
+                context={{ category: form.category, excerpt: form.excerpt }}
+                onGenerated={(text) => set('title', text)}
+              />
+            </div>
             <Input id="n-title" value={form.title} onChange={(e) => set('title', e.target.value)} required />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="n-excerpt">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="n-excerpt">Description</Label>
+              <AiAssistButton
+                contentType="news" field="excerpt" value={form.excerpt}
+                context={{ title: form.title, category: form.category, content: form.content }}
+                onGenerated={(text) => set('excerpt', text)}
+              />
+            </div>
             <textarea
               id="n-excerpt"
               value={form.excerpt}
@@ -89,10 +104,17 @@ function NewsFormModal({ item, onClose, onSaved }: NewsFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="n-content">
-              Article Content
-              <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">optional — for original articles not linking externally</span>
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="n-content">
+                Article Content
+                <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">optional — for original articles not linking externally</span>
+              </Label>
+              <AiAssistButton
+                contentType="news" field="content" value={form.content}
+                context={{ title: form.title, category: form.category, excerpt: form.excerpt }}
+                onGenerated={(text) => set('content', text)}
+              />
+            </div>
             <textarea
               id="n-content"
               value={form.content}

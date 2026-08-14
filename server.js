@@ -979,7 +979,7 @@ router.post('/chat', requireAuth, async (req, res) => {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         max_tokens: 1024,
         stream: true,
         messages: [
@@ -1033,6 +1033,79 @@ router.post('/chat', requireAuth, async (req, res) => {
       res.write(`data: ${JSON.stringify({ error: 'Stream interrupted' })}\n\n`);
       res.end();
     }
+  }
+});
+
+// ── AI Assist (CMS title/description generation, same Groq key as Ivy) ─────
+// One generic endpoint used by an "AI assist" button across the CMS forms —
+// keyed by contentType.field so prompt phrasing/length can be tuned per
+// field without a separate route for each content type.
+const AI_ASSIST_FIELDS = {
+  'news.title':               { label: 'a news article title', maxWords: 12 },
+  'news.excerpt':              { label: 'a short news article excerpt/summary', maxWords: 40 },
+  'news.content':               { label: 'a full news article body, written as 3-4 short paragraphs separated by blank lines', maxWords: 250 },
+  'course.title':               { label: 'a staff training course title', maxWords: 10 },
+  'course.description':         { label: 'a staff training course description', maxWords: 45 },
+  'video.title':                 { label: 'a video title', maxWords: 10 },
+  'video.description':           { label: 'a video description', maxWords: 40 },
+  'video-album.title':           { label: 'a video album title', maxWords: 10 },
+  'video-album.description':     { label: 'a video album description', maxWords: 40 },
+  'picture-album.title':         { label: 'a photo album title', maxWords: 10 },
+  'picture-album.description':   { label: 'a photo album description', maxWords: 40 },
+};
+
+const AI_ASSIST_SYSTEM_PROMPT = `You are a concise, professional copywriter for the Iwosan Integration Hub, a centralized digital platform for Iwosan Healthcare Systems Limited and its network of hospitals. Write in a warm, professional tone reflecting Iwosan's values: empathetic, ethical, knowledge-driven, innovative, accessible. Never invent specific facts, statistics, dates, or names that weren't given in the context — stay general if specifics aren't provided. Output plain text only: no markdown, no headers, no surrounding quotation marks, no preamble or explanation — just the requested text itself.`;
+
+// POST /api/admin/cms/ai-assist
+router.post('/admin/cms/ai-assist', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+
+  const { contentType, field, mode = 'generate', existingText = '', context = {} } = req.body ?? {};
+  const config = AI_ASSIST_FIELDS[`${contentType}.${field}`];
+  if (!config) return res.status(400).json({ error: 'Unsupported field' });
+
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    console.error('[ai-assist] GROQ_API_KEY is not set');
+    return res.status(503).json({ error: 'AI assistant is not configured on this server' });
+  }
+
+  const contextLines = Object.entries(context)
+    .filter(([, v]) => typeof v === 'string' && v.trim())
+    .map(([k, v]) => `${k}: ${String(v).trim()}`)
+    .join('\n');
+
+  const instruction = mode === 'rewrite' && typeof existingText === 'string' && existingText.trim()
+    ? `Rewrite the following ${config.label} to be clearer and more polished, keeping the same meaning and roughly the same length (max ${config.maxWords} words). Return ONLY the rewritten text.\n\nOriginal:\n${existingText.trim()}`
+    : `Write ${config.label} (max ${config.maxWords} words). Return ONLY the text itself.`;
+
+  const userPrompt = contextLines ? `Context:\n${contextLines}\n\n${instruction}` : instruction;
+
+  try {
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: 'openai/gpt-oss-120b',
+        max_tokens: 600,
+        messages: [
+          { role: 'system', content: AI_ASSIST_SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
+      }),
+    });
+    if (!groqRes.ok) {
+      const errText = await groqRes.text();
+      console.error('[ai-assist] Groq API error:', groqRes.status, errText);
+      return res.status(502).json({ error: 'AI service error' });
+    }
+    const data = await groqRes.json();
+    const text = data.choices?.[0]?.message?.content?.trim() ?? '';
+    if (!text) return res.status(502).json({ error: 'AI returned an empty response' });
+    return res.json({ text });
+  } catch (err) {
+    console.error('[ai-assist] error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

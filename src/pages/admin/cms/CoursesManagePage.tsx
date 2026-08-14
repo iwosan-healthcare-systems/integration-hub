@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PreviewDialog } from '@/components/cms/previews/PreviewDialog';
 import { VideoField } from '@/components/cms/VideoField';
+import { AiAssistButton } from '@/components/cms/AiAssistButton';
 import { CoursePreviewCard } from '@/components/cms/previews/PreviewCards';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import {
@@ -80,11 +81,25 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
             </div>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="c-title">Title</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="c-title">Title</Label>
+              <AiAssistButton
+                contentType="course" field="title" value={form.title}
+                context={{ category: form.category, description: form.description }}
+                onGenerated={(text) => set('title', text)}
+              />
+            </div>
             <Input id="c-title" value={form.title} onChange={(e) => set('title', e.target.value)} required />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="c-desc">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="c-desc">Description</Label>
+              <AiAssistButton
+                contentType="course" field="description" value={form.description}
+                context={{ title: form.title, category: form.category, level: form.level, audience: form.audience }}
+                onGenerated={(text) => set('description', text)}
+              />
+            </div>
             <textarea
               id="c-desc"
               title="Description"

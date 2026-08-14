@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { GalleryField } from '@/components/cms/GalleryField';
+import { AiAssistButton } from '@/components/cms/AiAssistButton';
 import { PreviewDialog } from '@/components/cms/previews/PreviewDialog';
 import { PicturePreviewCard } from '@/components/cms/previews/PreviewCards';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
@@ -63,12 +64,26 @@ function PictureFormModal({ item, onClose, onSaved }: PictureFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
 
           <div className="space-y-1.5">
-            <Label htmlFor="p-title">Title</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="p-title">Title</Label>
+              <AiAssistButton
+                contentType="picture-album" field="title" value={form.title}
+                context={{ description: form.description }}
+                onGenerated={(text) => set('title', text)}
+              />
+            </div>
             <Input id="p-title" value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="e.g. NeuroSurgery" required />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="p-desc">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="p-desc">Description</Label>
+              <AiAssistButton
+                contentType="picture-album" field="description" value={form.description}
+                context={{ title: form.title }}
+                onGenerated={(text) => set('description', text)}
+              />
+            </div>
             <textarea
               id="p-desc"
               value={form.description}
