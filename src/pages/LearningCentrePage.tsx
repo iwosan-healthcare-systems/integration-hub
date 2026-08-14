@@ -516,7 +516,7 @@ const LearningCentrePage = () => {
           {videoCourse && (
             <>
               <DialogTitle className="sr-only">{videoCourse.title}</DialogTitle>
-              <ArticleVideoPlayer videoKey={videoCourse.video} title={videoCourse.title} className="rounded-none" />
+              <ArticleVideoPlayer videoKey={videoCourse.video} title={videoCourse.title} className="rounded-none" insideDialog />
               <div className="p-6">
                 <h2 className="font-serif text-xl font-bold mb-2">{videoCourse.title}</h2>
                 {videoCourse.description && (

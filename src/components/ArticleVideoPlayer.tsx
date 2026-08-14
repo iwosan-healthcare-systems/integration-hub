@@ -7,13 +7,16 @@ interface ArticleVideoPlayerProps {
   videoKey: string;
   title: string;
   className?: string;
+  // True when rendered inside a Dialog — Radix's built-in close "X" sits at
+  // top-4 right-4, so the PiP button needs to shift left to avoid it.
+  insideDialog?: boolean;
 }
 
 // Inline player for a video attached to a News article or Course — resolves
 // a fresh signed URL for the given S3 key and embeds a native <video>
 // (picture-in-picture works out of the box via the browser's own controls;
 // this adds an explicit button too since support for that control varies).
-export function ArticleVideoPlayer({ videoKey, title, className = "rounded-2xl" }: ArticleVideoPlayerProps) {
+export function ArticleVideoPlayer({ videoKey, title, className = "rounded-2xl", insideDialog = false }: ArticleVideoPlayerProps) {
   const [playUrl, setPlayUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -52,7 +55,7 @@ export function ArticleVideoPlayer({ videoKey, title, className = "rounded-2xl" 
               aria-label="Picture in picture"
               title="Picture in picture"
               onClick={togglePip}
-              className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+              className={`absolute top-3 h-9 w-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors ${insideDialog ? "right-14" : "right-3"}`}
             >
               <PictureInPicture2 className="h-4 w-4" />
             </button>

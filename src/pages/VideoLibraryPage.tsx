@@ -18,20 +18,67 @@ function copyLink(path: string, label: string) {
 }
 
 // ── Video card (used in the standalone grid and inside an album dialog) ────
+// Hovering briefly loads a muted, looping preview of the video itself in
+// place of the thumbnail — the signed URL is fetched lazily (after a short
+// delay, so a quick mouse pass-over doesn't fire a request) and cached per
+// card so re-hovering doesn't refetch it.
 
 function VideoCard({ video, onClick, delay = 0 }: { video: Video; onClick: () => void; delay?: number }) {
+  const [hovering, setHovering] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const cachedPreviewUrl = useRef<string | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function startHover() {
+    setHovering(true);
+    if (cachedPreviewUrl.current) { setPreviewUrl(cachedPreviewUrl.current); return; }
+    hoverTimer.current = setTimeout(() => {
+      getVideoPlayUrl(video.id).then(({ url }) => {
+        if (url) { cachedPreviewUrl.current = url; setPreviewUrl(url); }
+      });
+    }, 350);
+  }
+
+  function endHover() {
+    setHovering(false);
+    setPreviewUrl(null);
+    if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; }
+  }
+
+  const showingPreview = hovering && !!previewUrl;
+
   return (
     <AnimateOnScroll delay={delay}>
-      <button type="button" onClick={onClick} className="group block w-full text-left">
+      <button
+        type="button"
+        onClick={onClick}
+        onMouseEnter={startHover}
+        onMouseLeave={endHover}
+        className="group block w-full text-left"
+      >
         <div className="relative aspect-video rounded-xl overflow-hidden mb-3 img-zoom bg-muted transition-shadow duration-300 group-hover:shadow-lg">
           {video.thumbnail
             ? <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" loading="lazy" />
             : <div className="w-full h-full flex items-center justify-center"><VideoIcon className="h-6 w-6 text-muted-foreground/40" /></div>}
-          <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <div className="h-11 w-11 rounded-full bg-white/90 flex items-center justify-center">
-              <Play className="h-4 w-4 text-iwosan-navy fill-current ml-0.5" />
+          {showingPreview && (
+            // eslint-disable-next-line jsx-a11y/media-has-caption
+            <video
+              src={previewUrl!}
+              className="absolute inset-0 w-full h-full object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+              onLoadedMetadata={(e) => { e.currentTarget.currentTime = Math.min(1.5, e.currentTarget.duration || 0); }}
+            />
+          )}
+          {!showingPreview && (
+            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="h-11 w-11 rounded-full bg-white/90 flex items-center justify-center">
+                <Play className="h-4 w-4 text-iwosan-navy fill-current ml-0.5" />
+              </div>
             </div>
-          </div>
+          )}
           {video.duration && (
             <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/70 text-white text-[10px] font-semibold px-2 py-0.5">
               <Clock className="h-3 w-3" />{video.duration}
@@ -102,7 +149,7 @@ function VideoPlayerDialog({
                       aria-label="Picture in picture"
                       title="Picture in picture"
                       onClick={togglePip}
-                      className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+                      className="absolute top-3 right-14 h-9 w-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
                     >
                       <PictureInPicture2 className="h-4 w-4" />
                     </button>

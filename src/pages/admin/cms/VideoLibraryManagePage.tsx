@@ -15,7 +15,7 @@ import { ImageField } from '@/components/cms/ImageField';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import {
   getVideos, getVideoAlbums, requestVideoUploadUrl, uploadVideoToS3, createVideo, updateVideo, deleteVideo,
-  createVideoAlbum, updateVideoAlbum, deleteVideoAlbum,
+  createVideoAlbum, updateVideoAlbum, deleteVideoAlbum, uploadImage,
   type Video, type VideoInput, type VideoAlbum, type VideoAlbumInput,
 } from '@/services/cmsService';
 
@@ -37,6 +37,44 @@ function detectVideoDuration(file: File): Promise<string> {
       resolve(h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`);
     };
     video.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
+    video.src = url;
+  });
+}
+
+// Grabs a frame partway into the video (1-3s in, or the midpoint for very
+// short clips) and returns it as a JPEG data URL — used to auto-fill the
+// thumbnail when the editor hasn't uploaded one of their own.
+function captureVideoFrame(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.muted = true;
+    video.playsInline = true;
+    const cleanup = () => URL.revokeObjectURL(url);
+    video.onloadedmetadata = () => {
+      const d = video.duration;
+      video.currentTime = isFinite(d) && d > 0 ? Math.min(3, Math.max(1, d * 0.1)) : 0;
+    };
+    video.onseeked = () => {
+      try {
+        const maxWidth = 640;
+        const scale = video.videoWidth > maxWidth ? maxWidth / video.videoWidth : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(video.videoWidth * scale) || 640;
+        canvas.height = Math.round(video.videoHeight * scale) || 360;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { cleanup(); resolve(''); return; }
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        cleanup();
+        resolve(dataUrl);
+      } catch {
+        cleanup();
+        resolve('');
+      }
+    };
+    video.onerror = () => { cleanup(); resolve(''); };
     video.src = url;
   });
 }
@@ -86,6 +124,7 @@ function VideoFormModal({ item, albumId, onClose, onSaved }: VideoFormProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [autoThumbLoading, setAutoThumbLoading] = useState(false);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -106,6 +145,23 @@ function VideoFormModal({ item, albumId, onClose, onSaved }: VideoFormProps) {
     setFile(f);
     const duration = await detectVideoDuration(f);
     if (duration) set('duration', duration);
+
+    // Auto-fill the thumbnail from a video frame, but only if the editor
+    // hasn't already chosen one themselves.
+    let alreadyHasThumbnail = false;
+    setForm((cur) => { alreadyHasThumbnail = !!cur.thumbnail; return cur; });
+    if (alreadyHasThumbnail) return;
+
+    setAutoThumbLoading(true);
+    const frameDataUrl = await captureVideoFrame(f);
+    if (frameDataUrl) {
+      const { url, error: upErr } = await uploadImage(frameDataUrl);
+      if (url && !upErr) {
+        const apiBase = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+        setForm((cur) => (cur.thumbnail ? cur : { ...cur, thumbnail: `${apiBase}${url}` }));
+      }
+    }
+    setAutoThumbLoading(false);
   }
 
   const busy = uploading || loading;
@@ -170,6 +226,15 @@ function VideoFormModal({ item, albumId, onClose, onSaved }: VideoFormProps) {
           </div>
 
           <ImageField label="Thumbnail" value={form.thumbnail} onChange={(v) => set('thumbnail', v)} enableLibraryPicker />
+          {autoThumbLoading && (
+            <p className="text-xs text-muted-foreground -mt-2.5 flex items-center gap-1.5">
+              <span className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              Generating a thumbnail from your video…
+            </p>
+          )}
+          {!isEdit && !form.thumbnail && !autoThumbLoading && (
+            <p className="text-[10px] text-muted-foreground -mt-2.5">Leave blank and choose a video below — we'll grab a frame automatically.</p>
+          )}
 
           {!isEdit && (
             <div className="space-y-1.5">
