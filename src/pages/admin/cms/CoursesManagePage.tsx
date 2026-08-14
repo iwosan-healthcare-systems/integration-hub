@@ -13,6 +13,7 @@ import { VideoField } from '@/components/cms/VideoField';
 import { AiAssistButton } from '@/components/cms/AiAssistButton';
 import { CoursePreviewCard } from '@/components/cms/previews/PreviewCards';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
+import { formatDurationHuman } from '@/lib/videoDuration';
 import {
   getCourses, createCourse, updateCourse, deleteCourse,
   type Course, type CourseInput,
@@ -127,8 +128,19 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="c-dur">Duration</Label>
-              <Input id="c-dur" value={form.duration} onChange={(e) => set('duration', e.target.value)} placeholder="e.g. 2h 30m" required />
+              <Label htmlFor="c-dur">
+                Duration
+                {form.video && <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">from the uploaded video</span>}
+              </Label>
+              <Input
+                id="c-dur"
+                value={form.duration}
+                onChange={(e) => set('duration', e.target.value)}
+                placeholder="e.g. 2h 30m"
+                required
+                readOnly={!!form.video}
+                disabled={!!form.video}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="c-mods">Modules</Label>
@@ -150,6 +162,7 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
             label="Course Video"
             value={form.video ?? ''}
             onChange={(v) => set('video', v)}
+            onDurationDetected={(seconds) => set('duration', formatDurationHuman(seconds))}
           />
           <p className="text-[10px] text-muted-foreground -mt-2.5">Alternative to the course link above, for courses with no external URL.</p>
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { requestVideoUploadUrl, uploadVideoToS3, getVideoPlayUrlByKey } from "@/services/cmsService";
+import { getVideoDurationSeconds } from "@/lib/videoDuration";
 
 const MAX_VIDEO_BYTES = 500 * 1024 * 1024;
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
@@ -13,9 +14,14 @@ interface VideoFieldProps {
   // The uploaded video's S3 key, or "" if none is attached.
   value: string;
   onChange: (key: string) => void;
+  // Reports the selected file's actual length (in seconds) once read
+  // client-side, so callers can derive a duration field from the video
+  // itself rather than leaving it free-typed. Fires as soon as the file is
+  // chosen — doesn't wait for the upload to finish.
+  onDurationDetected?: (seconds: number) => void;
 }
 
-export function VideoField({ label = "Video", value, onChange }: VideoFieldProps) {
+export function VideoField({ label = "Video", value, onChange, onDurationDetected }: VideoFieldProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -34,6 +40,7 @@ export function VideoField({ label = "Video", value, onChange }: VideoFieldProps
       return;
     }
     setError("");
+    if (onDurationDetected) getVideoDurationSeconds(file).then((s) => { if (s) onDurationDetected(s); });
     setUploading(true);
     setProgress(0);
     const { uploadUrl, key, error: urlErr } = await requestVideoUploadUrl(file.type, file.size);

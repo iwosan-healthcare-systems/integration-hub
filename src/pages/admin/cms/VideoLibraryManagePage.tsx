@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ImageField } from '@/components/cms/ImageField';
 import { AiAssistButton } from '@/components/cms/AiAssistButton';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
+import { getVideoDurationSeconds, formatDurationCompact } from '@/lib/videoDuration';
 import {
   getVideos, getVideoAlbums, requestVideoUploadUrl, uploadVideoToS3, createVideo, updateVideo, deleteVideo,
   createVideoAlbum, updateVideoAlbum, deleteVideoAlbum, uploadImage,
@@ -23,23 +24,8 @@ import {
 const MAX_VIDEO_BYTES = 500 * 1024 * 1024;
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 
-function detectVideoDuration(file: File): Promise<string> {
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.onloadedmetadata = () => {
-      URL.revokeObjectURL(url);
-      const total = Math.round(video.duration);
-      if (!isFinite(total) || total <= 0) { resolve(''); return; }
-      const h = Math.floor(total / 3600);
-      const m = Math.floor((total % 3600) / 60);
-      const s = total % 60;
-      resolve(h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`);
-    };
-    video.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
-    video.src = url;
-  });
+async function detectVideoDuration(file: File): Promise<string> {
+  return formatDurationCompact(await getVideoDurationSeconds(file));
 }
 
 // Grabs a frame partway into the video (1-3s in, or the midpoint for very
