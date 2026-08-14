@@ -24,6 +24,7 @@ const NewsPage             = lazy(() => import("./pages/NewsPage"));
 const NewsArticlePage      = lazy(() => import("./pages/NewsArticlePage"));
 const LeadershipPage       = lazy(() => import("./pages/LeadershipPage"));
 const LearningCentrePage   = lazy(() => import("./pages/LearningCentrePage"));
+const CoursePage           = lazy(() => import("./pages/CoursePage"));
 const PictureLibraryPage   = lazy(() => import("./pages/PictureLibraryPage"));
 const AlbumPage            = lazy(() => import("./pages/AlbumPage"));
 const VideoLibraryPage     = lazy(() => import("./pages/VideoLibraryPage"));
@@ -144,6 +145,7 @@ const App = () => (
                 <Route path="/leadership" element={<LeadershipPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/learning" element={<LearningCentrePage />} />
+                <Route path="/courses/:slug" element={<CoursePage />} />
                 <Route path="/picture-library" element={<PictureLibraryPage />} />
                 <Route path="/album/:slug" element={<AlbumPage />} />
                 <Route path="/videos" element={<VideoLibraryPage />} />

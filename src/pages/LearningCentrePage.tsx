@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import {
   BookOpen,
   Clock,
@@ -19,11 +19,9 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { getCourses, getLearningPaths, getSessions, type Course, type LearningPath, type LiveSession } from "@/services/cmsService";
-import { isOwnUploadUrl } from "@/lib/utils";
+import { isOwnUploadUrl, slugify } from "@/lib/utils";
 import { isPastSession, formatSessionTime } from "@/lib/sessions";
-import { ArticleVideoPlayer } from "@/components/ArticleVideoPlayer";
 import { Seo } from "@/components/Seo";
 
 // ─── Config maps ────────────────────────────────────────────────────────────
@@ -156,7 +154,6 @@ const LearningCentrePage = () => {
   const [sessions, setSessions] = useState<LiveSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>('All');
-  const [videoCourse, setVideoCourse] = useState<Course | null>(null);
 
   useEffect(() => {
     Promise.all([getCourses(), getLearningPaths(), getSessions()]).then(
@@ -439,9 +436,9 @@ const LearningCentrePage = () => {
                           {cardContent}
                         </a>
                       ) : course.video ? (
-                        <button type="button" onClick={() => setVideoCourse(course)} className="block h-full w-full text-left">
+                        <Link to={`/courses/${slugify(course.title)}`} className="block h-full">
                           {cardContent}
-                        </button>
+                        </Link>
                       ) : (
                         <div className="h-full">{cardContent}</div>
                       )}
@@ -509,24 +506,6 @@ const LearningCentrePage = () => {
           </div>
         </section>
       )}
-
-      {/* ── Course video dialog ── */}
-      <Dialog open={!!videoCourse} onOpenChange={(v) => { if (!v) setVideoCourse(null); }}>
-        <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden">
-          {videoCourse && (
-            <>
-              <DialogTitle className="sr-only">{videoCourse.title}</DialogTitle>
-              <ArticleVideoPlayer videoKey={videoCourse.video} title={videoCourse.title} className="rounded-none" insideDialog />
-              <div className="p-6">
-                <h2 className="font-serif text-xl font-bold mb-2">{videoCourse.title}</h2>
-                {videoCourse.description && (
-                  <p className="font-sans text-sm text-muted-foreground leading-relaxed">{videoCourse.description}</p>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
