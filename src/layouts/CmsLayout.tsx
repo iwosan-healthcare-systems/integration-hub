@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Newspaper, BookOpen, CalendarDays, GraduationCap, Images, Video, LogOut, PenSquare, Menu, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/ModeToggle';
+import { InactivityTimer } from '@/components/InactivityTimer';
 import { useAuth } from '@/contexts/AuthContext';
 import { clearAzureSession } from '@/services/authService';
 import { useInactivityLogout } from '@/hooks/useInactivityLogout';
@@ -107,7 +108,7 @@ export function CmsLayout() {
     toast.info('You were logged out after 1 hour of inactivity.');
   }, [user, logout, navigate]);
 
-  useInactivityLogout(handleInactivityTimeout, !!user);
+  const inactivityRemainingMs = useInactivityLogout(handleInactivityTimeout, !!user);
 
   const handleLogout = () => {
     logout();
@@ -166,6 +167,7 @@ export function CmsLayout() {
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden sm:block text-xs text-muted-foreground">Iwosan Integration Hub</span>
+            {user && <InactivityTimer remainingMs={inactivityRemainingMs} />}
             <ModeToggle />
           </div>
         </header>

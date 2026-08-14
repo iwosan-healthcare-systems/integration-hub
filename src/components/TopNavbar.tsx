@@ -4,6 +4,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ModeToggle } from "@/components/ModeToggle";
+import { InactivityTimer } from "@/components/InactivityTimer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,7 +49,13 @@ type SearchItem = {
   description?: string;
 };
 
-export function TopNavbar() {
+interface TopNavbarProps {
+  // Undefined when no user is signed in — the timer only makes sense
+  // alongside an active, auto-logout-eligible session.
+  inactivityRemainingMs?: number;
+}
+
+export function TopNavbar({ inactivityRemainingMs }: TopNavbarProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
@@ -241,6 +248,8 @@ export function TopNavbar() {
           >
             <Search className="h-4 w-4" />
           </Button>
+
+          {inactivityRemainingMs !== undefined && <InactivityTimer remainingMs={inactivityRemainingMs} />}
 
           <ModeToggle />
 
