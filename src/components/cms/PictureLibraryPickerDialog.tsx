@@ -214,11 +214,11 @@ export function PictureLibraryPickerDialog({ open, onOpenChange, onSelect, multi
         </div>
 
         {multiple && (
-          <DialogFooter className="sm:justify-between items-center pt-2 border-t border-border/60">
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:space-x-0 pt-2 border-t border-border/60">
             <p className="text-xs text-muted-foreground">{selected.size} selected</p>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="button" size="sm" disabled={selected.size === 0} onClick={confirmSelection}>
+            <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:items-center">
+              <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="button" size="sm" className="w-full sm:w-auto" disabled={selected.size === 0} onClick={confirmSelection}>
                 Add {selected.size > 0 ? selected.size : ""} image{selected.size !== 1 ? "s" : ""}
               </Button>
             </div>

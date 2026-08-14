@@ -146,13 +146,13 @@ function CourseFormModal({ item, onClose, onSaved }: CourseFormProps) {
             </div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter className="sm:justify-between">
-            <Button type="button" variant="outline" className="gap-2" onClick={() => setPreviewOpen(true)}>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:space-x-0">
+            <Button type="button" variant="outline" className="gap-2 w-full sm:w-auto" onClick={() => setPreviewOpen(true)}>
               <Eye className="h-3.5 w-3.5" />Preview
             </Button>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-              <Button type="submit" disabled={loading}>
+            <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:items-center">
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onClose}>Cancel</Button>
+              <Button type="submit" className="w-full sm:w-auto" disabled={loading}>
                 {loading ? <span className="flex items-center gap-2"><span className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />{isEdit ? 'Saving…' : 'Creating…'}</span> : isEdit ? 'Save Changes' : 'Create Course'}
               </Button>
             </div>
