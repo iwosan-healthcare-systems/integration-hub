@@ -24,6 +24,7 @@ const NewsPage             = lazy(() => import("./pages/NewsPage"));
 const NewsArticlePage      = lazy(() => import("./pages/NewsArticlePage"));
 const LeadershipPage       = lazy(() => import("./pages/LeadershipPage"));
 const LearningCentrePage   = lazy(() => import("./pages/LearningCentrePage"));
+const LearningFormPage     = lazy(() => import("./pages/LearningFormPage"));
 const CoursePage           = lazy(() => import("./pages/CoursePage"));
 const PictureLibraryPage   = lazy(() => import("./pages/PictureLibraryPage"));
 const AlbumPage            = lazy(() => import("./pages/AlbumPage"));
@@ -33,6 +34,7 @@ const UsersPage               = lazy(() => import("./pages/admin/UsersPage"));
 const NewsManagePage          = lazy(() => import("./pages/admin/cms/NewsManagePage"));
 const CoursesManagePage       = lazy(() => import("./pages/admin/cms/CoursesManagePage"));
 const SessionsManagePage      = lazy(() => import("./pages/admin/cms/SessionsManagePage"));
+const FormsManagePage         = lazy(() => import("./pages/admin/cms/FormsManagePage"));
 const LearningPathsManagePage = lazy(() => import("./pages/admin/cms/LearningPathsManagePage"));
 const PictureLibraryManagePage = lazy(() => import("./pages/admin/cms/PictureLibraryManagePage"));
 const VideoLibraryManagePage  = lazy(() => import("./pages/admin/cms/VideoLibraryManagePage"));
@@ -106,6 +108,7 @@ const App = () => (
                 <Route path="/admin/cms/news" element={<NewsManagePage />} />
                 <Route path="/admin/cms/courses" element={<CoursesManagePage />} />
                 <Route path="/admin/cms/sessions" element={<SessionsManagePage />} />
+                <Route path="/admin/cms/forms" element={<FormsManagePage />} />
                 <Route path="/admin/cms/learning-paths" element={<LearningPathsManagePage />} />
                 <Route path="/admin/cms/picture-library" element={<PictureLibraryManagePage />} />
                 <Route path="/admin/cms/videos" element={<VideoLibraryManagePage />} />
@@ -123,6 +126,7 @@ const App = () => (
                 <Route path="/cms/news" element={<NewsManagePage />} />
                 <Route path="/cms/courses" element={<CoursesManagePage />} />
                 <Route path="/cms/sessions" element={<SessionsManagePage />} />
+                <Route path="/cms/forms" element={<FormsManagePage />} />
                 <Route path="/cms/learning-paths" element={<LearningPathsManagePage />} />
                 <Route path="/cms/picture-library" element={<PictureLibraryManagePage />} />
                 <Route path="/cms/videos" element={<VideoLibraryManagePage />} />
@@ -145,6 +149,7 @@ const App = () => (
                 <Route path="/leadership" element={<LeadershipPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/learning" element={<LearningCentrePage />} />
+                <Route path="/learning/forms/:id" element={<LearningFormPage />} />
                 <Route path="/courses/:slug" element={<CoursePage />} />
                 <Route path="/picture-library" element={<PictureLibraryPage />} />
                 <Route path="/album/:slug" element={<AlbumPage />} />

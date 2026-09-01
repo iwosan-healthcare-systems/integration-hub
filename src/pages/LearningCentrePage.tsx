@@ -16,12 +16,14 @@ import {
   ExternalLink,
   ShieldAlert,
   Play,
+  FileQuestion,
+  CheckCircle2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
-import { getCourses, getLearningPaths, getSessions, type Course, type LearningPath, type LiveSession } from "@/services/cmsService";
+import { getCourses, getForms, getLearningPaths, getSessions, type Course, type LearningForm, type LearningPath, type LiveSession } from "@/services/cmsService";
 import { isOwnUploadUrl, slugify } from "@/lib/utils";
-import { isPastSession, formatSessionTime } from "@/lib/sessions";
+import { isPastSession, hasSessionStarted, formatSessionTime } from "@/lib/sessions";
 import { Seo } from "@/components/Seo";
 
 // ─── Config maps ────────────────────────────────────────────────────────────
@@ -69,6 +71,7 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
   const FmtIcon = fmtCfg.icon;
   const [month, day, year] = session.date.replace(",", "").split(" ");
   const hasImage = !!session.image && isOwnUploadUrl(session.image);
+  const assessmentAvailable = !!session.assessmentForm && (isPast || hasSessionStarted(session));
 
   return (
     <AnimateOnScroll delay={delay}>
@@ -118,29 +121,87 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
             </div>
           </div>
 
-          {isPast ? (
-            <div className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-border bg-muted/40 px-4 py-2 text-sm font-sans font-semibold text-muted-foreground">
-              Session ended
-            </div>
-          ) : session.meetingUrl ? (
-            <a
-              href={session.meetingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-sans font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              Join
-            </a>
-          ) : (
-            <a
-              href="mailto:HumanResources@iwosanhealth.com?subject=Live Session Registration"
-              className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-border bg-muted/50 px-4 py-2 text-sm font-sans font-semibold text-muted-foreground transition-colors hover:bg-muted"
-            >
-              Contact HR
-            </a>
-          )}
+          <div className="mt-5 space-y-2">
+            {isPast ? (
+              <div className="inline-flex w-full items-center justify-center rounded-xl border border-border bg-muted/40 px-4 py-2 text-sm font-sans font-semibold text-muted-foreground">
+                Session ended
+              </div>
+            ) : session.meetingUrl ? (
+              <a
+                href={session.meetingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-sans font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                Join
+              </a>
+            ) : (
+              <a
+                href="mailto:HumanResources@iwosanhealth.com?subject=Live Session Registration"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-border bg-muted/50 px-4 py-2 text-sm font-sans font-semibold text-muted-foreground transition-colors hover:bg-muted"
+              >
+                Contact HR
+              </a>
+            )}
+            {assessmentAvailable && session.assessmentForm && (
+              <Link
+                to={`/learning/forms/${session.assessmentForm.id}`}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <FileQuestion className="h-4 w-4" />
+                Take assessment
+              </Link>
+            )}
+          </div>
         </div>
       </div>
+    </AnimateOnScroll>
+  );
+}
+
+function formatFormDateTime(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function FormCard({ form, delay }: { form: LearningForm; delay: number }) {
+  const status = form.hasSubmitted
+    ? { label: "Submitted", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400", icon: CheckCircle2 }
+    : form.expired
+      ? { label: "Expired", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400", icon: AlertCircle }
+      : form.upcoming
+        ? { label: "Upcoming", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", icon: CalendarDays }
+        : { label: "Open", className: "bg-primary/10 text-primary", icon: FileQuestion };
+  const StatusIcon = status.icon;
+  const questionCount = form.questionCount ?? form.questions?.length ?? 0;
+
+  return (
+    <AnimateOnScroll delay={delay}>
+      <Link to={`/learning/forms/${form.id}`} className="block h-full">
+        <div className={`group flex h-full flex-col rounded-2xl border border-border bg-card p-5 transition-all duration-200 ${form.expired ? "opacity-80 hover:opacity-100" : "hover:-translate-y-1 hover:shadow-md"}`}>
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <FileQuestion className="h-4.5 w-4.5" />
+            </div>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${status.className}`}>
+              <StatusIcon className="h-3 w-3" />
+              {status.label}
+            </span>
+          </div>
+          <h3 className="mb-1.5 font-serif text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-accent">
+            {form.title}
+          </h3>
+          <p className="mb-4 flex-1 font-sans text-sm leading-relaxed text-muted-foreground">
+            {form.description || `${questionCount} questions`}
+          </p>
+          <div className="space-y-1 border-t border-border pt-3 text-[11px] font-sans text-muted-foreground">
+            <div className="flex items-center justify-between gap-3">
+              <span>{questionCount} question{questionCount !== 1 ? "s" : ""}</span>
+              <span className="font-semibold text-accent">{form.expired ? "View status" : "Open assessment"}</span>
+            </div>
+            <p>{form.upcoming ? "Opens" : "Closes"} {formatFormDateTime(form.upcoming ? form.startsAt : form.expiresAt)}</p>
+          </div>
+        </div>
+      </Link>
     </AnimateOnScroll>
   );
 }
@@ -152,15 +213,17 @@ const LearningCentrePage = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
   const [sessions, setSessions] = useState<LiveSession[]>([]);
+  const [forms, setForms] = useState<LearningForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>('All');
 
   useEffect(() => {
-    Promise.all([getCourses(), getLearningPaths(), getSessions()]).then(
-      ([c, lp, s]) => {
+    Promise.all([getCourses(), getLearningPaths(), getSessions(), getForms()]).then(
+      ([c, lp, s, f]) => {
         setCourses(c.courses ?? []);
         setLearningPaths(lp.learningPaths ?? []);
         setSessions(s.sessions ?? []);
+        setForms(f.forms ?? []);
         setLoading(false);
       }
     );
@@ -208,6 +271,7 @@ const LearningCentrePage = () => {
                 { label: "Courses", value: loading ? "—" : courses.length.toString() },
                 { label: "Categories", value: "6" },
                 { label: "Learning Paths", value: loading ? "—" : learningPaths.length.toString() },
+                { label: "Assessments", value: loading ? "—" : forms.length.toString() },
                 { label: "Upcoming Sessions", value: loading ? "—" : upcomingSessions.length.toString() },
               ].map((s) => (
                 <div key={s.label} className="text-center">
@@ -451,6 +515,36 @@ const LearningCentrePage = () => {
       </section>
 
       {/* ── Upcoming Live Sessions ── */}
+      <section id="forms" className="px-6 py-14 sm:px-8 lg:px-16 border-t border-border scroll-mt-20">
+        <div className="max-w-6xl mx-auto">
+          <AnimateOnScroll>
+            <p className="font-sans uppercase tracking-[0.2em] text-accent text-xs font-medium mb-2">
+              Assessments
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+              Learning assessments
+            </h2>
+            <p className="font-sans text-muted-foreground max-w-xl mb-8">
+              Complete active assessments shared with your organisation. Expired assessments remain visible here until they are hidden by the content team.
+            </p>
+          </AnimateOnScroll>
+
+          {loading ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-52" />)}
+            </div>
+          ) : forms.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No assessments available.</p>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {forms.map((form, i) => (
+                <FormCard key={form.id} form={form} delay={i * 0.08} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
       <section id="sessions" className="px-6 py-14 sm:px-8 lg:px-16 bg-muted/30 border-t border-border scroll-mt-20">
         <div className="max-w-6xl mx-auto">
           <AnimateOnScroll>

@@ -2,6 +2,10 @@ import { getStoredToken } from './authService';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
+function hasApiError(value: unknown): value is { error: string } {
+  return typeof value === 'object' && value !== null && 'error' in value && typeof (value as { error?: unknown }).error === 'string';
+}
+
 async function apiFetch<T>(
   path: string,
   options?: RequestInit
@@ -22,7 +26,7 @@ async function apiFetch<T>(
     return { data: null, error: 'Network error. Please try again.' };
   }
 
-  let json: any = null;
+  let json: unknown = null;
   try {
     json = await res.json();
   } catch (err) {
@@ -30,7 +34,7 @@ async function apiFetch<T>(
   }
 
   if (!res.ok) {
-    return { data: null, error: json?.error || `Request failed (${res.status})` };
+    return { data: null, error: hasApiError(json) ? json.error : `Request failed (${res.status})` };
   }
   return { data: json as T, error: null };
 }
@@ -89,6 +93,7 @@ export interface LiveSession {
   meetingUrl: string;
   entities: string[];
   image: string;
+  assessmentForm?: LearningForm | null;
 }
 
 export interface PictureLibraryItem {
@@ -118,6 +123,38 @@ export interface VideoAlbum {
   videos: Video[];
 }
 
+export type FormQuestionType = 'choice' | 'text' | 'rating' | 'date' | 'ranking' | 'likert' | 'nps' | 'section';
+
+export interface FormQuestion {
+  id: string;
+  type: FormQuestionType;
+  title: string;
+  required: boolean;
+  options?: string[];
+  rows?: string[];
+  allowMultiple?: boolean;
+  longAnswer?: boolean;
+  max?: number;
+}
+
+export interface LearningForm {
+  id: number;
+  title: string;
+  description: string;
+  questions?: FormQuestion[];
+  questionCount?: number;
+  entities: string[];
+  liveSessionId: number | null;
+  startsAt: string;
+  expiresAt: string;
+  hideWhenExpired: boolean;
+  expired: boolean;
+  upcoming: boolean;
+  sortOrder: number;
+  responseCount: number;
+  hasSubmitted: boolean;
+}
+
 // ── Public reads ──────────────────────────────────────────────────────────
 
 export async function getNews(): Promise<{ news: NewsItem[] | null; error: string | null }> {
@@ -138,6 +175,27 @@ export async function getLearningPaths(): Promise<{ learningPaths: LearningPath[
 export async function getSessions(): Promise<{ sessions: LiveSession[] | null; error: string | null }> {
   const { data, error } = await apiFetch<{ sessions: LiveSession[] }>('/sessions');
   return { sessions: data?.sessions ?? null, error };
+}
+
+export async function getForms(): Promise<{ forms: LearningForm[] | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ forms: LearningForm[] }>('/forms');
+  return { forms: data?.forms ?? null, error };
+}
+
+export async function getForm(id: number): Promise<{ form: LearningForm | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ form: LearningForm }>(`/forms/${id}`);
+  return { form: data?.form ?? null, error };
+}
+
+export async function submitForm(
+  id: number,
+  answers: Record<string, unknown>
+): Promise<{ error: string | null }> {
+  const { error } = await apiFetch(`/forms/${id}/responses`, {
+    method: 'POST',
+    body: JSON.stringify({ answers }),
+  });
+  return { error };
 }
 
 export async function getPictureLibrary(): Promise<{ pictures: PictureLibraryItem[] | null; error: string | null }> {
@@ -283,6 +341,82 @@ export async function updateSession(id: number, input: Partial<SessionInput>): P
 export async function deleteSession(id: number): Promise<{ error: string | null }> {
   const { error } = await apiFetch(`/admin/cms/sessions/${id}`, { method: 'DELETE' });
   return { error };
+}
+
+// -- Admin: Forms
+
+export type FormInput = {
+  title: string;
+  description: string;
+  questions: FormQuestion[];
+  entities: string[];
+  startsAt: string;
+  expiresAt: string;
+  hideWhenExpired: boolean;
+  liveSessionId?: number | null;
+  sortOrder?: number;
+};
+
+export async function getCmsForms(): Promise<{ forms: LearningForm[] | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ forms: LearningForm[] }>('/admin/cms/forms');
+  return { forms: data?.forms ?? null, error };
+}
+
+export async function createForm(input: FormInput): Promise<{ form: LearningForm | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ form: LearningForm }>('/admin/cms/forms', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return { form: data?.form ?? null, error };
+}
+
+export async function updateForm(id: number, input: Partial<FormInput>): Promise<{ form: LearningForm | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ form: LearningForm }>(`/admin/cms/forms/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+  return { form: data?.form ?? null, error };
+}
+
+export async function deleteForm(id: number): Promise<{ error: string | null }> {
+  const { error } = await apiFetch(`/admin/cms/forms/${id}`, { method: 'DELETE' });
+  return { error };
+}
+
+export async function downloadFormResponses(id: number): Promise<{ error: string | null }> {
+  try {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE}/api/admin/cms/forms/${id}/responses/export`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      let json: unknown = null;
+      try { json = await res.json(); } catch { /* non-json response */ }
+      const message = typeof json === 'object' && json !== null && 'error' in json
+        ? String((json as { error?: unknown }).error)
+        : null;
+      return { error: message || `Request failed (${res.status})` };
+    }
+
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition') ?? '';
+    const filenameMatch = disposition.match(/filename="([^"]+)"/i);
+    const filename = filenameMatch?.[1] ?? `assessment-${id}-responses.xlsx`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    return { error: null };
+  } catch {
+    return { error: 'Network error. Please try again.' };
+  }
 }
 
 // ── Admin: Picture Library ────────────────────────────────────────────────

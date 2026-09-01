@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { LayoutDashboard, Users, LogOut, Shield, Menu, X, ArrowLeft, Newspaper, BookOpen, CalendarDays, GraduationCap, Images, Video, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Shield, Menu, X, ArrowLeft, Newspaper, BookOpen, CalendarDays, GraduationCap, Images, Video, ChevronDown, FileQuestion } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/ModeToggle';
 import { InactivityTimer } from '@/components/InactivityTimer';
@@ -19,6 +19,7 @@ const cmsItems = [
   { to: '/admin/cms/news', label: 'News', icon: Newspaper },
   { to: '/admin/cms/courses', label: 'Courses', icon: BookOpen },
   { to: '/admin/cms/sessions', label: 'Sessions', icon: CalendarDays },
+  { to: '/admin/cms/forms', label: 'Assessments', icon: FileQuestion },
   { to: '/admin/cms/learning-paths', label: 'Learning Paths', icon: GraduationCap },
   { to: '/admin/cms/picture-library', label: 'Picture Library', icon: Images },
   { to: '/admin/cms/videos', label: 'Video Library', icon: Video },

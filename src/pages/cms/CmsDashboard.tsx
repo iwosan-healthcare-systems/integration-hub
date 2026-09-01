@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Newspaper, BookOpen, CalendarDays, GraduationCap, Images, Video } from 'lucide-react';
+import { Newspaper, BookOpen, CalendarDays, GraduationCap, Images, Video, FileQuestion } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 const sections = [
@@ -23,6 +23,13 @@ const sections = [
     label: 'Live Sessions',
     description: 'Schedule and update upcoming live training and meeting sessions.',
     color: 'text-orange-600 bg-orange-500/10',
+  },
+  {
+    to: '/cms/forms',
+    icon: FileQuestion,
+    label: 'Assessments',
+    description: 'Create Learning Centre assessments, set organisation visibility, and export responses.',
+    color: 'text-indigo-600 bg-indigo-500/10',
   },
   {
     to: '/cms/learning-paths',

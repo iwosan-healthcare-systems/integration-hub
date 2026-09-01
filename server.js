@@ -12,6 +12,7 @@ import cookieParser from 'cookie-parser';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import JSZip from 'jszip';
 import { randomBytes, createPublicKey } from 'crypto';
 import { readFileSync } from 'fs';
 import { resolve, dirname, extname } from 'path';
@@ -1190,6 +1191,324 @@ function validateUrl(value) {
   return !value || /^https?:\/\//i.test(String(value));
 }
 
+const FORM_QUESTION_TYPES = new Set(['choice', 'text', 'rating', 'date', 'ranking', 'likert', 'nps', 'section']);
+
+function cleanStringList(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((v) => String(v ?? '').trim()).filter(Boolean);
+}
+
+function validateEntitiesList(entities) {
+  return Array.isArray(entities) && entities.length > 0 && entities.every((e) => e in ENTITIES);
+}
+
+function hasDuplicateStrings(values) {
+  return new Set(values).size !== values.length;
+}
+
+function normalizeFormQuestions(input) {
+  if (!Array.isArray(input) || input.length === 0) {
+    return { error: 'At least one question is required' };
+  }
+  if (input.length > 100) return { error: 'An assessment can have at most 100 questions' };
+
+  const ids = new Set();
+  const questions = [];
+  for (let index = 0; index < input.length; index += 1) {
+    const raw = input[index] ?? {};
+    const type = String(raw.type ?? '');
+    const title = String(raw.title ?? '').trim();
+    const id = String(raw.id || `q-${index + 1}-${randomBytes(3).toString('hex')}`)
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    if (!FORM_QUESTION_TYPES.has(type)) return { error: `Question ${index + 1} has an invalid type` };
+    if (!title) return { error: `Question ${index + 1} needs question text` };
+    if (!id || ids.has(id)) return { error: `Question ${index + 1} has a duplicate or invalid ID` };
+    ids.add(id);
+
+    const question = { id, type, title, required: type === 'section' ? false : Boolean(raw.required) };
+    if (type === 'choice') {
+      const options = cleanStringList(raw.options);
+      if (options.length < 2) return { error: `Question ${index + 1} needs at least two options` };
+      if (hasDuplicateStrings(options)) return { error: `Question ${index + 1} has duplicate options` };
+      question.options = options;
+      question.allowMultiple = Boolean(raw.allowMultiple);
+    } else if (type === 'text') {
+      question.longAnswer = Boolean(raw.longAnswer);
+    } else if (type === 'rating') {
+      const max = Number(raw.max) || 5;
+      if (!Number.isInteger(max) || max < 2 || max > 10) return { error: `Question ${index + 1} rating must be between 2 and 10` };
+      question.max = max;
+    } else if (type === 'ranking') {
+      const options = cleanStringList(raw.options);
+      if (options.length < 2) return { error: `Question ${index + 1} needs at least two ranking options` };
+      if (hasDuplicateStrings(options)) return { error: `Question ${index + 1} has duplicate ranking options` };
+      question.options = options;
+    } else if (type === 'likert') {
+      const rows = cleanStringList(raw.rows);
+      const options = cleanStringList(raw.options);
+      if (rows.length < 1) return { error: `Question ${index + 1} needs at least one statement` };
+      if (options.length < 2) return { error: `Question ${index + 1} needs at least two scale options` };
+      if (hasDuplicateStrings(rows)) return { error: `Question ${index + 1} has duplicate statements` };
+      if (hasDuplicateStrings(options)) return { error: `Question ${index + 1} has duplicate scale options` };
+      question.rows = rows;
+      question.options = options;
+    }
+    questions.push(question);
+  }
+
+  return { questions };
+}
+
+function parseFormDate(value, label) {
+  if (!value) return { error: `${label} is required` };
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return { error: `${label} must be a valid date/time` };
+  return { date };
+}
+
+function isExpiredForm(row) {
+  return new Date(row.expires_at).getTime() < Date.now();
+}
+
+function isUpcomingForm(row) {
+  return new Date(row.starts_at).getTime() > Date.now();
+}
+
+function userCanSeeForm(user, row) {
+  return !!user?.entity && Array.isArray(row.entities) && row.entities.includes(user.entity);
+}
+
+async function normalizeLiveSessionId(value, { excludeFormId = null } = {}) {
+  if (value === undefined || value === null || value === '') return { liveSessionId: null };
+  const liveSessionId = Number(value);
+  if (!Number.isInteger(liveSessionId) || liveSessionId <= 0) {
+    return { error: 'liveSessionId must be a valid live session' };
+  }
+
+  const sessionRows = await db('SELECT id FROM live_sessions WHERE id = $1 AND is_active = true', [liveSessionId]);
+  if (!sessionRows[0]) return { error: 'Selected live session was not found' };
+
+  const params = [liveSessionId];
+  let conflictQuery = 'SELECT id FROM cms_forms WHERE live_session_id = $1 AND is_active = true';
+  if (excludeFormId !== null) {
+    params.push(excludeFormId);
+    conflictQuery += ` AND id <> $${params.length}`;
+  }
+  const conflictRows = await db(`${conflictQuery} LIMIT 1`, params);
+  if (conflictRows[0]) return { error: 'This live session already has a linked assessment' };
+
+  return { liveSessionId };
+}
+
+function mapFormRow(r, { includeQuestions = false } = {}) {
+  const questions = r.questions ?? [];
+  const questionCount = Array.isArray(questions) ? questions.filter((q) => q.type !== 'section').length : 0;
+  return {
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    ...(includeQuestions ? { questions, questionCount } : { questionCount }),
+    entities: r.entities ?? [],
+    liveSessionId: r.live_session_id ?? null,
+    startsAt: new Date(r.starts_at).toISOString(),
+    expiresAt: new Date(r.expires_at).toISOString(),
+    hideWhenExpired: r.hide_when_expired,
+    expired: isExpiredForm(r),
+    upcoming: isUpcomingForm(r),
+    sortOrder: r.sort_order,
+    responseCount: Number(r.response_count ?? 0),
+    hasSubmitted: Boolean(r.has_submitted),
+  };
+}
+
+function mapSessionRow(r, assessmentFormsBySession = new Map()) {
+  return {
+    id: r.id,
+    title: r.title,
+    date: fmtDate(r.session_date),
+    time: r.session_time,
+    format: r.format,
+    venue: r.venue,
+    host: r.host,
+    meetingUrl: r.meeting_url,
+    entities: r.entities,
+    image: r.image,
+    assessmentForm: assessmentFormsBySession.get(r.id) ?? null,
+  };
+}
+
+async function getAssessmentFormsBySession(sessionIds, user) {
+  const map = new Map();
+  if (!sessionIds.length || !user?.entity) return map;
+
+  const rows = await db(
+    `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
+            f.hide_when_expired, f.sort_order,
+            EXISTS (
+              SELECT 1 FROM cms_form_responses r
+              WHERE r.form_id = f.id AND r.user_id = $2
+            ) AS has_submitted
+     FROM cms_forms f
+     WHERE f.is_active = true
+       AND f.live_session_id = ANY($1::int[])
+       AND $3 = ANY(f.entities)
+     ORDER BY f.live_session_id ASC, f.sort_order ASC, f.created_at DESC`,
+    [sessionIds, user.userId, user.entity]
+  );
+
+  for (const row of rows) {
+    if (!map.has(row.live_session_id)) map.set(row.live_session_id, mapFormRow(row));
+  }
+  return map;
+}
+
+function validateFormAnswers(questions, rawAnswers) {
+  if (!rawAnswers || typeof rawAnswers !== 'object' || Array.isArray(rawAnswers)) {
+    return { error: 'Answers must be an object' };
+  }
+
+  const answers = {};
+  for (const q of questions) {
+    if (q.type === 'section') continue;
+    const value = rawAnswers[q.id];
+    const isEmpty =
+      value === undefined ||
+      value === null ||
+      value === '' ||
+      (Array.isArray(value) && value.length === 0) ||
+      (q.type === 'likert' && typeof value === 'object' && Object.keys(value).length === 0);
+
+    if (isEmpty) {
+      if (q.required) return { error: `"${q.title}" is required` };
+      continue;
+    }
+
+    if (q.type === 'choice') {
+      if (q.allowMultiple) {
+        if (!Array.isArray(value)) return { error: `"${q.title}" must contain selected options` };
+        const cleaned = value.map((v) => String(v));
+        if (!cleaned.every((v) => q.options.includes(v))) return { error: `"${q.title}" contains an invalid option` };
+        answers[q.id] = cleaned;
+      } else {
+        const selected = String(value);
+        if (!q.options.includes(selected)) return { error: `"${q.title}" contains an invalid option` };
+        answers[q.id] = selected;
+      }
+    } else if (q.type === 'text') {
+      if (typeof value !== 'string') return { error: `"${q.title}" must be text` };
+      if (q.required && !value.trim()) return { error: `"${q.title}" is required` };
+      answers[q.id] = value.trim();
+    } else if (q.type === 'rating') {
+      const rating = Number(value);
+      if (!Number.isInteger(rating) || rating < 1 || rating > q.max) return { error: `"${q.title}" must be a valid rating` };
+      answers[q.id] = rating;
+    } else if (q.type === 'date') {
+      const date = String(value);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: `"${q.title}" must be a valid date` };
+      answers[q.id] = date;
+    } else if (q.type === 'ranking') {
+      if (!Array.isArray(value)) return { error: `"${q.title}" must be a ranked list` };
+      const ranked = value.map((v) => String(v));
+      if (new Set(ranked).size !== ranked.length || !ranked.every((v) => q.options.includes(v))) {
+        return { error: `"${q.title}" contains invalid ranking options` };
+      }
+      if (q.required && ranked.length !== q.options.length) return { error: `"${q.title}" must rank every option` };
+      answers[q.id] = ranked;
+    } else if (q.type === 'likert') {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return { error: `"${q.title}" must contain scale answers` };
+      const answer = {};
+      for (const row of q.rows) {
+        const selected = value[row];
+        if (!selected) {
+          if (q.required) return { error: `"${q.title}" must answer every statement` };
+          continue;
+        }
+        if (!q.options.includes(String(selected))) return { error: `"${q.title}" contains an invalid scale answer` };
+        answer[row] = String(selected);
+      }
+      answers[q.id] = answer;
+    } else if (q.type === 'nps') {
+      const score = Number(value);
+      if (!Number.isInteger(score) || score < 0 || score > 10) return { error: `"${q.title}" must be between 0 and 10` };
+      answers[q.id] = score;
+    }
+  }
+
+  return { answers };
+}
+
+function formatAnswerForExport(question, answers) {
+  const value = answers?.[question.id];
+  if (value === undefined || value === null) return '';
+  if (question.type === 'choice') return Array.isArray(value) ? value.join('; ') : String(value);
+  if (question.type === 'ranking') return Array.isArray(value) ? value.join(' > ') : String(value);
+  if (question.type === 'likert' && typeof value === 'object') {
+    return Object.entries(value).map(([row, selected]) => `${row}: ${selected}`).join('; ');
+  }
+  return String(value);
+}
+
+function escapeXml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function excelColumnName(index) {
+  let name = '';
+  let n = index + 1;
+  while (n > 0) {
+    const remainder = (n - 1) % 26;
+    name = String.fromCharCode(65 + remainder) + name;
+    n = Math.floor((n - 1) / 26);
+  }
+  return name;
+}
+
+async function buildXlsxBuffer(rows) {
+  const zip = new JSZip();
+  const sheetRows = rows.map((row, rowIndex) => {
+    const cells = row.map((value, columnIndex) => {
+      const cellRef = `${excelColumnName(columnIndex)}${rowIndex + 1}`;
+      return `<c r="${cellRef}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`;
+    }).join('');
+    return `<row r="${rowIndex + 1}">${cells}</row>`;
+  }).join('');
+
+  zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+</Types>`);
+  zip.folder('_rels')?.file('.rels', `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`);
+  zip.folder('xl')?.file('workbook.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="Responses" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`);
+  zip.folder('xl')?.folder('_rels')?.file('workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+</Relationships>`);
+  zip.folder('xl')?.folder('worksheets')?.file('sheet1.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>${sheetRows}</sheetData>
+</worksheet>`);
+
+  return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+}
+
 // ── CMS: Image upload ─────────────────────────────────────────────────────
 
 // POST /api/admin/cms/upload  — accepts { image: "data:<mime>;base64,<data>" }
@@ -1218,6 +1537,305 @@ router.post('/admin/cms/upload', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Upload error:', err);
     return res.status(500).json({ error: 'Failed to save image' });
+  }
+});
+
+// -- CMS: Forms (public read/submit, admin write) --------------------------
+
+// GET /api/forms - Learning Centre cards for the current user's organisation
+router.get('/forms', requireAuth, async (req, res) => {
+  try {
+    const rows = await db(
+      `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
+              f.hide_when_expired, f.sort_order,
+              EXISTS (
+                SELECT 1 FROM cms_form_responses r
+                WHERE r.form_id = f.id AND r.user_id = $2
+              ) AS has_submitted
+       FROM cms_forms f
+       WHERE f.is_active = true
+         AND $1 = ANY(f.entities)
+         AND f.live_session_id IS NULL
+         AND (f.expires_at >= NOW() OR f.hide_when_expired = false)
+       ORDER BY f.sort_order ASC, f.created_at DESC`,
+      [req.authUser.entity, req.authUser.userId]
+    );
+    return res.json({ forms: rows.map((r) => mapFormRow(r)) });
+  } catch (err) {
+    console.error('GET /forms error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/forms/:id - a single form page, guarded by organisation visibility
+router.get('/forms/:id', requireAuth, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    const rows = await db(
+      `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
+              f.hide_when_expired, f.sort_order,
+              EXISTS (
+                SELECT 1 FROM cms_form_responses r
+                WHERE r.form_id = f.id AND r.user_id = $2
+              ) AS has_submitted
+       FROM cms_forms f
+       WHERE f.id = $1 AND f.is_active = true`,
+      [id, req.authUser.userId]
+    );
+    const form = rows[0];
+    if (!form || !userCanSeeForm(req.authUser, form)) return res.status(404).json({ error: 'Not found' });
+    if (isExpiredForm(form) && form.hide_when_expired && !form.live_session_id) return res.status(404).json({ error: 'Not found' });
+    return res.json({ form: mapFormRow(form, { includeQuestions: true }) });
+  } catch (err) {
+    console.error('GET /forms/:id error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/forms/:id/responses - one submission per user, while the form is open
+router.post('/forms/:id/responses', requireAuth, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    const formRows = await db('SELECT * FROM cms_forms WHERE id = $1 AND is_active = true', [id]);
+    const form = formRows[0];
+    if (!form || !userCanSeeForm(req.authUser, form)) return res.status(404).json({ error: 'Not found' });
+    if (isUpcomingForm(form)) return res.status(400).json({ error: 'This assessment is not open yet' });
+    if (isExpiredForm(form)) return res.status(400).json({ error: 'This assessment has expired' });
+
+    const existingRows = await db(
+      'SELECT id FROM cms_form_responses WHERE form_id = $1 AND user_id = $2',
+      [id, req.authUser.userId]
+    );
+    if (existingRows[0]) return res.status(409).json({ error: 'You have already submitted this assessment' });
+
+    const questions = form.questions ?? [];
+    const checked = validateFormAnswers(questions, req.body?.answers);
+    if (checked.error) return res.status(400).json({ error: checked.error });
+
+    const userRows = await db('SELECT email, name, entity FROM users WHERE id = $1', [req.authUser.userId]);
+    const user = userRows[0] ?? {};
+    await db(
+      `INSERT INTO cms_form_responses (form_id, user_id, user_email, user_name, user_entity, answers)
+       VALUES ($1,$2,$3,$4,$5,$6)`,
+      [
+        id,
+        req.authUser.userId,
+        user.email || req.authUser.email,
+        user.name || '',
+        user.entity || req.authUser.entity,
+        JSON.stringify(checked.answers),
+      ]
+    );
+    return res.status(201).json({ message: 'Submitted successfully' });
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'You have already submitted this assessment' });
+    console.error('POST /forms/:id/responses error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/cms/forms
+router.get('/admin/cms/forms', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  try {
+    const rows = await db(
+      `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
+              f.hide_when_expired, f.sort_order, COUNT(r.id)::int AS response_count
+       FROM cms_forms f
+       LEFT JOIN cms_form_responses r ON r.form_id = f.id
+       WHERE f.is_active = true
+       GROUP BY f.id
+       ORDER BY f.sort_order ASC, f.created_at DESC`,
+      []
+    );
+    return res.json({ forms: rows.map((r) => mapFormRow(r, { includeQuestions: true })) });
+  } catch (err) {
+    console.error('GET /admin/cms/forms error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/cms/forms
+router.post('/admin/cms/forms', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const {
+    title,
+    description = '',
+    questions,
+    entities,
+    startsAt,
+    expiresAt,
+    hideWhenExpired = false,
+    liveSessionId = null,
+    sortOrder = 0,
+  } = req.body ?? {};
+
+  if (!title) return res.status(400).json({ error: 'title is required' });
+  if (!validateEntitiesList(entities)) return res.status(400).json({ error: 'At least one valid entity is required' });
+  const normalized = normalizeFormQuestions(questions);
+  if (normalized.error) return res.status(400).json({ error: normalized.error });
+  const start = parseFormDate(startsAt, 'startsAt');
+  if (start.error) return res.status(400).json({ error: start.error });
+  const expiry = parseFormDate(expiresAt, 'expiresAt');
+  if (expiry.error) return res.status(400).json({ error: expiry.error });
+  if (expiry.date <= start.date) return res.status(400).json({ error: 'expiresAt must be after startsAt' });
+
+  try {
+    const linkedSession = await normalizeLiveSessionId(liveSessionId);
+    if (linkedSession.error) return res.status(400).json({ error: linkedSession.error });
+
+    const rows = await db(
+      `INSERT INTO cms_forms (title, description, questions, entities, live_session_id, starts_at, expires_at, hide_when_expired, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      [
+        String(title).trim(),
+        String(description ?? ''),
+        JSON.stringify(normalized.questions),
+        entities,
+        linkedSession.liveSessionId,
+        start.date.toISOString(),
+        expiry.date.toISOString(),
+        Boolean(hideWhenExpired),
+        Number(sortOrder) || 0,
+      ]
+    );
+    return res.status(201).json({ form: mapFormRow(rows[0], { includeQuestions: true }) });
+  } catch (err) {
+    if (err.code === '23505' && err.constraint === 'cms_forms_one_active_per_session_idx') {
+      return res.status(409).json({ error: 'This live session already has a linked assessment' });
+    }
+    console.error('POST /admin/cms/forms error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/admin/cms/forms/:id
+router.patch('/admin/cms/forms/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  const { title, description, questions, entities, startsAt, expiresAt, hideWhenExpired, liveSessionId, sortOrder } = req.body ?? {};
+
+  try {
+    const existingRows = await db('SELECT * FROM cms_forms WHERE id = $1 AND is_active = true', [id]);
+    const existing = existingRows[0];
+    if (!existing) return res.status(404).json({ error: 'Not found' });
+
+    let normalized = null;
+    if (questions !== undefined) {
+      normalized = normalizeFormQuestions(questions);
+      if (normalized.error) return res.status(400).json({ error: normalized.error });
+    }
+    if (entities !== undefined && !validateEntitiesList(entities)) {
+      return res.status(400).json({ error: 'At least one valid entity is required' });
+    }
+
+    let nextStart = new Date(existing.starts_at);
+    let nextExpiry = new Date(existing.expires_at);
+    if (startsAt !== undefined) {
+      const parsed = parseFormDate(startsAt, 'startsAt');
+      if (parsed.error) return res.status(400).json({ error: parsed.error });
+      nextStart = parsed.date;
+    }
+    if (expiresAt !== undefined) {
+      const parsed = parseFormDate(expiresAt, 'expiresAt');
+      if (parsed.error) return res.status(400).json({ error: parsed.error });
+      nextExpiry = parsed.date;
+    }
+    if (nextExpiry <= nextStart) return res.status(400).json({ error: 'expiresAt must be after startsAt' });
+
+    let linkedSession = null;
+    if (liveSessionId !== undefined) {
+      linkedSession = await normalizeLiveSessionId(liveSessionId, { excludeFormId: id });
+      if (linkedSession.error) return res.status(400).json({ error: linkedSession.error });
+    }
+
+    const set = [];
+    const params = [];
+    let i = 1;
+    if (title !== undefined)           { set.push(`title=$${i++}`);             params.push(String(title).trim()); }
+    if (description !== undefined)     { set.push(`description=$${i++}`);       params.push(String(description ?? '')); }
+    if (normalized)                    { set.push(`questions=$${i++}`);         params.push(JSON.stringify(normalized.questions)); }
+    if (entities !== undefined)        { set.push(`entities=$${i++}`);          params.push(entities); }
+    if (startsAt !== undefined)        { set.push(`starts_at=$${i++}`);         params.push(nextStart.toISOString()); }
+    if (expiresAt !== undefined)       { set.push(`expires_at=$${i++}`);        params.push(nextExpiry.toISOString()); }
+    if (hideWhenExpired !== undefined) { set.push(`hide_when_expired=$${i++}`); params.push(Boolean(hideWhenExpired)); }
+    if (linkedSession)                 { set.push(`live_session_id=$${i++}`);   params.push(linkedSession.liveSessionId); }
+    if (sortOrder !== undefined)       { set.push(`sort_order=$${i++}`);        params.push(Number(sortOrder) || 0); }
+    if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+    set.push('updated_at=NOW()');
+    params.push(id);
+
+    const rows = await db(`UPDATE cms_forms SET ${set.join(',')} WHERE id=$${i} RETURNING *`, params);
+    return res.json({ form: mapFormRow(rows[0], { includeQuestions: true }) });
+  } catch (err) {
+    if (err.code === '23505' && err.constraint === 'cms_forms_one_active_per_session_idx') {
+      return res.status(409).json({ error: 'This live session already has a linked assessment' });
+    }
+    console.error('PATCH /admin/cms/forms error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/cms/forms/:id
+router.delete('/admin/cms/forms/:id', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    const rows = await db('UPDATE cms_forms SET is_active = false, updated_at = NOW() WHERE id=$1 AND is_active = true RETURNING id', [id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    return res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /admin/cms/forms error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/cms/forms/:id/responses/export
+router.get('/admin/cms/forms/:id/responses/export', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    const formRows = await db('SELECT * FROM cms_forms WHERE id = $1 AND is_active = true', [id]);
+    const form = formRows[0];
+    if (!form) return res.status(404).json({ error: 'Not found' });
+    const responses = await db(
+      `SELECT user_email, user_name, user_entity, answers, submitted_at
+       FROM cms_form_responses
+       WHERE form_id = $1
+       ORDER BY submitted_at DESC`,
+      [id]
+    );
+
+    const questions = (form.questions ?? []).filter((q) => q.type !== 'section');
+    const headers = ['Submitted At', 'Email', 'Name', 'Organisation', ...questions.map((q, i) => q.title || `Question ${i + 1}`)];
+    const worksheetRows = [
+      headers,
+      ...responses.map((row) => {
+        const base = [
+          new Date(row.submitted_at).toISOString(),
+          row.user_email,
+          row.user_name,
+          ENTITIES[row.user_entity] ?? row.user_entity ?? '',
+        ];
+        const answerValues = questions.map((q) => formatAnswerForExport(q, row.answers ?? {}));
+        return [...base, ...answerValues];
+      }),
+    ];
+
+    const buffer = await buildXlsxBuffer(worksheetRows);
+    const filename = `${String(form.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'assessment'}-responses.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', buffer.length);
+    return res.send(buffer);
+  } catch (err) {
+    console.error('GET /admin/cms/forms/:id/responses/export error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1534,12 +2152,9 @@ router.get('/sessions', requireAuth, async (req, res) => {
            FROM live_sessions WHERE is_active = true AND ($1 = ANY(entities) OR $2 = ANY(entities)) ORDER BY session_date ASC`,
       seesAll ? [] : [req.authUser.entity, GENERAL_ENTITY]
     );
+    const assessmentFormsBySession = await getAssessmentFormsBySession(rows.map((r) => r.id), req.authUser);
     return res.json({
-      sessions: rows.map((r) => ({
-        id: r.id, title: r.title, date: fmtDate(r.session_date),
-        time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url,
-        entities: r.entities, image: r.image,
-      })),
+      sessions: rows.map((r) => mapSessionRow(r, assessmentFormsBySession)),
     });
   } catch (err) {
     console.error('GET /sessions error:', err);
@@ -1566,7 +2181,7 @@ router.post('/admin/cms/sessions', requireAuth, async (req, res) => {
     );
     const r = rows[0];
     return res.status(201).json({
-      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url, entities: r.entities, image: r.image },
+      session: mapSessionRow(r),
     });
   } catch (err) {
     console.error('POST /admin/cms/sessions error:', err);
@@ -1602,7 +2217,7 @@ router.patch('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const r = rows[0];
     return res.json({
-      session: { id: r.id, title: r.title, date: fmtDate(r.session_date), time: r.session_time, format: r.format, venue: r.venue, host: r.host, meetingUrl: r.meeting_url, entities: r.entities, image: r.image },
+      session: mapSessionRow(r),
     });
   } catch (err) {
     console.error('PATCH /admin/cms/sessions error:', err);
