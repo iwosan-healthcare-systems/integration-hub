@@ -54,14 +54,15 @@ function QuestionField({
     return (
       <div className="space-y-2">
         {options.map((option) => (
-          <label key={option} className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2">
+          <label key={option} className="flex cursor-pointer items-start gap-2 rounded-md border border-border px-3 py-2">
             <Checkbox
+              className="mt-0.5 shrink-0"
               checked={selected.includes(option)}
               onCheckedChange={(checked) => {
                 onChange(checked ? [...selected, option] : selected.filter((item) => item !== option));
               }}
             />
-            <span className="text-sm text-foreground">{option}</span>
+            <span className="min-w-0 break-words text-sm text-foreground">{option}</span>
           </label>
         ))}
       </div>
@@ -72,9 +73,9 @@ function QuestionField({
     return (
       <RadioGroup value={typeof value === 'string' ? value : ''} onValueChange={onChange}>
         {options.map((option) => (
-          <label key={option} className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2">
-            <RadioGroupItem value={option} />
-            <span className="text-sm text-foreground">{option}</span>
+          <label key={option} className="flex cursor-pointer items-start gap-2 rounded-md border border-border px-3 py-2">
+            <RadioGroupItem value={option} className="mt-0.5 shrink-0" />
+            <span className="min-w-0 break-words text-sm text-foreground">{option}</span>
           </label>
         ))}
       </RadioGroup>
@@ -124,9 +125,9 @@ function QuestionField({
     return (
       <div className="space-y-2">
         {ranked.map((option, index) => (
-          <div key={option} className="grid grid-cols-[2rem_1fr_4.5rem] items-center gap-2 rounded-md border border-border px-3 py-2">
+          <div key={option} className="grid grid-cols-[2rem_minmax(0,1fr)_4.5rem] items-center gap-2 rounded-md border border-border px-3 py-2">
             <span className="text-center text-xs font-semibold text-muted-foreground">{index + 1}</span>
-            <span className="text-sm text-foreground">{option}</span>
+            <span className="min-w-0 break-words text-sm text-foreground">{option}</span>
             <div className="flex justify-end gap-1">
               <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => move(index, -1)} disabled={index === 0} aria-label="Move up">
                 <ChevronUp className="h-3.5 w-3.5" />
@@ -145,8 +146,24 @@ function QuestionField({
     const rows = question.rows ?? [];
     const answers = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, string> : {};
     return (
-      <div className="overflow-x-auto rounded-md border border-border">
-        <div className="min-w-[620px]">
+      <div>
+        <div className="space-y-3 sm:hidden">
+          {rows.map((row) => (
+            <div key={row} className="rounded-md border border-border p-3">
+              <p className="mb-2 break-words text-sm font-medium text-foreground">{row}</p>
+              <RadioGroup value={answers[row] ?? ''} onValueChange={(next) => onChange({ ...answers, [row]: next })}>
+                {options.map((option) => (
+                  <label key={`${row}-${option}`} className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5">
+                    <RadioGroupItem value={option} className="mt-0.5 shrink-0" />
+                    <span className="min-w-0 break-words text-sm text-muted-foreground">{option}</span>
+                  </label>
+                ))}
+              </RadioGroup>
+            </div>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto rounded-md border border-border sm:block">
+          <div className="min-w-[620px]">
           <div className="grid" style={{ gridTemplateColumns: `minmax(12rem,1fr) repeat(${options.length}, minmax(7rem, 8rem))` }}>
             <div className="border-b border-border bg-muted/50 px-3 py-2 text-xs font-semibold text-muted-foreground">Statement</div>
             {options.map((option) => (
@@ -165,6 +182,7 @@ function QuestionField({
               </Fragment>
             ))}
           </div>
+        </div>
         </div>
       </div>
     );
@@ -255,7 +273,7 @@ export default function LearningFormPage() {
             Learning Centre
           </Link>
           <p className="mb-2 font-sans text-xs font-medium uppercase tracking-[0.2em] text-accent">Assessment</p>
-          <h1 className="text-2xl font-bold text-white sm:text-3xl">{title}</h1>
+          <h1 className="break-words text-2xl font-bold text-white sm:text-3xl">{title}</h1>
           {form?.description && <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/65">{form.description}</p>}
         </div>
       </section>
@@ -278,9 +296,9 @@ export default function LearningFormPage() {
               <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CalendarClock className="h-4 w-4" />
-                  <span>Open until {formatDateTime(form.expiresAt)}</span>
+                  <span className="min-w-0 break-words">Open until {formatDateTime(form.expiresAt)}</span>
                 </div>
-                <div className="text-sm text-muted-foreground">{user?.email}</div>
+                <div className="break-all text-sm text-muted-foreground">{user?.email}</div>
               </div>
 
               {(form.expired || form.upcoming || form.hasSubmitted || submitted) && (
@@ -319,9 +337,9 @@ export default function LearningFormPage() {
                     }
                     return (
                       <Card key={question.id} className="border-border/60">
-                        <CardContent className="space-y-4 p-5">
+                        <CardContent className="space-y-4 p-4 sm:p-5">
                           <div>
-                            <Label className="text-base font-semibold text-foreground">
+                            <Label className="break-words text-base font-semibold text-foreground">
                               {index + 1}. {question.title}
                               {question.required && <span className="ml-1 text-destructive">*</span>}
                             </Label>
@@ -339,7 +357,7 @@ export default function LearningFormPage() {
                   {error && <p className="text-sm text-destructive">{error}</p>}
 
                   <div className="flex justify-end">
-                    <Button type="submit" disabled={submitting} className="gap-2">
+                    <Button type="submit" disabled={submitting} className="w-full gap-2 sm:w-auto">
                       {submitting ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Send className="h-4 w-4" />}
                       Submit
                     </Button>

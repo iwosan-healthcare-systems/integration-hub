@@ -57,8 +57,9 @@ const pool = new Pool(poolConfig);
 async function main() {
   console.log('Adding live_sessions.entities …');
   await pool.query(
-    "ALTER TABLE live_sessions ADD COLUMN IF NOT EXISTS entities TEXT[] NOT NULL DEFAULT ARRAY['iwosan-healthcare']::TEXT[]"
+    "ALTER TABLE live_sessions ADD COLUMN IF NOT EXISTS entities TEXT[] NOT NULL DEFAULT ARRAY['general']::TEXT[]"
   );
+  await pool.query("ALTER TABLE live_sessions ALTER COLUMN entities SET DEFAULT ARRAY['general']::TEXT[]");
 
   const { rows } = await pool.query(
     `SELECT column_name FROM information_schema.columns WHERE table_name = 'live_sessions' AND column_name = 'entity'`

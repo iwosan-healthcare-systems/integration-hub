@@ -357,20 +357,38 @@ const AZURE_ORGS = {
   },
 };
 
-// Entities that CMS content (e.g. Sessions) can be scoped to. The 3 with
-// Azure SSO reuse their AZURE_ORGS key as the entity value, so a user's
-// entity is set directly from the org they authenticate through — no
-// separate mapping needed. Paelon Memorial has no Azure app registration
-// yet, so its users are local accounts with entity assigned manually.
-// 'iwosan-healthcare' doubles as the "general" entity: content tagged to it
-// is visible to every entity, not just Iwosan Healthcare's own users.
+// Real organisations a user can belong to. The 3 with Azure SSO reuse their
+// AZURE_ORGS key as the entity value, so a user's entity is set directly from
+// the org they authenticate through. Paelon Memorial has no Azure app
+// registration yet, so its users are local accounts with entity assigned
+// manually.
 const ENTITIES = {
   'iwosan-lagoon': 'Lagoon Hospitals',
   'euracare': 'Euracare',
   'paelon-memorial': 'Paelon Memorial',
   'iwosan-healthcare': 'Iwosan Healthcare Systems',
 };
-const GENERAL_ENTITY = 'iwosan-healthcare';
+const GENERAL_ENTITY = 'general';
+const CONTENT_ENTITIES = {
+  [GENERAL_ENTITY]: 'General',
+  ...ENTITIES,
+};
+const IWOSAN_HEALTHCARE_ENTITY = 'iwosan-healthcare';
+const IWOSAN_HEALTHCARE_EMAIL_DOMAIN = '@iwosanhealth.com';
+
+function hasIwosanHealthcareEmail(user) {
+  const email = String(user?.email ?? '').toLowerCase().trim();
+  return email.endsWith(IWOSAN_HEALTHCARE_EMAIL_DOMAIN);
+}
+
+function canSeeAllContent(user) {
+  return isCmsEditor(user) || hasIwosanHealthcareEmail(user);
+}
+
+function getContentVisibilityEntity(user) {
+  if (hasIwosanHealthcareEmail(user)) return IWOSAN_HEALTHCARE_ENTITY;
+  return user?.entity ?? null;
+}
 
 // The root seed admin is a super-admin account, not tied to any one
 // subsidiary — it must never carry an entity value, regardless of what's
@@ -954,8 +972,9 @@ const contentDigestCache = new Map();
 const CONTENT_DIGEST_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 async function getLiveContentDigest(authUser) {
-  const seesAllSessions = isCmsEditor(authUser) || authUser.entity === GENERAL_ENTITY;
-  const cacheKey = seesAllSessions ? '__all__' : authUser.entity;
+  const seesAllSessions = canSeeAllContent(authUser);
+  const visibilityEntity = getContentVisibilityEntity(authUser);
+  const cacheKey = seesAllSessions ? '__all__' : (visibilityEntity ?? '__general__');
   const cached = contentDigestCache.get(cacheKey);
   if (cached && Date.now() < cached.expiresAt) return cached.text;
 
@@ -970,7 +989,7 @@ async function getLiveContentDigest(authUser) {
           : `SELECT title, session_date, session_time, format, venue FROM live_sessions
              WHERE is_active = true AND session_date >= CURRENT_DATE AND ($1 = ANY(entities) OR $2 = ANY(entities))
              ORDER BY session_date ASC LIMIT 8`,
-        seesAllSessions ? [] : [authUser.entity, GENERAL_ENTITY]
+        seesAllSessions ? [] : [visibilityEntity, GENERAL_ENTITY]
       ),
       db(`SELECT title FROM video_albums WHERE is_active = true ORDER BY sort_order ASC LIMIT 10`, []),
       db(`SELECT COUNT(*)::int AS count FROM videos WHERE is_active = true`, []),
@@ -1199,7 +1218,7 @@ function cleanStringList(value) {
 }
 
 function validateEntitiesList(entities) {
-  return Array.isArray(entities) && entities.length > 0 && entities.every((e) => e in ENTITIES);
+  return Array.isArray(entities) && entities.length > 0 && entities.every((e) => e in CONTENT_ENTITIES);
 }
 
 function hasDuplicateStrings(values) {
@@ -1279,7 +1298,10 @@ function isUpcomingForm(row) {
 }
 
 function userCanSeeForm(user, row) {
-  return !!user?.entity && Array.isArray(row.entities) && row.entities.includes(user.entity);
+  if (!Array.isArray(row.entities)) return false;
+  if (canSeeAllContent(user)) return true;
+  const visibilityEntity = getContentVisibilityEntity(user);
+  return row.entities.includes(GENERAL_ENTITY) || (!!visibilityEntity && row.entities.includes(visibilityEntity));
 }
 
 async function normalizeLiveSessionId(value, { excludeFormId = null } = {}) {
@@ -1343,10 +1365,13 @@ function mapSessionRow(r, assessmentFormsBySession = new Map()) {
 
 async function getAssessmentFormsBySession(sessionIds, user) {
   const map = new Map();
-  if (!sessionIds.length || !user?.entity) return map;
+  if (!sessionIds.length) return map;
+  const seesAll = canSeeAllContent(user);
+  const visibilityEntity = getContentVisibilityEntity(user);
 
   const rows = await db(
-    `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
+    seesAll
+      ? `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
             f.hide_when_expired, f.sort_order,
             EXISTS (
               SELECT 1 FROM cms_form_responses r
@@ -1355,9 +1380,19 @@ async function getAssessmentFormsBySession(sessionIds, user) {
      FROM cms_forms f
      WHERE f.is_active = true
        AND f.live_session_id = ANY($1::int[])
-       AND $3 = ANY(f.entities)
+     ORDER BY f.live_session_id ASC, f.sort_order ASC, f.created_at DESC`
+      : `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
+            f.hide_when_expired, f.sort_order,
+            EXISTS (
+              SELECT 1 FROM cms_form_responses r
+              WHERE r.form_id = f.id AND r.user_id = $2
+            ) AS has_submitted
+     FROM cms_forms f
+     WHERE f.is_active = true
+       AND f.live_session_id = ANY($1::int[])
+       AND ($3 = ANY(f.entities) OR $4 = ANY(f.entities))
      ORDER BY f.live_session_id ASC, f.sort_order ASC, f.created_at DESC`,
-    [sessionIds, user.userId, user.entity]
+    seesAll ? [sessionIds, user.userId] : [sessionIds, user.userId, visibilityEntity, GENERAL_ENTITY]
   );
 
   for (const row of rows) {
@@ -1545,8 +1580,22 @@ router.post('/admin/cms/upload', requireAuth, async (req, res) => {
 // GET /api/forms - Learning Centre cards for the current user's organisation
 router.get('/forms', requireAuth, async (req, res) => {
   try {
+    const seesAll = canSeeAllContent(req.authUser);
+    const visibilityEntity = getContentVisibilityEntity(req.authUser);
     const rows = await db(
-      `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
+      seesAll
+        ? `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
+              f.hide_when_expired, f.sort_order,
+              EXISTS (
+                SELECT 1 FROM cms_form_responses r
+                WHERE r.form_id = f.id AND r.user_id = $1
+              ) AS has_submitted
+       FROM cms_forms f
+       WHERE f.is_active = true
+         AND f.live_session_id IS NULL
+         AND (f.expires_at >= NOW() OR f.hide_when_expired = false)
+       ORDER BY f.sort_order ASC, f.created_at DESC`
+        : `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
               f.hide_when_expired, f.sort_order,
               EXISTS (
                 SELECT 1 FROM cms_form_responses r
@@ -1554,11 +1603,11 @@ router.get('/forms', requireAuth, async (req, res) => {
               ) AS has_submitted
        FROM cms_forms f
        WHERE f.is_active = true
-         AND $1 = ANY(f.entities)
+         AND ($1 = ANY(f.entities) OR $3 = ANY(f.entities))
          AND f.live_session_id IS NULL
          AND (f.expires_at >= NOW() OR f.hide_when_expired = false)
        ORDER BY f.sort_order ASC, f.created_at DESC`,
-      [req.authUser.entity, req.authUser.userId]
+      seesAll ? [req.authUser.userId] : [visibilityEntity, req.authUser.userId, GENERAL_ENTITY]
     );
     return res.json({ forms: rows.map((r) => mapFormRow(r)) });
   } catch (err) {
@@ -1624,7 +1673,7 @@ router.post('/forms/:id/responses', requireAuth, async (req, res) => {
         req.authUser.userId,
         user.email || req.authUser.email,
         user.name || '',
-        user.entity || req.authUser.entity,
+        user.entity || getContentVisibilityEntity(req.authUser),
         JSON.stringify(checked.answers),
       ]
     );
@@ -1673,7 +1722,7 @@ router.post('/admin/cms/forms', requireAuth, async (req, res) => {
   } = req.body ?? {};
 
   if (!title) return res.status(400).json({ error: 'title is required' });
-  if (!validateEntitiesList(entities)) return res.status(400).json({ error: 'At least one valid entity is required' });
+  if (!validateEntitiesList(entities)) return res.status(400).json({ error: 'At least one valid visibility option is required' });
   const normalized = normalizeFormQuestions(questions);
   if (normalized.error) return res.status(400).json({ error: normalized.error });
   const start = parseFormDate(startsAt, 'startsAt');
@@ -1729,7 +1778,7 @@ router.patch('/admin/cms/forms/:id', requireAuth, async (req, res) => {
       if (normalized.error) return res.status(400).json({ error: normalized.error });
     }
     if (entities !== undefined && !validateEntitiesList(entities)) {
-      return res.status(400).json({ error: 'At least one valid entity is required' });
+      return res.status(400).json({ error: 'At least one valid visibility option is required' });
     }
 
     let nextStart = new Date(existing.starts_at);
@@ -1820,7 +1869,7 @@ router.get('/admin/cms/forms/:id/responses/export', requireAuth, async (req, res
           new Date(row.submitted_at).toISOString(),
           row.user_email,
           row.user_name,
-          ENTITIES[row.user_entity] ?? row.user_entity ?? '',
+          CONTENT_ENTITIES[row.user_entity] ?? row.user_entity ?? '',
         ];
         const answerValues = questions.map((q) => formatAnswerForExport(q, row.answers ?? {}));
         return [...base, ...answerValues];
@@ -2135,22 +2184,18 @@ router.delete('/admin/cms/learning-paths/:id', requireAuth, async (req, res) => 
 // GET /api/sessions
 // CMS editors see every entity's sessions (they manage content for the
 // whole group). Everyone else only sees their own entity's sessions plus
-// the general entity's — a user with no entity assigned yet sees general
-// only, since `entity = NULL` never matches in SQL.
+// the separate general visibility marker.
 router.get('/sessions', requireAuth, async (req, res) => {
   try {
-    // CMS editors, and staff belonging to the general entity itself
-    // (Iwosan Healthcare Systems — the parent company), see every session
-    // regardless of entity. Everyone else only sees their own entity's
-    // sessions plus ones explicitly tagged general.
-    const seesAll = isCmsEditor(req.authUser) || req.authUser.entity === GENERAL_ENTITY;
+    const seesAll = canSeeAllContent(req.authUser);
+    const visibilityEntity = getContentVisibilityEntity(req.authUser);
     const rows = await db(
       seesAll
         ? `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entities, image
            FROM live_sessions WHERE is_active = true ORDER BY session_date ASC`
         : `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entities, image
            FROM live_sessions WHERE is_active = true AND ($1 = ANY(entities) OR $2 = ANY(entities)) ORDER BY session_date ASC`,
-      seesAll ? [] : [req.authUser.entity, GENERAL_ENTITY]
+      seesAll ? [] : [visibilityEntity, GENERAL_ENTITY]
     );
     const assessmentFormsBySession = await getAssessmentFormsBySession(rows.map((r) => r.id), req.authUser);
     return res.json({
@@ -2170,8 +2215,8 @@ router.post('/admin/cms/sessions', requireAuth, async (req, res) => {
   const validFormats = ['Virtual', 'In-Person', 'Hybrid'];
   if (!validFormats.includes(format)) return res.status(400).json({ error: 'format must be Virtual, In-Person, or Hybrid' });
   if (!validateUrl(meetingUrl)) return res.status(400).json({ error: 'meetingUrl must be an http or https URL' });
-  if (!Array.isArray(entities) || entities.length === 0 || !entities.every((e) => e in ENTITIES)) {
-    return res.status(400).json({ error: 'At least one valid entity is required' });
+  if (!Array.isArray(entities) || entities.length === 0 || !entities.every((e) => e in CONTENT_ENTITIES)) {
+    return res.status(400).json({ error: 'At least one valid visibility option is required' });
   }
   try {
     const rows = await db(
@@ -2197,8 +2242,8 @@ router.patch('/admin/cms/sessions/:id', requireAuth, async (req, res) => {
   const { title, date, time, format, venue, host, meetingUrl, entities, image } = req.body ?? {};
   if (format !== undefined && !['Virtual','In-Person','Hybrid'].includes(format)) return res.status(400).json({ error: 'Invalid format' });
   if (meetingUrl !== undefined && !validateUrl(meetingUrl)) return res.status(400).json({ error: 'meetingUrl must be an http or https URL' });
-  if (entities !== undefined && (!Array.isArray(entities) || entities.length === 0 || !entities.every((e) => e in ENTITIES))) {
-    return res.status(400).json({ error: 'At least one valid entity is required' });
+  if (entities !== undefined && (!Array.isArray(entities) || entities.length === 0 || !entities.every((e) => e in CONTENT_ENTITIES))) {
+    return res.status(400).json({ error: 'At least one valid visibility option is required' });
   }
   const set = []; const params = []; let i = 1;
   if (title !== undefined)      { set.push(`title=$${i++}`);        params.push(title); }

@@ -126,7 +126,7 @@ function CreateUserModal({ open, onClose, onCreated }: CreateUserModalProps) {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-[10px] text-muted-foreground">Which entity's sessions this user can see. Ignored for Microsoft sign-in accounts — theirs is set automatically from the org they sign in through.</p>
+            <p className="text-[10px] text-muted-foreground">Which organisation's sessions and assessments this user can see. Ignored for Microsoft sign-in accounts — theirs is set automatically from the org they sign in through.</p>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
@@ -254,7 +254,7 @@ function EditUserModal({ user, onClose, onSaved }: EditModalProps) {
                 ? "This account is a super-admin and is never tied to an entity."
                 : isAzure
                 ? "Set automatically from the Microsoft org this account signs in through — can't be edited here."
-                : "Which entity's sessions this user can see."}
+                : "Which organisation's sessions and assessments this user can see."}
             </p>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}

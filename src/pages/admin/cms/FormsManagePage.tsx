@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
-import { ENTITIES, entityName } from '@/lib/entities';
+import { GENERAL_ENTITY, VISIBILITY_ENTITIES, entityName } from '@/lib/entities';
 import {
   createForm,
   deleteForm,
@@ -157,7 +157,7 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (form.entities.length === 0) {
-      setError('Select at least one organisation.');
+      setError('Select at least one visibility option.');
       return;
     }
     if (!form.startsAt || !form.expiresAt || new Date(form.expiresAt) <= new Date(form.startsAt)) {
@@ -185,7 +185,7 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto p-4 sm:max-w-3xl sm:p-6">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Assessment' : 'Add Assessment'}</DialogTitle>
         </DialogHeader>
@@ -219,7 +219,7 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
                 <SelectItem value="standalone">Standalone Learning Centre assessment</SelectItem>
                 {sessionOptions.map((session) => (
                   <SelectItem key={session.id} value={String(session.id)}>
-                    {sessionLabel(session)}
+                    <span className="block truncate">{sessionLabel(session)}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -241,9 +241,9 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Organisations</Label>
+            <Label>Visibility</Label>
             <div className="grid gap-2 rounded-md border border-input px-3 py-2.5 sm:grid-cols-2">
-              {ENTITIES.map((entity) => {
+              {VISIBILITY_ENTITIES.map((entity) => {
                 const checked = form.entities.includes(entity.id);
                 return (
                   <label key={entity.id} htmlFor={`f-entity-${entity.id}`} className="flex cursor-pointer select-none items-center gap-2.5">
@@ -254,7 +254,10 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
                         set('entities', value ? [...form.entities, entity.id] : form.entities.filter((id) => id !== entity.id))
                       }
                     />
-                    <span className="text-sm text-foreground">{entity.name}</span>
+                    <span className="text-sm text-foreground">
+                      {entity.name}
+                      {entity.id === GENERAL_ENTITY && <span className="text-muted-foreground"> (visible to everyone)</span>}
+                    </span>
                   </label>
                 );
               })}
@@ -308,9 +311,9 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={loading}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onClose}>Cancel</Button>
+            <Button type="submit" className="w-full sm:w-auto" disabled={loading}>
               {loading ? <span className="flex items-center gap-2"><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />Saving...</span> : isEdit ? 'Save Changes' : 'Create Assessment'}
             </Button>
           </DialogFooter>
@@ -346,7 +349,7 @@ function QuestionEditor({ question, index, isFirst, isLast, onChange, onRemove, 
             <GripVertical className="h-4 w-4" />
             <span className="text-xs font-semibold">{index + 1}</span>
           </div>
-          <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-[1fr_11rem]">
+          <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-[1fr_11rem]">
             <Input value={question.title} onChange={(e) => setField('title', e.target.value)} placeholder="Question" required />
             <Select value={question.type} onValueChange={(value) => onChange(applyTypeDefaults(question, value as FormQuestionType))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -407,7 +410,7 @@ function QuestionEditor({ question, index, isFirst, isLast, onChange, onRemove, 
         )}
 
         {question.type === 'nps' && (
-          <div className="grid grid-cols-11 gap-1">
+          <div className="grid grid-cols-6 gap-1 sm:grid-cols-11">
             {Array.from({ length: 11 }, (_, score) => (
               <div key={score} className="rounded border border-border bg-muted/40 py-1 text-center text-xs text-muted-foreground">{score}</div>
             ))}
@@ -432,7 +435,7 @@ function OptionList({ label, values, onChange }: { label: string; values: string
       <div className="space-y-2">
         {values.map((value, index) => (
           <div key={index} className="flex items-center gap-2">
-            <Input value={value} onChange={(e) => onChange(listWithUpdatedIndex(values, index, e.target.value))} />
+            <Input className="min-w-0 flex-1" value={value} onChange={(e) => onChange(listWithUpdatedIndex(values, index, e.target.value))} />
             <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onChange(values.filter((_, i) => i !== index))} aria-label={`Remove ${label.toLowerCase()}`}>
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -534,7 +537,7 @@ export default function FormsManagePage() {
           <h2 className="text-xl font-bold text-foreground">Assessments</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{forms.length} assessment{forms.length !== 1 ? 's' : ''}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={load} disabled={loading} className="gap-2">
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -546,7 +549,7 @@ export default function FormsManagePage() {
         </div>
       </div>
 
-      <CmsSearchBar value={search} onChange={setSearch} placeholder="Search assessments by title, organisation, or status..." />
+      <CmsSearchBar value={search} onChange={setSearch} placeholder="Search assessments by title, visibility, or status..." />
 
       {globalError && (
         <div className="flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -561,7 +564,7 @@ export default function FormsManagePage() {
             <div className="grid grid-cols-[1fr_9rem_9rem_8rem_9rem_12rem_7rem] gap-3 border-b border-border/60 bg-muted/50 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
               <span>Assessment</span>
               <span className="text-center">Placement</span>
-              <span className="text-center">Organisations</span>
+              <span className="text-center">Visibility</span>
               <span className="text-center">Status</span>
               <span className="text-center">Responses</span>
               <span className="text-center">Window</span>
@@ -609,7 +612,7 @@ export default function FormsManagePage() {
                         </div>
                         <div className="flex flex-wrap justify-center gap-1">
                           {form.entities.slice(0, 2).map((entity) => (
-                            <Badge key={entity} variant="secondary" className="max-w-full truncate px-1.5 py-0 text-[9px]">
+                            <Badge key={entity} variant={entity === GENERAL_ENTITY ? 'default' : 'secondary'} className="max-w-full truncate px-1.5 py-0 text-[9px]">
                               {entityName(entity)}
                             </Badge>
                           ))}

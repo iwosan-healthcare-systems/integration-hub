@@ -93,8 +93,8 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
               <span className="text-2xl font-bold leading-tight">{day}</span>
               <span className="text-[10px] font-sans opacity-60 leading-none">{year}</span>
             </div>
-            <div>
-              <h3 className="font-serif text-base font-semibold text-foreground leading-snug">
+            <div className="min-w-0">
+              <h3 className="break-words font-serif text-base font-semibold text-foreground leading-snug">
                 {session.title}
               </h3>
               <div className="flex items-center gap-1.5 mt-1.5">
@@ -109,15 +109,15 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
           <div className="space-y-2 flex-1">
             <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
               <CalendarDays className="h-4 w-4 shrink-0" />
-              <span>{session.date} · {formatSessionTime(session.time)}</span>
+              <span className="min-w-0 break-words">{session.date} · {formatSessionTime(session.time)}</span>
             </div>
             <div className="flex items-start gap-2 text-sm font-sans text-muted-foreground">
               <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
-              <span>{session.venue}</span>
+              <span className="min-w-0 break-words">{session.venue}</span>
             </div>
             <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
               <Users className="h-4 w-4 shrink-0" />
-              <span>{session.host}</span>
+              <span className="min-w-0 break-words">{session.host}</span>
             </div>
           </div>
 
@@ -182,19 +182,19 @@ function FormCard({ form, delay }: { form: LearningForm; delay: number }) {
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <FileQuestion className="h-4.5 w-4.5" />
             </div>
-            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${status.className}`}>
+            <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${status.className}`}>
               <StatusIcon className="h-3 w-3" />
               {status.label}
             </span>
           </div>
-          <h3 className="mb-1.5 font-serif text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-accent">
+          <h3 className="mb-1.5 break-words font-serif text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-accent">
             {form.title}
           </h3>
-          <p className="mb-4 flex-1 font-sans text-sm leading-relaxed text-muted-foreground">
+          <p className="mb-4 min-w-0 flex-1 break-words font-sans text-sm leading-relaxed text-muted-foreground">
             {form.description || `${questionCount} questions`}
           </p>
           <div className="space-y-1 border-t border-border pt-3 text-[11px] font-sans text-muted-foreground">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span>{questionCount} question{questionCount !== 1 ? "s" : ""}</span>
               <span className="font-semibold text-accent">{form.expired ? "View status" : "Open assessment"}</span>
             </div>

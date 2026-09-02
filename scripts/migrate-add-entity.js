@@ -58,9 +58,9 @@ async function main() {
   console.log('Adding users.entity …');
   await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS entity TEXT');
 
-  console.log("Adding live_sessions.entity (default 'iwosan-healthcare' — existing sessions become general) …");
+  console.log("Adding live_sessions.entity (default 'general') …");
   await pool.query(
-    "ALTER TABLE live_sessions ADD COLUMN IF NOT EXISTS entity TEXT NOT NULL DEFAULT 'iwosan-healthcare'"
+    "ALTER TABLE live_sessions ADD COLUMN IF NOT EXISTS entity TEXT NOT NULL DEFAULT 'general'"
   );
 
   console.log('Done.');

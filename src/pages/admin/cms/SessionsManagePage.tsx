@@ -17,7 +17,7 @@ import {
   getSessions, createSession, updateSession, deleteSession,
   type LiveSession, type SessionInput,
 } from '@/services/cmsService';
-import { ENTITIES, GENERAL_ENTITY, entityName } from '@/lib/entities';
+import { GENERAL_ENTITY, VISIBILITY_ENTITIES, entityName } from '@/lib/entities';
 import { formatSessionTime, toTimeInputValue } from '@/lib/sessions';
 
 const FORMAT_OPTIONS = ['Virtual', 'In-Person', 'Hybrid'] as const;
@@ -71,7 +71,7 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (form.entities.length === 0) { setError('Select at least one entity.'); return; }
+    if (form.entities.length === 0) { setError('Select at least one visibility option.'); return; }
     setLoading(true);
     setError('');
     const result = isEdit
@@ -85,7 +85,7 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto p-4 sm:max-w-md sm:p-6">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Session' : 'Add Session'}</DialogTitle>
         </DialogHeader>
@@ -122,9 +122,9 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Entities</Label>
+            <Label>Visibility</Label>
             <div className="space-y-2.5 rounded-md border border-input px-3 py-2.5">
-              {ENTITIES.map((e) => {
+              {VISIBILITY_ENTITIES.map((e) => {
                 const checked = form.entities.includes(e.id);
                 return (
                   <label key={e.id} htmlFor={`s-entity-${e.id}`} className="flex items-center gap-2.5 cursor-pointer select-none">
@@ -137,13 +137,13 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
                     />
                     <span className="text-sm text-foreground">
                       {e.name}
-                      {e.id === GENERAL_ENTITY && <span className="text-muted-foreground"> (General — visible to everyone)</span>}
+                      {e.id === GENERAL_ENTITY && <span className="text-muted-foreground"> (visible to everyone)</span>}
                     </span>
                   </label>
                 );
               })}
             </div>
-            <p className="text-xs text-muted-foreground">Staff from any checked entity will see this session — check the general one too if everyone should see it.</p>
+            <p className="text-xs text-muted-foreground">Staff from any checked organisation will see this session — check General too if everyone should see it.</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="s-venue">Venue</Label>
@@ -271,7 +271,7 @@ export default function SessionsManagePage() {
           <div className="min-w-[620px]">
             <div className="grid grid-cols-[1fr_9rem_7rem_10rem_4.5rem] gap-3 px-5 py-2.5 border-b border-border/60 bg-muted/50 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
               <span>Session</span>
-              <span className="text-center">Entity</span>
+              <span className="text-center">Visibility</span>
               <span className="text-center">Format</span>
               <span className="text-center">Date & Time</span>
               <span className="text-right">Actions</span>
