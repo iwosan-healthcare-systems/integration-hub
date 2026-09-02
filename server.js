@@ -1226,7 +1226,81 @@ function hasDuplicateStrings(values) {
   return new Set(values).size !== values.length;
 }
 
-function normalizeFormQuestions(input) {
+function normalizeQuestionCorrectAnswer(question, rawValue, index) {
+  if (
+    rawValue === undefined ||
+    rawValue === null ||
+    rawValue === '' ||
+    (Array.isArray(rawValue) && rawValue.length === 0)
+  ) {
+    return { error: `Question ${index + 1} needs a correct answer for scoring` };
+  }
+
+  if (question.type === 'choice') {
+    if (question.allowMultiple) {
+      if (!Array.isArray(rawValue)) return { error: `Question ${index + 1} correct answer must contain selected options` };
+      const selected = cleanStringList(rawValue);
+      if (selected.length === 0) return { error: `Question ${index + 1} needs at least one correct option` };
+      if (hasDuplicateStrings(selected)) return { error: `Question ${index + 1} has duplicate correct options` };
+      if (!selected.every((value) => question.options.includes(value))) return { error: `Question ${index + 1} has a correct answer outside the option list` };
+      return { value: selected };
+    }
+    const selected = String(rawValue).trim();
+    if (!question.options.includes(selected)) return { error: `Question ${index + 1} correct answer must be one of the options` };
+    return { value: selected };
+  }
+
+  if (question.type === 'text') {
+    const answer = String(rawValue).trim();
+    if (!answer) return { error: `Question ${index + 1} needs a correct text answer` };
+    return { value: answer };
+  }
+
+  if (question.type === 'rating') {
+    const rating = Number(rawValue);
+    if (!Number.isInteger(rating) || rating < 1 || rating > question.max) return { error: `Question ${index + 1} correct answer must be a valid rating` };
+    return { value: rating };
+  }
+
+  if (question.type === 'date') {
+    const date = String(rawValue).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: `Question ${index + 1} correct answer must be a valid date` };
+    return { value: date };
+  }
+
+  if (question.type === 'ranking') {
+    if (!Array.isArray(rawValue)) return { error: `Question ${index + 1} correct answer must be a ranked list` };
+    const ranked = rawValue.map((value) => String(value));
+    if (ranked.length !== question.options.length || hasDuplicateStrings(ranked) || !ranked.every((value) => question.options.includes(value))) {
+      return { error: `Question ${index + 1} correct answer must rank every option once` };
+    }
+    return { value: ranked };
+  }
+
+  if (question.type === 'likert') {
+    if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) {
+      return { error: `Question ${index + 1} correct answer must contain scale answers` };
+    }
+    const answer = {};
+    for (const row of question.rows) {
+      const selected = rawValue[row];
+      if (!selected) return { error: `Question ${index + 1} needs a correct answer for every statement` };
+      if (!question.options.includes(String(selected))) return { error: `Question ${index + 1} has a correct scale answer outside the option list` };
+      answer[row] = String(selected);
+    }
+    return { value: answer };
+  }
+
+  if (question.type === 'nps') {
+    const score = Number(rawValue);
+    if (!Number.isInteger(score) || score < 0 || score > 10) return { error: `Question ${index + 1} correct answer must be between 0 and 10` };
+    return { value: score };
+  }
+
+  return { value: null };
+}
+
+function normalizeFormQuestions(input, { scoringEnabled = false } = {}) {
   if (!Array.isArray(input) || input.length === 0) {
     return { error: 'At least one question is required' };
   }
@@ -1234,6 +1308,7 @@ function normalizeFormQuestions(input) {
 
   const ids = new Set();
   const questions = [];
+  let scoredQuestionCount = 0;
   for (let index = 0; index < input.length; index += 1) {
     const raw = input[index] ?? {};
     const type = String(raw.type ?? '');
@@ -1277,7 +1352,22 @@ function normalizeFormQuestions(input) {
       question.rows = rows;
       question.options = options;
     }
+
+    if (scoringEnabled && type !== 'section') {
+      const points = Number(raw.points);
+      if (!Number.isFinite(points) || points <= 0) return { error: `Question ${index + 1} needs a score greater than zero` };
+      const correctAnswer = normalizeQuestionCorrectAnswer(question, raw.correctAnswer, index);
+      if (correctAnswer.error) return { error: correctAnswer.error };
+      question.points = points;
+      question.correctAnswer = correctAnswer.value;
+      scoredQuestionCount += 1;
+    }
+
     questions.push(question);
+  }
+
+  if (scoringEnabled && scoredQuestionCount === 0) {
+    return { error: 'Enable scoring only when the assessment has at least one scored question' };
   }
 
   return { questions };
@@ -1305,6 +1395,15 @@ function userCanSeeForm(user, row) {
   return row.entities.includes(GENERAL_ENTITY) || (!!visibilityEntity && row.entities.includes(visibilityEntity));
 }
 
+function sanitizeQuestionsForUser(questions) {
+  if (!Array.isArray(questions)) return [];
+  return questions.map((question) => {
+    const safeQuestion = { ...(question ?? {}) };
+    delete safeQuestion.correctAnswer;
+    return safeQuestion;
+  });
+}
+
 async function normalizeLiveSessionId(value, { excludeFormId = null } = {}) {
   if (value === undefined || value === null || value === '') return { liveSessionId: null };
   const liveSessionId = Number(value);
@@ -1329,25 +1428,108 @@ async function normalizeLiveSessionId(value, { excludeFormId = null } = {}) {
   return { liveSessionId };
 }
 
-function mapFormRow(r, { includeQuestions = false } = {}) {
-  const questions = r.questions ?? [];
+function normalizeTextForScore(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function sameStringSet(left, right) {
+  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+  const a = left.map(String).sort();
+  const b = right.map(String).sort();
+  return a.every((value, index) => value === b[index]);
+}
+
+function sameStringOrder(left, right) {
+  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+  return left.every((value, index) => String(value) === String(right[index]));
+}
+
+function isObjectAnswer(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function answerMatches(question, userAnswer, correctAnswer) {
+  if (question.type === 'choice' && question.allowMultiple) return sameStringSet(userAnswer, correctAnswer);
+  if (question.type === 'choice') return String(userAnswer ?? '') === String(correctAnswer ?? '');
+  if (question.type === 'text') return normalizeTextForScore(userAnswer) === normalizeTextForScore(correctAnswer);
+  if (question.type === 'rating' || question.type === 'nps') return Number(userAnswer) === Number(correctAnswer);
+  if (question.type === 'date') return String(userAnswer ?? '') === String(correctAnswer ?? '');
+  if (question.type === 'ranking') return sameStringOrder(userAnswer, correctAnswer);
+  if (question.type === 'likert') {
+    if (!isObjectAnswer(userAnswer) || !isObjectAnswer(correctAnswer)) return false;
+    return (question.rows ?? []).every((row) => String(userAnswer[row] ?? '') === String(correctAnswer[row] ?? ''));
+  }
+  return false;
+}
+
+function evaluateFormScore(questions, answers, scoringEnabled) {
+  if (!scoringEnabled) return null;
+
+  let score = 0;
+  let maxScore = 0;
+  const items = [];
+  for (const question of questions ?? []) {
+    if (!question || question.type === 'section') continue;
+    const points = Number(question.points);
+    if (!Number.isFinite(points) || points <= 0) continue;
+    const userAnswer = answers?.[question.id] ?? null;
+    const correctAnswer = question.correctAnswer ?? null;
+    const correct = answerMatches(question, userAnswer, correctAnswer);
+    const earned = correct ? points : 0;
+    maxScore += points;
+    score += earned;
+    items.push({
+      questionId: question.id,
+      title: question.title,
+      type: question.type,
+      points,
+      earned,
+      correct,
+      userAnswer,
+      correctAnswer,
+    });
+  }
+
+  return {
+    score,
+    maxScore,
+    percentage: maxScore > 0 ? Math.round((score / maxScore) * 100) : 0,
+    isFullScore: maxScore > 0 && score === maxScore,
+    items,
+  };
+}
+
+function mapFormSubmission(form, responseRow) {
+  if (!responseRow) return null;
+  const answers = isObjectAnswer(responseRow.answers) ? responseRow.answers : {};
+  return {
+    answers,
+    submittedAt: new Date(responseRow.submitted_at).toISOString(),
+    score: evaluateFormScore(form.questions ?? [], answers, Boolean(form.scoring_enabled)),
+  };
+}
+
+function mapFormRow(r, { includeQuestions = false, includeCorrectAnswers = false, submission } = {}) {
+  const questions = Array.isArray(r.questions) ? r.questions : [];
   const questionCount = Array.isArray(questions) ? questions.filter((q) => q.type !== 'section').length : 0;
   return {
     id: r.id,
     title: r.title,
     description: r.description,
-    ...(includeQuestions ? { questions, questionCount } : { questionCount }),
+    ...(includeQuestions ? { questions: includeCorrectAnswers ? questions : sanitizeQuestionsForUser(questions), questionCount } : { questionCount }),
     entities: r.entities ?? [],
     liveSessionId: r.live_session_id ?? null,
     startsAt: new Date(r.starts_at).toISOString(),
     expiresAt: new Date(r.expires_at).toISOString(),
     hideWhenExpired: r.hide_when_expired,
     isAttendance: Boolean(r.is_attendance),
+    scoringEnabled: Boolean(r.scoring_enabled),
     expired: isExpiredForm(r),
     upcoming: isUpcomingForm(r),
     sortOrder: r.sort_order,
     responseCount: Number(r.response_count ?? 0),
     hasSubmitted: Boolean(r.has_submitted),
+    ...(submission !== undefined ? { submission } : {}),
   };
 }
 
@@ -1378,7 +1560,7 @@ async function getAssessmentFormsBySession(sessionIds, user) {
   const rows = await db(
     seesAll
       ? `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-            f.hide_when_expired, f.is_attendance, f.sort_order,
+            f.hide_when_expired, f.is_attendance, f.scoring_enabled, f.sort_order,
             EXISTS (
               SELECT 1 FROM cms_form_responses r
               WHERE r.form_id = f.id AND r.user_id = $2
@@ -1388,7 +1570,7 @@ async function getAssessmentFormsBySession(sessionIds, user) {
        AND f.live_session_id = ANY($1::int[])
      ORDER BY f.live_session_id ASC, f.sort_order ASC, f.created_at DESC`
       : `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-            f.hide_when_expired, f.is_attendance, f.sort_order,
+            f.hide_when_expired, f.is_attendance, f.scoring_enabled, f.sort_order,
             EXISTS (
               SELECT 1 FROM cms_form_responses r
               WHERE r.form_id = f.id AND r.user_id = $2
@@ -1515,8 +1697,30 @@ function excelColumnName(index) {
   return name;
 }
 
-async function buildXlsxBuffer(rows) {
+function safeFilename(value, fallback = 'assessment') {
+  const cleaned = String(value ?? '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[<>:"/\\|?*\x00-\x1F]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120);
+  return cleaned || fallback;
+}
+
+function safeSheetName(value, fallback = 'Responses') {
+  const cleaned = String(value ?? '')
+    .replace(/[:\\/?*\[\]]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^'+|'+$/g, '')
+    .slice(0, 31);
+  return cleaned || fallback;
+}
+
+async function buildXlsxBuffer(rows, sheetName = 'Responses') {
   const zip = new JSZip();
+  const workbookSheetName = safeSheetName(sheetName);
   const sheetRows = rows.map((row, rowIndex) => {
     const cells = row.map((value, columnIndex) => {
       const cellRef = `${excelColumnName(columnIndex)}${rowIndex + 1}`;
@@ -1538,7 +1742,7 @@ async function buildXlsxBuffer(rows) {
 </Relationships>`);
   zip.folder('xl')?.file('workbook.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <sheets><sheet name="Responses" sheetId="1" r:id="rId1"/></sheets>
+  <sheets><sheet name="${escapeXml(workbookSheetName)}" sheetId="1" r:id="rId1"/></sheets>
 </workbook>`);
   zip.folder('xl')?.folder('_rels')?.file('workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
@@ -1593,7 +1797,7 @@ router.get('/forms', requireAuth, async (req, res) => {
     const rows = await db(
       seesAll
         ? `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-              f.hide_when_expired, f.is_attendance, f.sort_order,
+              f.hide_when_expired, f.is_attendance, f.scoring_enabled, f.sort_order,
               EXISTS (
                 SELECT 1 FROM cms_form_responses r
                 WHERE r.form_id = f.id AND r.user_id = $1
@@ -1604,7 +1808,7 @@ router.get('/forms', requireAuth, async (req, res) => {
          AND (f.expires_at >= NOW() OR f.hide_when_expired = false)
        ORDER BY f.sort_order ASC, f.created_at DESC`
         : `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-              f.hide_when_expired, f.is_attendance, f.sort_order,
+              f.hide_when_expired, f.is_attendance, f.scoring_enabled, f.sort_order,
               EXISTS (
                 SELECT 1 FROM cms_form_responses r
                 WHERE r.form_id = f.id AND r.user_id = $2
@@ -1631,7 +1835,7 @@ router.get('/forms/:id', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-              f.hide_when_expired, f.is_attendance, f.sort_order,
+              f.hide_when_expired, f.is_attendance, f.scoring_enabled, f.sort_order,
               EXISTS (
                 SELECT 1 FROM cms_form_responses r
                 WHERE r.form_id = f.id AND r.user_id = $2
@@ -1643,7 +1847,17 @@ router.get('/forms/:id', requireAuth, async (req, res) => {
     const form = rows[0];
     if (!form || !userCanSeeForm(req.authUser, form)) return res.status(404).json({ error: 'Not found' });
     if (isExpiredForm(form) && form.hide_when_expired && !form.live_session_id) return res.status(404).json({ error: 'Not found' });
-    return res.json({ form: mapFormRow(form, { includeQuestions: true }) });
+
+    const responseRows = await db(
+      `SELECT answers, submitted_at
+       FROM cms_form_responses
+       WHERE form_id = $1 AND user_id = $2
+       ORDER BY submitted_at DESC
+       LIMIT 1`,
+      [id, req.authUser.userId]
+    );
+    const submission = mapFormSubmission(form, responseRows[0]);
+    return res.json({ form: mapFormRow(form, { includeQuestions: true, submission }) });
   } catch (err) {
     console.error('GET /forms/:id error:', err);
     return res.status(500).json({ error: 'Internal server error' });
@@ -1676,9 +1890,10 @@ router.post('/forms/:id/responses', requireAuth, async (req, res) => {
 
     const userRows = await db('SELECT email, name, entity FROM users WHERE id = $1', [req.authUser.userId]);
     const user = userRows[0] ?? {};
-    await db(
+    const insertedRows = await db(
       `INSERT INTO cms_form_responses (form_id, user_id, user_email, user_name, user_entity, answers)
-       VALUES ($1,$2,$3,$4,$5,$6)`,
+       VALUES ($1,$2,$3,$4,$5,$6)
+       RETURNING answers, submitted_at`,
       [
         id,
         req.authUser.userId,
@@ -1688,7 +1903,10 @@ router.post('/forms/:id/responses', requireAuth, async (req, res) => {
         JSON.stringify(checked.answers),
       ]
     );
-    return res.status(201).json({ message: form.is_attendance ? 'Attendance marked successfully' : 'Submitted successfully' });
+    return res.status(201).json({
+      message: form.is_attendance ? 'Attendance marked successfully' : 'Submitted successfully',
+      submission: mapFormSubmission(form, insertedRows[0]),
+    });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'You have already submitted this form' });
     console.error('POST /forms/:id/responses error:', err);
@@ -1702,7 +1920,7 @@ router.get('/admin/cms/forms', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-              f.hide_when_expired, f.is_attendance, f.sort_order, COUNT(r.id)::int AS response_count
+              f.hide_when_expired, f.is_attendance, f.scoring_enabled, f.sort_order, COUNT(r.id)::int AS response_count
        FROM cms_forms f
        LEFT JOIN cms_form_responses r ON r.form_id = f.id
        WHERE f.is_active = true
@@ -1710,7 +1928,7 @@ router.get('/admin/cms/forms', requireAuth, async (req, res) => {
        ORDER BY f.sort_order ASC, f.created_at DESC`,
       []
     );
-    return res.json({ forms: rows.map((r) => mapFormRow(r, { includeQuestions: true })) });
+    return res.json({ forms: rows.map((r) => mapFormRow(r, { includeQuestions: true, includeCorrectAnswers: true })) });
   } catch (err) {
     console.error('GET /admin/cms/forms error:', err);
     return res.status(500).json({ error: 'Internal server error' });
@@ -1729,13 +1947,14 @@ router.post('/admin/cms/forms', requireAuth, async (req, res) => {
     expiresAt,
     hideWhenExpired = false,
     isAttendance = false,
+    scoringEnabled = false,
     liveSessionId = null,
     sortOrder = 0,
   } = req.body ?? {};
 
   if (!title) return res.status(400).json({ error: 'title is required' });
   if (!validateEntitiesList(entities)) return res.status(400).json({ error: 'At least one valid visibility option is required' });
-  const normalized = normalizeFormQuestions(questions);
+  const normalized = normalizeFormQuestions(questions, { scoringEnabled: Boolean(scoringEnabled) });
   if (normalized.error) return res.status(400).json({ error: normalized.error });
   const start = parseFormDate(startsAt, 'startsAt');
   if (start.error) return res.status(400).json({ error: start.error });
@@ -1748,8 +1967,8 @@ router.post('/admin/cms/forms', requireAuth, async (req, res) => {
     if (linkedSession.error) return res.status(400).json({ error: linkedSession.error });
 
     const rows = await db(
-      `INSERT INTO cms_forms (title, description, questions, entities, live_session_id, starts_at, expires_at, hide_when_expired, is_attendance, sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      `INSERT INTO cms_forms (title, description, questions, entities, live_session_id, starts_at, expires_at, hide_when_expired, is_attendance, scoring_enabled, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
       [
         String(title).trim(),
         String(description ?? ''),
@@ -1760,10 +1979,11 @@ router.post('/admin/cms/forms', requireAuth, async (req, res) => {
         expiry.date.toISOString(),
         Boolean(hideWhenExpired),
         Boolean(isAttendance),
+        Boolean(scoringEnabled),
         Number(sortOrder) || 0,
       ]
     );
-    return res.status(201).json({ form: mapFormRow(rows[0], { includeQuestions: true }) });
+    return res.status(201).json({ form: mapFormRow(rows[0], { includeQuestions: true, includeCorrectAnswers: true }) });
   } catch (err) {
     if (err.code === '23505' && err.constraint === 'cms_forms_one_active_per_session_idx') {
       return res.status(409).json({ error: 'Run database migrations to allow two linked forms per session' });
@@ -1778,16 +1998,17 @@ router.patch('/admin/cms/forms/:id', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
-  const { title, description, questions, entities, startsAt, expiresAt, hideWhenExpired, isAttendance, liveSessionId, sortOrder } = req.body ?? {};
+  const { title, description, questions, entities, startsAt, expiresAt, hideWhenExpired, isAttendance, scoringEnabled, liveSessionId, sortOrder } = req.body ?? {};
 
   try {
     const existingRows = await db('SELECT * FROM cms_forms WHERE id = $1 AND is_active = true', [id]);
     const existing = existingRows[0];
     if (!existing) return res.status(404).json({ error: 'Not found' });
 
+    const nextScoringEnabled = scoringEnabled !== undefined ? Boolean(scoringEnabled) : Boolean(existing.scoring_enabled);
     let normalized = null;
-    if (questions !== undefined) {
-      normalized = normalizeFormQuestions(questions);
+    if (questions !== undefined || nextScoringEnabled !== Boolean(existing.scoring_enabled)) {
+      normalized = normalizeFormQuestions(questions !== undefined ? questions : existing.questions, { scoringEnabled: nextScoringEnabled });
       if (normalized.error) return res.status(400).json({ error: normalized.error });
     }
     if (entities !== undefined && !validateEntitiesList(entities)) {
@@ -1825,6 +2046,7 @@ router.patch('/admin/cms/forms/:id', requireAuth, async (req, res) => {
     if (expiresAt !== undefined)       { set.push(`expires_at=$${i++}`);        params.push(nextExpiry.toISOString()); }
     if (hideWhenExpired !== undefined) { set.push(`hide_when_expired=$${i++}`); params.push(Boolean(hideWhenExpired)); }
     if (isAttendance !== undefined)    { set.push(`is_attendance=$${i++}`);     params.push(Boolean(isAttendance)); }
+    if (scoringEnabled !== undefined)  { set.push(`scoring_enabled=$${i++}`);   params.push(Boolean(scoringEnabled)); }
     if (linkedSession)                 { set.push(`live_session_id=$${i++}`);   params.push(linkedSession.liveSessionId); }
     if (sortOrder !== undefined)       { set.push(`sort_order=$${i++}`);        params.push(Number(sortOrder) || 0); }
     if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
@@ -1832,7 +2054,7 @@ router.patch('/admin/cms/forms/:id', requireAuth, async (req, res) => {
     params.push(id);
 
     const rows = await db(`UPDATE cms_forms SET ${set.join(',')} WHERE id=$${i} RETURNING *`, params);
-    return res.json({ form: mapFormRow(rows[0], { includeQuestions: true }) });
+    return res.json({ form: mapFormRow(rows[0], { includeQuestions: true, includeCorrectAnswers: true }) });
   } catch (err) {
     if (err.code === '23505' && err.constraint === 'cms_forms_one_active_per_session_idx') {
       return res.status(409).json({ error: 'Run database migrations to allow two linked forms per session' });

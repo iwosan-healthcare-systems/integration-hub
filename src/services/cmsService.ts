@@ -131,11 +131,38 @@ export interface FormQuestion {
   type: FormQuestionType;
   title: string;
   required: boolean;
+  points?: number;
+  correctAnswer?: unknown;
   options?: string[];
   rows?: string[];
   allowMultiple?: boolean;
   longAnswer?: boolean;
   max?: number;
+}
+
+export interface FormScoreItem {
+  questionId: string;
+  title: string;
+  type: FormQuestionType;
+  points: number;
+  earned: number;
+  correct: boolean;
+  userAnswer: unknown;
+  correctAnswer: unknown;
+}
+
+export interface FormScoreResult {
+  score: number;
+  maxScore: number;
+  percentage: number;
+  isFullScore: boolean;
+  items: FormScoreItem[];
+}
+
+export interface FormSubmission {
+  answers: Record<string, unknown>;
+  submittedAt: string;
+  score: FormScoreResult | null;
 }
 
 export interface LearningForm {
@@ -150,11 +177,13 @@ export interface LearningForm {
   expiresAt: string;
   hideWhenExpired: boolean;
   isAttendance: boolean;
+  scoringEnabled: boolean;
   expired: boolean;
   upcoming: boolean;
   sortOrder: number;
   responseCount: number;
   hasSubmitted: boolean;
+  submission?: FormSubmission | null;
 }
 
 // ── Public reads ──────────────────────────────────────────────────────────
@@ -184,20 +213,20 @@ export async function getForms(): Promise<{ forms: LearningForm[] | null; error:
   return { forms: data?.forms ?? null, error };
 }
 
-export async function getForm(id: number): Promise<{ form: LearningForm | null; error: string | null }> {
-  const { data, error } = await apiFetch<{ form: LearningForm }>(`/forms/${id}`);
+export async function getForm(idOrSlug: number | string): Promise<{ form: LearningForm | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ form: LearningForm }>(`/forms/${encodeURIComponent(String(idOrSlug))}`);
   return { form: data?.form ?? null, error };
 }
 
 export async function submitForm(
   id: number,
   answers: Record<string, unknown>
-): Promise<{ error: string | null }> {
-  const { error } = await apiFetch(`/forms/${id}/responses`, {
+): Promise<{ submission: FormSubmission | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ submission: FormSubmission }>(`/forms/${id}/responses`, {
     method: 'POST',
     body: JSON.stringify({ answers }),
   });
-  return { error };
+  return { submission: data?.submission ?? null, error };
 }
 
 export async function getPictureLibrary(): Promise<{ pictures: PictureLibraryItem[] | null; error: string | null }> {
@@ -361,6 +390,7 @@ export type FormInput = {
   expiresAt: string;
   hideWhenExpired: boolean;
   isAttendance: boolean;
+  scoringEnabled: boolean;
   liveSessionId?: number | null;
   sortOrder?: number;
 };
