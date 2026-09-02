@@ -71,7 +71,12 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
   const FmtIcon = fmtCfg.icon;
   const [month, day, year] = session.date.replace(",", "").split(" ");
   const hasImage = !!session.image && isOwnUploadUrl(session.image);
-  const assessmentAvailable = !!session.assessmentForm && (isPast || hasSessionStarted(session));
+  const linkedForms = session.assessmentForms?.length
+    ? session.assessmentForms
+    : session.assessmentForm
+      ? [session.assessmentForm]
+      : [];
+  const availableLinkedForms = isPast || hasSessionStarted(session) ? linkedForms : [];
 
   return (
     <AnimateOnScroll delay={delay}>
@@ -143,15 +148,19 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
                 Contact HR
               </a>
             )}
-            {assessmentAvailable && session.assessmentForm && (
-              <Link
-                to={`/learning/forms/${session.assessmentForm.id}`}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                <FileQuestion className="h-4 w-4" />
-                Take assessment
-              </Link>
-            )}
+            {availableLinkedForms.map((form) => {
+              const ActionIcon = form.isAttendance ? CheckCircle2 : FileQuestion;
+              return (
+                <Link
+                  key={form.id}
+                  to={`/learning/forms/${form.id}`}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  <ActionIcon className="h-4 w-4" />
+                  {form.isAttendance ? "Mark Attendance" : "Take assessment"}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -173,6 +182,7 @@ function FormCard({ form, delay }: { form: LearningForm; delay: number }) {
         : { label: "Open", className: "bg-primary/10 text-primary", icon: FileQuestion };
   const StatusIcon = status.icon;
   const questionCount = form.questionCount ?? form.questions?.length ?? 0;
+  const CardIcon = form.isAttendance ? CheckCircle2 : FileQuestion;
 
   return (
     <AnimateOnScroll delay={delay}>
@@ -180,7 +190,7 @@ function FormCard({ form, delay }: { form: LearningForm; delay: number }) {
         <div className={`group flex h-full flex-col rounded-2xl border border-border bg-card p-5 transition-all duration-200 ${form.expired ? "opacity-80 hover:opacity-100" : "hover:-translate-y-1 hover:shadow-md"}`}>
           <div className="mb-4 flex items-start justify-between gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <FileQuestion className="h-4.5 w-4.5" />
+              <CardIcon className="h-4.5 w-4.5" />
             </div>
             <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${status.className}`}>
               <StatusIcon className="h-3 w-3" />
@@ -196,7 +206,7 @@ function FormCard({ form, delay }: { form: LearningForm; delay: number }) {
           <div className="space-y-1 border-t border-border pt-3 text-[11px] font-sans text-muted-foreground">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span>{questionCount} question{questionCount !== 1 ? "s" : ""}</span>
-              <span className="font-semibold text-accent">{form.expired ? "View status" : "Open assessment"}</span>
+              <span className="font-semibold text-accent">{form.expired ? "View status" : form.isAttendance ? "Mark attendance" : "Open assessment"}</span>
             </div>
             <p>{form.upcoming ? "Opens" : "Closes"} {formatFormDateTime(form.upcoming ? form.startsAt : form.expiresAt)}</p>
           </div>

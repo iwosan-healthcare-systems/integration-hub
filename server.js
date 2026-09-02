@@ -1211,6 +1211,7 @@ function validateUrl(value) {
 }
 
 const FORM_QUESTION_TYPES = new Set(['choice', 'text', 'rating', 'date', 'ranking', 'likert', 'nps', 'section']);
+const MAX_LINKED_FORMS_PER_SESSION = 2;
 
 function cleanStringList(value) {
   if (!Array.isArray(value)) return [];
@@ -1315,13 +1316,15 @@ async function normalizeLiveSessionId(value, { excludeFormId = null } = {}) {
   if (!sessionRows[0]) return { error: 'Selected live session was not found' };
 
   const params = [liveSessionId];
-  let conflictQuery = 'SELECT id FROM cms_forms WHERE live_session_id = $1 AND is_active = true';
+  let countQuery = 'SELECT COUNT(*)::int AS count FROM cms_forms WHERE live_session_id = $1 AND is_active = true';
   if (excludeFormId !== null) {
     params.push(excludeFormId);
-    conflictQuery += ` AND id <> $${params.length}`;
+    countQuery += ` AND id <> $${params.length}`;
   }
-  const conflictRows = await db(`${conflictQuery} LIMIT 1`, params);
-  if (conflictRows[0]) return { error: 'This live session already has a linked assessment' };
+  const countRows = await db(countQuery, params);
+  if (Number(countRows[0]?.count ?? 0) >= MAX_LINKED_FORMS_PER_SESSION) {
+    return { error: 'A live session can have at most two linked forms' };
+  }
 
   return { liveSessionId };
 }
@@ -1339,6 +1342,7 @@ function mapFormRow(r, { includeQuestions = false } = {}) {
     startsAt: new Date(r.starts_at).toISOString(),
     expiresAt: new Date(r.expires_at).toISOString(),
     hideWhenExpired: r.hide_when_expired,
+    isAttendance: Boolean(r.is_attendance),
     expired: isExpiredForm(r),
     upcoming: isUpcomingForm(r),
     sortOrder: r.sort_order,
@@ -1348,6 +1352,7 @@ function mapFormRow(r, { includeQuestions = false } = {}) {
 }
 
 function mapSessionRow(r, assessmentFormsBySession = new Map()) {
+  const assessmentForms = assessmentFormsBySession.get(r.id) ?? [];
   return {
     id: r.id,
     title: r.title,
@@ -1359,7 +1364,8 @@ function mapSessionRow(r, assessmentFormsBySession = new Map()) {
     meetingUrl: r.meeting_url,
     entities: r.entities,
     image: r.image,
-    assessmentForm: assessmentFormsBySession.get(r.id) ?? null,
+    assessmentForms,
+    assessmentForm: assessmentForms[0] ?? null,
   };
 }
 
@@ -1372,7 +1378,7 @@ async function getAssessmentFormsBySession(sessionIds, user) {
   const rows = await db(
     seesAll
       ? `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-            f.hide_when_expired, f.sort_order,
+            f.hide_when_expired, f.is_attendance, f.sort_order,
             EXISTS (
               SELECT 1 FROM cms_form_responses r
               WHERE r.form_id = f.id AND r.user_id = $2
@@ -1382,7 +1388,7 @@ async function getAssessmentFormsBySession(sessionIds, user) {
        AND f.live_session_id = ANY($1::int[])
      ORDER BY f.live_session_id ASC, f.sort_order ASC, f.created_at DESC`
       : `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-            f.hide_when_expired, f.sort_order,
+            f.hide_when_expired, f.is_attendance, f.sort_order,
             EXISTS (
               SELECT 1 FROM cms_form_responses r
               WHERE r.form_id = f.id AND r.user_id = $2
@@ -1396,7 +1402,9 @@ async function getAssessmentFormsBySession(sessionIds, user) {
   );
 
   for (const row of rows) {
-    if (!map.has(row.live_session_id)) map.set(row.live_session_id, mapFormRow(row));
+    const forms = map.get(row.live_session_id) ?? [];
+    forms.push(mapFormRow(row));
+    map.set(row.live_session_id, forms);
   }
   return map;
 }
@@ -1585,7 +1593,7 @@ router.get('/forms', requireAuth, async (req, res) => {
     const rows = await db(
       seesAll
         ? `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-              f.hide_when_expired, f.sort_order,
+              f.hide_when_expired, f.is_attendance, f.sort_order,
               EXISTS (
                 SELECT 1 FROM cms_form_responses r
                 WHERE r.form_id = f.id AND r.user_id = $1
@@ -1596,7 +1604,7 @@ router.get('/forms', requireAuth, async (req, res) => {
          AND (f.expires_at >= NOW() OR f.hide_when_expired = false)
        ORDER BY f.sort_order ASC, f.created_at DESC`
         : `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-              f.hide_when_expired, f.sort_order,
+              f.hide_when_expired, f.is_attendance, f.sort_order,
               EXISTS (
                 SELECT 1 FROM cms_form_responses r
                 WHERE r.form_id = f.id AND r.user_id = $2
@@ -1623,7 +1631,7 @@ router.get('/forms/:id', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-              f.hide_when_expired, f.sort_order,
+              f.hide_when_expired, f.is_attendance, f.sort_order,
               EXISTS (
                 SELECT 1 FROM cms_form_responses r
                 WHERE r.form_id = f.id AND r.user_id = $2
@@ -1650,14 +1658,17 @@ router.post('/forms/:id/responses', requireAuth, async (req, res) => {
     const formRows = await db('SELECT * FROM cms_forms WHERE id = $1 AND is_active = true', [id]);
     const form = formRows[0];
     if (!form || !userCanSeeForm(req.authUser, form)) return res.status(404).json({ error: 'Not found' });
-    if (isUpcomingForm(form)) return res.status(400).json({ error: 'This assessment is not open yet' });
-    if (isExpiredForm(form)) return res.status(400).json({ error: 'This assessment has expired' });
+    const formLabel = form.is_attendance ? 'attendance form' : 'assessment';
+    if (isUpcomingForm(form)) return res.status(400).json({ error: `This ${formLabel} is not open yet` });
+    if (isExpiredForm(form)) return res.status(400).json({ error: `This ${formLabel} has expired` });
 
     const existingRows = await db(
       'SELECT id FROM cms_form_responses WHERE form_id = $1 AND user_id = $2',
       [id, req.authUser.userId]
     );
-    if (existingRows[0]) return res.status(409).json({ error: 'You have already submitted this assessment' });
+    if (existingRows[0]) {
+      return res.status(409).json({ error: form.is_attendance ? 'You have already marked attendance' : 'You have already submitted this assessment' });
+    }
 
     const questions = form.questions ?? [];
     const checked = validateFormAnswers(questions, req.body?.answers);
@@ -1677,9 +1688,9 @@ router.post('/forms/:id/responses', requireAuth, async (req, res) => {
         JSON.stringify(checked.answers),
       ]
     );
-    return res.status(201).json({ message: 'Submitted successfully' });
+    return res.status(201).json({ message: form.is_attendance ? 'Attendance marked successfully' : 'Submitted successfully' });
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ error: 'You have already submitted this assessment' });
+    if (err.code === '23505') return res.status(409).json({ error: 'You have already submitted this form' });
     console.error('POST /forms/:id/responses error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
@@ -1691,7 +1702,7 @@ router.get('/admin/cms/forms', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-              f.hide_when_expired, f.sort_order, COUNT(r.id)::int AS response_count
+              f.hide_when_expired, f.is_attendance, f.sort_order, COUNT(r.id)::int AS response_count
        FROM cms_forms f
        LEFT JOIN cms_form_responses r ON r.form_id = f.id
        WHERE f.is_active = true
@@ -1717,6 +1728,7 @@ router.post('/admin/cms/forms', requireAuth, async (req, res) => {
     startsAt,
     expiresAt,
     hideWhenExpired = false,
+    isAttendance = false,
     liveSessionId = null,
     sortOrder = 0,
   } = req.body ?? {};
@@ -1736,8 +1748,8 @@ router.post('/admin/cms/forms', requireAuth, async (req, res) => {
     if (linkedSession.error) return res.status(400).json({ error: linkedSession.error });
 
     const rows = await db(
-      `INSERT INTO cms_forms (title, description, questions, entities, live_session_id, starts_at, expires_at, hide_when_expired, sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      `INSERT INTO cms_forms (title, description, questions, entities, live_session_id, starts_at, expires_at, hide_when_expired, is_attendance, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
       [
         String(title).trim(),
         String(description ?? ''),
@@ -1747,13 +1759,14 @@ router.post('/admin/cms/forms', requireAuth, async (req, res) => {
         start.date.toISOString(),
         expiry.date.toISOString(),
         Boolean(hideWhenExpired),
+        Boolean(isAttendance),
         Number(sortOrder) || 0,
       ]
     );
     return res.status(201).json({ form: mapFormRow(rows[0], { includeQuestions: true }) });
   } catch (err) {
     if (err.code === '23505' && err.constraint === 'cms_forms_one_active_per_session_idx') {
-      return res.status(409).json({ error: 'This live session already has a linked assessment' });
+      return res.status(409).json({ error: 'Run database migrations to allow two linked forms per session' });
     }
     console.error('POST /admin/cms/forms error:', err);
     return res.status(500).json({ error: 'Internal server error' });
@@ -1765,7 +1778,7 @@ router.patch('/admin/cms/forms/:id', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
-  const { title, description, questions, entities, startsAt, expiresAt, hideWhenExpired, liveSessionId, sortOrder } = req.body ?? {};
+  const { title, description, questions, entities, startsAt, expiresAt, hideWhenExpired, isAttendance, liveSessionId, sortOrder } = req.body ?? {};
 
   try {
     const existingRows = await db('SELECT * FROM cms_forms WHERE id = $1 AND is_active = true', [id]);
@@ -1811,6 +1824,7 @@ router.patch('/admin/cms/forms/:id', requireAuth, async (req, res) => {
     if (startsAt !== undefined)        { set.push(`starts_at=$${i++}`);         params.push(nextStart.toISOString()); }
     if (expiresAt !== undefined)       { set.push(`expires_at=$${i++}`);        params.push(nextExpiry.toISOString()); }
     if (hideWhenExpired !== undefined) { set.push(`hide_when_expired=$${i++}`); params.push(Boolean(hideWhenExpired)); }
+    if (isAttendance !== undefined)    { set.push(`is_attendance=$${i++}`);     params.push(Boolean(isAttendance)); }
     if (linkedSession)                 { set.push(`live_session_id=$${i++}`);   params.push(linkedSession.liveSessionId); }
     if (sortOrder !== undefined)       { set.push(`sort_order=$${i++}`);        params.push(Number(sortOrder) || 0); }
     if (set.length === 0) return res.status(400).json({ error: 'Nothing to update' });
@@ -1821,7 +1835,7 @@ router.patch('/admin/cms/forms/:id', requireAuth, async (req, res) => {
     return res.json({ form: mapFormRow(rows[0], { includeQuestions: true }) });
   } catch (err) {
     if (err.code === '23505' && err.constraint === 'cms_forms_one_active_per_session_idx') {
-      return res.status(409).json({ error: 'This live session already has a linked assessment' });
+      return res.status(409).json({ error: 'Run database migrations to allow two linked forms per session' });
     }
     console.error('PATCH /admin/cms/forms error:', err);
     return res.status(500).json({ error: 'Internal server error' });

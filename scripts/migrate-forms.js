@@ -63,6 +63,7 @@ async function main() {
       starts_at         TIMESTAMPTZ NOT NULL,
       expires_at        TIMESTAMPTZ NOT NULL,
       hide_when_expired BOOLEAN     NOT NULL DEFAULT false,
+      is_attendance     BOOLEAN     NOT NULL DEFAULT false,
       sort_order        INTEGER     NOT NULL DEFAULT 0,
       is_active         BOOLEAN     NOT NULL DEFAULT true,
       created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -76,6 +77,7 @@ async function main() {
     ALTER TABLE cms_forms
     ADD COLUMN IF NOT EXISTS live_session_id INTEGER REFERENCES live_sessions(id) ON DELETE SET NULL
   `);
+  await pool.query('ALTER TABLE cms_forms ADD COLUMN IF NOT EXISTS is_attendance BOOLEAN NOT NULL DEFAULT false');
   await pool.query("ALTER TABLE cms_forms ALTER COLUMN entities SET DEFAULT ARRAY['general']::TEXT[]");
   await pool.query("UPDATE cms_forms SET entities = ARRAY['general']::TEXT[] WHERE entities IS NULL OR cardinality(entities) = 0");
 
@@ -97,7 +99,7 @@ async function main() {
   await pool.query('CREATE INDEX IF NOT EXISTS cms_forms_sort_idx ON cms_forms (sort_order, created_at DESC)');
   await pool.query('CREATE INDEX IF NOT EXISTS cms_forms_entities_idx ON cms_forms USING GIN (entities)');
   await pool.query('CREATE INDEX IF NOT EXISTS cms_forms_live_session_idx ON cms_forms (live_session_id)');
-  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS cms_forms_one_active_per_session_idx ON cms_forms (live_session_id) WHERE is_active = true AND live_session_id IS NOT NULL');
+  await pool.query('DROP INDEX IF EXISTS cms_forms_one_active_per_session_idx');
   await pool.query('CREATE INDEX IF NOT EXISTS cms_forms_active_dates_idx ON cms_forms (is_active, starts_at, expires_at)');
   await pool.query('CREATE INDEX IF NOT EXISTS cms_form_responses_form_idx ON cms_form_responses (form_id, submitted_at DESC)');
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS cms_form_responses_once_idx ON cms_form_responses (form_id, user_id) WHERE user_id IS NOT NULL');

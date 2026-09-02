@@ -261,18 +261,20 @@ export default function LearningFormPage() {
   }
 
   const title = form?.title ?? 'Learning Assessment';
+  const formLabel = form?.isAttendance ? 'Attendance' : 'Assessment';
+  const formNoun = form?.isAttendance ? 'attendance form' : 'assessment';
   const isBlocked = !!form && (form.expired || form.upcoming || form.hasSubmitted || submitted);
 
   return (
     <>
-      <Seo title={title} description={form?.description ?? 'Learning Centre assessment'} path={`/learning/forms/${params.id ?? ''}`} />
+      <Seo title={title} description={form?.description ?? `Learning Centre ${formNoun}`} path={`/learning/forms/${params.id ?? ''}`} />
       <section className="border-b border-border bg-learning-header px-6 py-10 sm:px-8 lg:px-16">
         <div className="mx-auto max-w-3xl">
           <Link to="/learning" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-white/70 transition-colors hover:text-white">
             <ArrowLeft className="h-4 w-4" />
             Learning Centre
           </Link>
-          <p className="mb-2 font-sans text-xs font-medium uppercase tracking-[0.2em] text-accent">Assessment</p>
+          <p className="mb-2 font-sans text-xs font-medium uppercase tracking-[0.2em] text-accent">{formLabel}</p>
           <h1 className="break-words text-2xl font-bold text-white sm:text-3xl">{title}</h1>
           {form?.description && <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/65">{form.description}</p>}
         </div>
@@ -311,13 +313,13 @@ export default function LearningFormPage() {
                     )}
                     <div>
                       <p className="text-sm font-semibold text-foreground">
-                        {form.hasSubmitted || submitted ? 'Response submitted' : form.expired ? 'This assessment has expired' : 'This assessment is not open yet'}
+                        {form.hasSubmitted || submitted ? (form.isAttendance ? 'Attendance marked' : 'Response submitted') : form.expired ? `This ${formNoun} has expired` : `This ${formNoun} is not open yet`}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {form.hasSubmitted || submitted
-                          ? 'Each user can submit this assessment once.'
+                          ? form.isAttendance ? 'Each user can mark attendance once.' : 'Each user can submit this assessment once.'
                           : form.expired
-                            ? `The submission window closed on ${formatDateTime(form.expiresAt)} and this assessment can no longer be filled.`
+                            ? `The submission window closed on ${formatDateTime(form.expiresAt)} and this ${formNoun} can no longer be filled.`
                             : `The submission window opens on ${formatDateTime(form.startsAt)}.`}
                       </p>
                     </div>
@@ -359,7 +361,7 @@ export default function LearningFormPage() {
                   <div className="flex justify-end">
                     <Button type="submit" disabled={submitting} className="w-full gap-2 sm:w-auto">
                       {submitting ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Send className="h-4 w-4" />}
-                      Submit
+                      {form.isAttendance ? 'Mark Attendance' : 'Submit'}
                     </Button>
                   </div>
                 </form>

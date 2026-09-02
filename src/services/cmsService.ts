@@ -93,6 +93,7 @@ export interface LiveSession {
   meetingUrl: string;
   entities: string[];
   image: string;
+  assessmentForms?: LearningForm[];
   assessmentForm?: LearningForm | null;
 }
 
@@ -148,6 +149,7 @@ export interface LearningForm {
   startsAt: string;
   expiresAt: string;
   hideWhenExpired: boolean;
+  isAttendance: boolean;
   expired: boolean;
   upcoming: boolean;
   sortOrder: number;
@@ -358,6 +360,7 @@ export type FormInput = {
   startsAt: string;
   expiresAt: string;
   hideWhenExpired: boolean;
+  isAttendance: boolean;
   liveSessionId?: number | null;
   sortOrder?: number;
 };

@@ -47,6 +47,7 @@ const QUESTION_TYPES: { value: Exclude<FormQuestionType, 'section'>; label: stri
   { value: 'likert', label: 'Likert' },
   { value: 'nps', label: 'Net Promoter Score' },
 ];
+const MAX_LINKED_FORMS_PER_SESSION = 2;
 
 function newQuestion(type: FormQuestionType = 'choice'): FormQuestion {
   const id = `q-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -99,17 +100,26 @@ function listWithUpdatedIndex(values: string[], index: number, nextValue: string
 
 interface FormModalProps {
   item?: LearningForm;
+  forms: LearningForm[];
   sessions: LiveSession[];
   onClose: () => void;
   onSaved: (item: LearningForm) => void;
 }
 
-function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
+function FormModal({ item, forms, sessions, onClose, onSaved }: FormModalProps) {
   const isEdit = !!item;
   const sessionOptions = useMemo(
     () => [...sessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     [sessions]
   );
+  const linkedCountsBySession = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const savedForm of forms) {
+      if (!savedForm.liveSessionId || savedForm.id === item?.id) continue;
+      counts.set(savedForm.liveSessionId, (counts.get(savedForm.liveSessionId) ?? 0) + 1);
+    }
+    return counts;
+  }, [forms, item?.id]);
   const [form, setForm] = useState<FormInput>({
     title: item?.title ?? '',
     description: item?.description ?? '',
@@ -119,6 +129,7 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
     startsAt: item ? toDateTimeLocal(item.startsAt) : toDateTimeLocal(new Date().toISOString()),
     expiresAt: item ? toDateTimeLocal(item.expiresAt) : defaultEndDate(),
     hideWhenExpired: item?.hideWhenExpired ?? false,
+    isAttendance: item?.isAttendance ?? false,
     sortOrder: item?.sortOrder ?? 0,
   });
   const [loading, setLoading] = useState(false);
@@ -209,7 +220,10 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
             <Label htmlFor="f-live-session">Placement</Label>
             <Select
               value={form.liveSessionId ? String(form.liveSessionId) : 'standalone'}
-              onValueChange={(value) => set('liveSessionId', value === 'standalone' ? null : Number(value))}
+              onValueChange={(value) => {
+                if (value === 'no-sessions') return;
+                set('liveSessionId', value === 'standalone' ? null : Number(value));
+              }}
             >
               <SelectTrigger id="f-live-session">
                 <SelectValue placeholder="Select placement" />
@@ -219,17 +233,37 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
                 {sessionOptions.length === 0 && (
                   <SelectItem value="no-sessions" disabled>No live sessions available</SelectItem>
                 )}
-                {sessionOptions.map((session) => (
-                  <SelectItem key={session.id} value={String(session.id)}>
-                    <span className="block truncate">Link to session: {sessionLabel(session)}</span>
-                  </SelectItem>
-                ))}
+                {sessionOptions.map((session) => {
+                  const linkedCount = linkedCountsBySession.get(session.id) ?? 0;
+                  const isFull = linkedCount >= MAX_LINKED_FORMS_PER_SESSION;
+                  return (
+                    <SelectItem key={session.id} value={String(session.id)} disabled={isFull}>
+                      <span className="block truncate">
+                        Link to session: {sessionLabel(session)} ({linkedCount}/{MAX_LINKED_FORMS_PER_SESSION} linked)
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Choose a live session to show this as a "Take assessment" button under that session. Leave it standalone to show it as a card.
+              Choose a live session to show this under that session. Each session can have up to two linked forms.
             </p>
           </div>
+
+          <label className="flex cursor-pointer select-none items-start gap-2 rounded-md border border-input px-3 py-2.5">
+            <Checkbox
+              className="mt-0.5"
+              checked={form.isAttendance}
+              onCheckedChange={(value) => set('isAttendance', Boolean(value))}
+            />
+            <span className="min-w-0 text-sm text-foreground">
+              Attendance form
+              <span className="block text-xs text-muted-foreground">
+                When linked to a live session, the session card button will show "Mark Attendance".
+              </span>
+            </span>
+          </label>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -468,7 +502,11 @@ export default function FormsManagePage() {
     if (!q) return forms;
     return forms.filter((form) => {
       const linkedSession = form.liveSessionId ? sessionById.get(form.liveSessionId) : null;
-      const placement = form.liveSessionId ? 'assessment linked session take assessment' : 'standalone learning centre assessment';
+      const placement = form.liveSessionId
+        ? form.isAttendance
+          ? 'attendance linked session mark attendance'
+          : 'assessment linked session take assessment'
+        : 'standalone learning centre assessment';
       return (
         form.title.toLowerCase().includes(q) ||
         form.description.toLowerCase().includes(q) ||
@@ -599,12 +637,15 @@ export default function FormsManagePage() {
                         className={`grid grid-cols-[1fr_9rem_9rem_8rem_9rem_12rem_7rem] items-center gap-3 px-5 py-3.5 transition-colors hover:bg-muted/40 ${index < filtered.length - 1 ? 'border-b border-border/40' : ''}`}
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">{form.title}</p>
+                          <div className="flex min-w-0 items-center gap-2">
+                            <p className="truncate text-sm font-medium text-foreground">{form.title}</p>
+                            {form.isAttendance && <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[9px]">Attendance</Badge>}
+                          </div>
                           <p className="truncate text-xs text-muted-foreground">{form.description || `${form.questions?.length ?? form.questionCount ?? 0} questions`}</p>
                         </div>
                         <div className="min-w-0 text-center">
                           <Badge variant={form.liveSessionId ? 'default' : 'outline'} className="text-[10px]">
-                            {form.liveSessionId ? 'Assessment' : 'Standalone'}
+                            {form.liveSessionId ? (form.isAttendance ? 'Attendance' : 'Assessment') : 'Standalone'}
                           </Badge>
                           {form.liveSessionId && (
                             <p className="mt-1 truncate text-[10px] text-muted-foreground" title={linkedSession?.title ?? 'Linked session'}>
@@ -666,6 +707,7 @@ export default function FormsManagePage() {
       {formTarget !== null && (
         <FormModal
           item={formTarget === 'new' ? undefined : formTarget}
+          forms={forms}
           sessions={sessions}
           onClose={() => setFormTarget(null)}
           onSaved={handleSaved}
