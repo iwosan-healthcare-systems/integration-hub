@@ -15,4 +15,5 @@ jobs:
           git reset --hard origin/master
           npm install
           npm run build
+          npm run migrate
           pm2 restart iwosan-integration-hub-api

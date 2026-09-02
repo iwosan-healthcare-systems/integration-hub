@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "setup-db": "node scripts/setup-db.js",
+    "migrate": "node scripts/run-migrations.js",
     "migrate-forms": "node scripts/migrate-forms.js",
     "migrate-general-visibility": "node scripts/migrate-general-visibility.js",
     "create-user": "node scripts/create-user.js"

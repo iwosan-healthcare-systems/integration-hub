@@ -1,8 +1,7 @@
 /**
- * One-time migration: adds the `entity` column to `users` and
- * `live_sessions` for entity-scoped Sessions. Safe to run more than once
- * (uses ADD COLUMN IF NOT EXISTS) and safe to run against a DB that was
- * already created fresh from schema.sql (which now includes these columns).
+ * One-time migration: adds the `entity` column to `users`. Safe to run more
+ * than once (uses ADD COLUMN IF NOT EXISTS) and safe to run against a DB that
+ * was already created fresh from schema.sql.
  *
  * Usage: node scripts/migrate-add-entity.js
  * Reads the same DB env vars as the app (DATABASE_URL, or DB_HOST/DB_PORT/
@@ -57,11 +56,6 @@ const pool = new Pool(poolConfig);
 async function main() {
   console.log('Adding users.entity …');
   await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS entity TEXT');
-
-  console.log("Adding live_sessions.entity (default 'general') …");
-  await pool.query(
-    "ALTER TABLE live_sessions ADD COLUMN IF NOT EXISTS entity TEXT NOT NULL DEFAULT 'general'"
-  );
 
   console.log('Done.');
   await pool.end();
