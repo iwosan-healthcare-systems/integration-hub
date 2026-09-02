@@ -58,7 +58,7 @@ async function main() {
       title             TEXT        NOT NULL,
       description       TEXT        NOT NULL DEFAULT '',
       questions         JSONB       NOT NULL DEFAULT '[]'::jsonb,
-      entities          TEXT[]      NOT NULL DEFAULT ARRAY[]::TEXT[],
+      entities          TEXT[]      NOT NULL DEFAULT ARRAY['general']::TEXT[],
       live_session_id   INTEGER     REFERENCES live_sessions(id) ON DELETE SET NULL,
       starts_at         TIMESTAMPTZ NOT NULL,
       expires_at        TIMESTAMPTZ NOT NULL,
@@ -76,6 +76,8 @@ async function main() {
     ALTER TABLE cms_forms
     ADD COLUMN IF NOT EXISTS live_session_id INTEGER REFERENCES live_sessions(id) ON DELETE SET NULL
   `);
+  await pool.query("ALTER TABLE cms_forms ALTER COLUMN entities SET DEFAULT ARRAY['general']::TEXT[]");
+  await pool.query("UPDATE cms_forms SET entities = ARRAY['general']::TEXT[] WHERE entities IS NULL OR cardinality(entities) = 0");
 
   console.log('Creating cms_form_responses table...');
   await pool.query(`

@@ -324,6 +324,11 @@ export type SessionInput = {
   entities: string[]; image: string;
 };
 
+export async function getCmsSessions(): Promise<{ sessions: LiveSession[] | null; error: string | null }> {
+  const { data, error } = await apiFetch<{ sessions: LiveSession[] }>('/admin/cms/sessions');
+  return { sessions: data?.sessions ?? null, error };
+}
+
 export async function createSession(input: SessionInput): Promise<{ session: LiveSession | null; error: string | null }> {
   const { data, error } = await apiFetch<{ session: LiveSession }>('/admin/cms/sessions', {
     method: 'POST', body: JSON.stringify(input),

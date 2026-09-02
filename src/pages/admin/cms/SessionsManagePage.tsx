@@ -14,7 +14,7 @@ import { SessionPreviewCard } from '@/components/cms/previews/PreviewCards';
 import { CmsSearchBar } from '@/components/cms/CmsSearchBar';
 import { ImageField } from '@/components/cms/ImageField';
 import {
-  getSessions, createSession, updateSession, deleteSession,
+  getCmsSessions, createSession, updateSession, deleteSession,
   type LiveSession, type SessionInput,
 } from '@/services/cmsService';
 import { GENERAL_ENTITY, VISIBILITY_ENTITIES, entityName } from '@/lib/entities';
@@ -143,7 +143,7 @@ function SessionFormModal({ item, onClose, onSaved }: SessionFormProps) {
                 );
               })}
             </div>
-            <p className="text-xs text-muted-foreground">Staff from any checked organisation will see this session — check General too if everyone should see it.</p>
+            <p className="text-xs text-muted-foreground">General is visible to everyone. Iwosan Healthcare Systems is only for @iwosanhealth.com staff.</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="s-venue">Venue</Label>
@@ -213,7 +213,7 @@ export default function SessionsManagePage() {
   const load = async () => {
     setLoading(true);
     setGlobalError('');
-    const { sessions: data, error } = await getSessions();
+    const { sessions: data, error } = await getCmsSessions();
     if (error) setGlobalError(error);
     else setSessions(data ?? []);
     setLoading(false);

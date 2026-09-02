@@ -2207,6 +2207,22 @@ router.get('/sessions', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/admin/cms/sessions
+router.get('/admin/cms/sessions', requireAuth, async (req, res) => {
+  if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });
+  try {
+    const rows = await db(
+      `SELECT id, title, session_date, session_time, format, venue, host, meeting_url, entities, image
+       FROM live_sessions WHERE is_active = true ORDER BY session_date ASC`,
+      []
+    );
+    return res.json({ sessions: rows.map((r) => mapSessionRow(r)) });
+  } catch (err) {
+    console.error('GET /admin/cms/sessions error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/admin/cms/sessions
 router.post('/admin/cms/sessions', requireAuth, async (req, res) => {
   if (!isCmsEditor(req.authUser)) return res.status(403).json({ error: 'Access required' });

@@ -66,7 +66,13 @@ async function main() {
   );
   if (rows.length > 0) {
     console.log('Backfilling entities from the old entity column …');
-    await pool.query('UPDATE live_sessions SET entities = ARRAY[entity] WHERE entity IS NOT NULL');
+    await pool.query(`
+      UPDATE live_sessions
+      SET entities = ARRAY[
+        CASE WHEN entity = 'iwosan-healthcare' THEN 'general' ELSE entity END
+      ]::TEXT[]
+      WHERE entity IS NOT NULL
+    `);
     console.log('Dropping the old entity column …');
     await pool.query('ALTER TABLE live_sessions DROP COLUMN entity');
   } else {

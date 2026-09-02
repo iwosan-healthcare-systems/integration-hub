@@ -29,7 +29,7 @@ import {
   deleteForm,
   downloadFormResponses,
   getCmsForms,
-  getSessions,
+  getCmsSessions,
   updateForm,
   type FormInput,
   type FormQuestion,
@@ -38,7 +38,7 @@ import {
   type LiveSession,
 } from '@/services/cmsService';
 
-const QUESTION_TYPES: { value: FormQuestionType; label: string }[] = [
+const QUESTION_TYPES: { value: Exclude<FormQuestionType, 'section'>; label: string }[] = [
   { value: 'choice', label: 'Choice' },
   { value: 'text', label: 'Text' },
   { value: 'rating', label: 'Rating' },
@@ -46,7 +46,6 @@ const QUESTION_TYPES: { value: FormQuestionType; label: string }[] = [
   { value: 'ranking', label: 'Ranking' },
   { value: 'likert', label: 'Likert' },
   { value: 'nps', label: 'Net Promoter Score' },
-  { value: 'section', label: 'Section' },
 ];
 
 function newQuestion(type: FormQuestionType = 'choice'): FormQuestion {
@@ -115,7 +114,7 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
     title: item?.title ?? '',
     description: item?.description ?? '',
     questions: item?.questions?.length ? item.questions : [newQuestion()],
-    entities: item?.entities ?? [],
+    entities: item?.entities?.length ? item.entities : [GENERAL_ENTITY],
     liveSessionId: item?.liveSessionId ?? null,
     startsAt: item ? toDateTimeLocal(item.startsAt) : toDateTimeLocal(new Date().toISOString()),
     expiresAt: item ? toDateTimeLocal(item.expiresAt) : defaultEndDate(),
@@ -216,16 +215,19 @@ function FormModal({ item, sessions, onClose, onSaved }: FormModalProps) {
                 <SelectValue placeholder="Select placement" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="standalone">Standalone Learning Centre assessment</SelectItem>
+                <SelectItem value="standalone">Standalone - show as Learning Centre card</SelectItem>
+                {sessionOptions.length === 0 && (
+                  <SelectItem value="no-sessions" disabled>No live sessions available</SelectItem>
+                )}
                 {sessionOptions.map((session) => (
                   <SelectItem key={session.id} value={String(session.id)}>
-                    <span className="block truncate">{sessionLabel(session)}</span>
+                    <span className="block truncate">Link to session: {sessionLabel(session)}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Linked assessments appear as a Take assessment button under the selected session after it has passed.
+              Choose a live session to show this as a "Take assessment" button under that session. Leave it standalone to show it as a card.
             </p>
           </div>
 
@@ -481,7 +483,7 @@ export default function FormsManagePage() {
   const load = async () => {
     setLoading(true);
     setGlobalError('');
-    const [formsResult, sessionsResult] = await Promise.all([getCmsForms(), getSessions()]);
+    const [formsResult, sessionsResult] = await Promise.all([getCmsForms(), getCmsSessions()]);
     if (formsResult.error) setGlobalError(formsResult.error);
     else setForms(formsResult.forms ?? []);
     if (sessionsResult.error) setGlobalError((current) => current || sessionsResult.error || '');
