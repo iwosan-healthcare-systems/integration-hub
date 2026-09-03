@@ -65,6 +65,10 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-muted animate-pulse rounded ${className}`} />;
 }
 
+function completedFormLabel(form: LearningForm): string {
+  return form.isAttendance ? "Attendance marked" : "Assessment Completed";
+}
+
 // ─── Session card ───────────────────────────────────────────────────────────
 
 function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast: boolean; delay: number }) {
@@ -150,15 +154,20 @@ function SessionCard({ session, isPast, delay }: { session: LiveSession; isPast:
               </a>
             )}
             {availableLinkedForms.map((form) => {
-              const ActionIcon = form.isAttendance ? CheckCircle2 : FileQuestion;
+              const isCompleted = form.hasSubmitted;
+              const ActionIcon = isCompleted || form.isAttendance ? CheckCircle2 : FileQuestion;
               return (
                 <Link
                   key={form.id}
                   to={learningFormPath(form)}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-sans font-semibold transition-colors ${
+                    isCompleted
+                      ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300"
+                      : "bg-primary text-primary-foreground hover:bg-primary/90"
+                  }`}
                 >
                   <ActionIcon className="h-4 w-4" />
-                  {form.isAttendance ? "Mark Attendance" : "Take assessment"}
+                  {isCompleted ? completedFormLabel(form) : form.isAttendance ? "Mark Attendance" : "Take assessment"}
                 </Link>
               );
             })}
@@ -175,7 +184,7 @@ function formatFormDateTime(iso: string): string {
 
 function FormCard({ form, delay }: { form: LearningForm; delay: number }) {
   const status = form.hasSubmitted
-    ? { label: "Submitted", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400", icon: CheckCircle2 }
+    ? { label: completedFormLabel(form), className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400", icon: CheckCircle2 }
     : form.expired
       ? { label: "Expired", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400", icon: AlertCircle }
       : form.upcoming
@@ -207,7 +216,7 @@ function FormCard({ form, delay }: { form: LearningForm; delay: number }) {
           <div className="space-y-1 border-t border-border pt-3 text-[11px] font-sans text-muted-foreground">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span>{questionCount} question{questionCount !== 1 ? "s" : ""}</span>
-              <span className="font-semibold text-accent">{form.expired ? "View status" : form.isAttendance ? "Mark attendance" : "Open assessment"}</span>
+              <span className="font-semibold text-accent">{form.hasSubmitted ? completedFormLabel(form) : form.expired ? "View status" : form.isAttendance ? "Mark attendance" : "Open assessment"}</span>
             </div>
             <p>{form.upcoming ? "Opens" : "Closes"} {formatFormDateTime(form.upcoming ? form.startsAt : form.expiresAt)}</p>
           </div>
