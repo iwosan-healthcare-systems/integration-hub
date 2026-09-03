@@ -1222,6 +1222,33 @@ function validateEntitiesList(entities) {
   return Array.isArray(entities) && entities.length > 0 && entities.every((e) => e in CONTENT_ENTITIES);
 }
 
+function slugifyContentTitle(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+async function ensureUniqueFormTitleSlug(title, { excludeFormId = null } = {}) {
+  const slug = slugifyContentTitle(title);
+  if (!slug) return { error: 'title must include at least one letter or number' };
+
+  const params = [];
+  let query = 'SELECT id, title FROM cms_forms WHERE is_active = true';
+  if (excludeFormId !== null) {
+    params.push(excludeFormId);
+    query += ` AND id <> $${params.length}`;
+  }
+
+  const rows = await db(query, params);
+  const duplicate = rows.find((row) => slugifyContentTitle(row.title) === slug);
+  if (duplicate) {
+    return { error: 'Assessment title must be unique because it is used for the public link' };
+  }
+  return { slug };
+}
+
 function hasDuplicateStrings(values) {
   return new Set(values).size !== values.length;
 }
@@ -1551,6 +1578,44 @@ function mapSessionRow(r, assessmentFormsBySession = new Map()) {
   };
 }
 
+async function findPublicFormByReference(reference, user) {
+  const ref = String(reference ?? '').trim();
+  if (!ref) return null;
+
+  const select = `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
+              f.hide_when_expired, f.is_attendance, f.scoring_enabled, f.sort_order,
+              EXISTS (
+                SELECT 1 FROM cms_form_responses r
+                WHERE r.form_id = f.id AND r.user_id = $2
+              ) AS has_submitted
+       FROM cms_forms f
+       WHERE f.id = $1 AND f.is_active = true`;
+
+  if (/^\d+$/.test(ref)) {
+    const rows = await db(select, [Number(ref), user.userId]);
+    const form = rows[0];
+    return form && userCanSeeForm(user, form) ? form : null;
+  }
+
+  const requestedSlug = slugifyContentTitle(ref);
+  if (!requestedSlug) return null;
+
+  const rows = await db(
+    `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
+            f.hide_when_expired, f.is_attendance, f.scoring_enabled, f.sort_order,
+            EXISTS (
+              SELECT 1 FROM cms_form_responses r
+              WHERE r.form_id = f.id AND r.user_id = $1
+            ) AS has_submitted
+     FROM cms_forms f
+     WHERE f.is_active = true
+     ORDER BY f.sort_order ASC, f.created_at DESC`,
+    [user.userId]
+  );
+
+  return rows.find((row) => slugifyContentTitle(row.title) === requestedSlug && userCanSeeForm(user, row)) ?? null;
+}
+
 async function getAssessmentFormsBySession(sessionIds, user) {
   const map = new Map();
   if (!sessionIds.length) return map;
@@ -1697,6 +1762,23 @@ function excelColumnName(index) {
   return name;
 }
 
+function isValidDate(value) {
+  return value instanceof Date && !Number.isNaN(value.getTime());
+}
+
+function excelDateSerial(date) {
+  const localTime = Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
+    date.getSeconds(),
+    date.getMilliseconds()
+  );
+  return (localTime - Date.UTC(1899, 11, 30)) / 86400000;
+}
+
 function safeFilename(value, fallback = 'assessment') {
   const cleaned = String(value ?? '')
     .normalize('NFKD')
@@ -1724,6 +1806,9 @@ async function buildXlsxBuffer(rows, sheetName = 'Responses') {
   const sheetRows = rows.map((row, rowIndex) => {
     const cells = row.map((value, columnIndex) => {
       const cellRef = `${excelColumnName(columnIndex)}${rowIndex + 1}`;
+      if (isValidDate(value)) {
+        return `<c r="${cellRef}" s="1"><v>${excelDateSerial(value)}</v></c>`;
+      }
       return `<c r="${cellRef}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`;
     }).join('');
     return `<row r="${rowIndex + 1}">${cells}</row>`;
@@ -1734,6 +1819,7 @@ async function buildXlsxBuffer(rows, sheetName = 'Responses') {
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
   <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
 </Types>`);
   zip.folder('_rels')?.file('.rels', `<?xml version="1.0" encoding="UTF-8"?>
@@ -1747,7 +1833,20 @@ async function buildXlsxBuffer(rows, sheetName = 'Responses') {
   zip.folder('xl')?.folder('_rels')?.file('workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
 </Relationships>`);
+  zip.folder('xl')?.file('styles.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
+  <fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+  <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="2">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="22" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+  </cellXfs>
+  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`);
   zip.folder('xl')?.folder('worksheets')?.file('sheet1.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheetData>${sheetRows}</sheetData>
@@ -1828,24 +1927,11 @@ router.get('/forms', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/forms/:id - a single form page, guarded by organisation visibility
+// GET /api/forms/:id - a single assessment page, guarded by organisation visibility
 router.get('/forms/:id', requireAuth, async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
   try {
-    const rows = await db(
-      `SELECT f.id, f.title, f.description, f.questions, f.entities, f.live_session_id, f.starts_at, f.expires_at,
-              f.hide_when_expired, f.is_attendance, f.scoring_enabled, f.sort_order,
-              EXISTS (
-                SELECT 1 FROM cms_form_responses r
-                WHERE r.form_id = f.id AND r.user_id = $2
-              ) AS has_submitted
-       FROM cms_forms f
-       WHERE f.id = $1 AND f.is_active = true`,
-      [id, req.authUser.userId]
-    );
-    const form = rows[0];
-    if (!form || !userCanSeeForm(req.authUser, form)) return res.status(404).json({ error: 'Not found' });
+    const form = await findPublicFormByReference(req.params.id, req.authUser);
+    if (!form) return res.status(404).json({ error: 'Not found' });
     if (isExpiredForm(form) && form.hide_when_expired && !form.live_session_id) return res.status(404).json({ error: 'Not found' });
 
     const responseRows = await db(
@@ -1854,7 +1940,7 @@ router.get('/forms/:id', requireAuth, async (req, res) => {
        WHERE form_id = $1 AND user_id = $2
        ORDER BY submitted_at DESC
        LIMIT 1`,
-      [id, req.authUser.userId]
+      [form.id, req.authUser.userId]
     );
     const submission = mapFormSubmission(form, responseRows[0]);
     return res.json({ form: mapFormRow(form, { includeQuestions: true, submission }) });
@@ -1952,7 +2038,7 @@ router.post('/admin/cms/forms', requireAuth, async (req, res) => {
     sortOrder = 0,
   } = req.body ?? {};
 
-  if (!title) return res.status(400).json({ error: 'title is required' });
+  if (!String(title ?? '').trim()) return res.status(400).json({ error: 'title is required' });
   if (!validateEntitiesList(entities)) return res.status(400).json({ error: 'At least one valid visibility option is required' });
   const normalized = normalizeFormQuestions(questions, { scoringEnabled: Boolean(scoringEnabled) });
   if (normalized.error) return res.status(400).json({ error: normalized.error });
@@ -1963,6 +2049,9 @@ router.post('/admin/cms/forms', requireAuth, async (req, res) => {
   if (expiry.date <= start.date) return res.status(400).json({ error: 'expiresAt must be after startsAt' });
 
   try {
+    const uniqueTitle = await ensureUniqueFormTitleSlug(title);
+    if (uniqueTitle.error) return res.status(400).json({ error: uniqueTitle.error });
+
     const linkedSession = await normalizeLiveSessionId(liveSessionId);
     if (linkedSession.error) return res.status(400).json({ error: linkedSession.error });
 
@@ -1999,11 +2088,17 @@ router.patch('/admin/cms/forms/:id', requireAuth, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
   const { title, description, questions, entities, startsAt, expiresAt, hideWhenExpired, isAttendance, scoringEnabled, liveSessionId, sortOrder } = req.body ?? {};
+  if (title !== undefined && !String(title).trim()) return res.status(400).json({ error: 'title is required' });
 
   try {
     const existingRows = await db('SELECT * FROM cms_forms WHERE id = $1 AND is_active = true', [id]);
     const existing = existingRows[0];
     if (!existing) return res.status(404).json({ error: 'Not found' });
+
+    if (title !== undefined) {
+      const uniqueTitle = await ensureUniqueFormTitleSlug(title, { excludeFormId: id });
+      if (uniqueTitle.error) return res.status(400).json({ error: uniqueTitle.error });
+    }
 
     const nextScoringEnabled = scoringEnabled !== undefined ? Boolean(scoringEnabled) : Boolean(existing.scoring_enabled);
     let normalized = null;
@@ -2097,23 +2192,33 @@ router.get('/admin/cms/forms/:id/responses/export', requireAuth, async (req, res
     );
 
     const questions = (form.questions ?? []).filter((q) => q.type !== 'section');
-    const headers = ['Submitted At', 'Email', 'Name', 'Organisation', ...questions.map((q, i) => q.title || `Question ${i + 1}`)];
+    const scoringEnabled = Boolean(form.scoring_enabled);
+    const scoreHeaders = scoringEnabled ? ['Score', 'Max Score', 'Percentage'] : [];
+    const headers = ['Submitted At', 'Email', 'Name', 'Organisation', ...scoreHeaders, ...questions.map((q, i) => q.title || `Question ${i + 1}`)];
     const worksheetRows = [
       headers,
       ...responses.map((row) => {
+        const score = evaluateFormScore(form.questions ?? [], row.answers ?? {}, scoringEnabled);
         const base = [
-          new Date(row.submitted_at).toISOString(),
+          new Date(row.submitted_at),
           row.user_email,
           row.user_name,
           CONTENT_ENTITIES[row.user_entity] ?? row.user_entity ?? '',
         ];
+        const scoreValues = scoringEnabled
+          ? [
+              score?.score ?? 0,
+              score?.maxScore ?? 0,
+              `${score?.percentage ?? 0}%`,
+            ]
+          : [];
         const answerValues = questions.map((q) => formatAnswerForExport(q, row.answers ?? {}));
-        return [...base, ...answerValues];
+        return [...base, ...scoreValues, ...answerValues];
       }),
     ];
 
-    const buffer = await buildXlsxBuffer(worksheetRows);
-    const filename = `${String(form.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'assessment'}-responses.xlsx`;
+    const buffer = await buildXlsxBuffer(worksheetRows, form.title);
+    const filename = `${safeFilename(form.title)}.xlsx`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', buffer.length);

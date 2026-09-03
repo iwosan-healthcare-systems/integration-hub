@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   CalendarClock,
@@ -16,9 +16,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Seo } from '@/components/Seo';
 import { useAuth } from '@/contexts/AuthContext';
-import { getForm, submitForm, type FormQuestion, type LearningForm } from '@/services/cmsService';
+import { learningFormPath, parseLearningFormSlug } from '@/lib/forms';
+import { getForm, submitForm, type FormScoreItem, type FormSubmission, type FormQuestion, type LearningForm } from '@/services/cmsService';
 
 type AnswerMap = Record<string, unknown>;
 
@@ -210,64 +212,145 @@ function QuestionField({
   return null;
 }
 
+function formatPoints(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, '');
+}
+
+function formatScoreAnswer(item: FormScoreItem, value: unknown): string {
+  if (value === undefined || value === null || value === '') return 'No answer';
+  if (Array.isArray(value)) return value.map(String).join(item.type === 'ranking' ? ' > ' : '; ');
+  if (value && typeof value === 'object') {
+    return Object.entries(value)
+      .map(([row, answer]) => `${row}: ${String(answer)}`)
+      .join('; ');
+  }
+  return String(value);
+}
+
+function ScoreResultCard({ submission, formLabel }: { submission: FormSubmission; formLabel: string }) {
+  const score = submission.score;
+  if (!score) return null;
+
+  return (
+    <Card className={`border-border/60 ${score.isFullScore ? 'border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20' : ''}`}>
+      <CardContent className="space-y-5 p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <CheckCircle2 className={`mt-0.5 h-5 w-5 shrink-0 ${score.isFullScore ? 'text-emerald-600' : 'text-primary'}`} />
+            <div className="min-w-0">
+              <p className="break-words text-sm font-semibold text-foreground">{formLabel} submitted</p>
+              <p className="mt-1 text-sm text-muted-foreground">Submitted on {formatDateTime(submission.submittedAt)}</p>
+            </div>
+          </div>
+          <div className="rounded-md border border-border bg-background px-4 py-3 text-left sm:text-right">
+            <p className="text-2xl font-bold text-foreground">{formatPoints(score.score)} / {formatPoints(score.maxScore)}</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{score.percentage}% score</p>
+          </div>
+        </div>
+
+        {score.isFullScore && (
+          <div className="rounded-md border border-emerald-200 bg-emerald-100/80 px-4 py-3 text-sm font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+            Congratulations, you got full grade.
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">Submitted Responses</h2>
+          {score.items.map((item, index) => (
+            <div key={item.questionId} className="rounded-md border border-border bg-background p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <p className="min-w-0 break-words text-sm font-semibold text-foreground">{index + 1}. {item.title}</p>
+                <Badge variant={item.correct ? 'default' : 'destructive'} className="w-fit shrink-0">
+                  {item.correct ? 'Correct' : 'Missed'} - {formatPoints(item.earned)}/{formatPoints(item.points)}
+                </Badge>
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="min-w-0 rounded-md bg-muted/40 p-3">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Your Answer</p>
+                  <p className="break-words text-sm text-foreground">{formatScoreAnswer(item, item.userAnswer)}</p>
+                </div>
+                <div className="min-w-0 rounded-md bg-muted/40 p-3">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Correct Answer</p>
+                  <p className="break-words text-sm text-foreground">{formatScoreAnswer(item, item.correctAnswer)}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function LearningFormPage() {
   const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [form, setForm] = useState<LearningForm | null>(null);
   const [answers, setAnswers] = useState<AnswerMap>({});
+  const [submission, setSubmission] = useState<FormSubmission | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  const formId = Number(params.id);
+  const formSlug = parseLearningFormSlug(params.slug);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (!Number.isFinite(formId)) {
+      if (!formSlug) {
         setError('Assessment not found.');
         setLoading(false);
         return;
       }
       setLoading(true);
-      const { form: data, error: loadError } = await getForm(formId);
+      setError('');
+      const { form: data, error: loadError } = await getForm(formSlug);
       if (cancelled) return;
       if (loadError || !data) {
         setError(loadError ?? 'Assessment not found.');
+        setForm(null);
+        setSubmission(null);
       } else {
         setForm(data);
-        setAnswers(initializeAnswers(data));
+        setAnswers(data.submission?.answers ?? initializeAnswers(data));
+        setSubmission(data.submission ?? null);
+        const expectedPath = learningFormPath(data);
+        if (location.pathname !== expectedPath) navigate(expectedPath, { replace: true });
       }
       setLoading(false);
     }
     load();
     return () => { cancelled = true; };
-  }, [formId]);
+  }, [formSlug, location.pathname, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form || form.expired || form.upcoming || form.hasSubmitted || submitted) return;
     setSubmitting(true);
     setError('');
-    const { error: submitError } = await submitForm(form.id, answers);
+    const { submission: submittedResponse, error: submitError } = await submitForm(form.id, answers);
     setSubmitting(false);
     if (submitError) {
       setError(submitError);
       return;
     }
     setSubmitted(true);
-    setForm({ ...form, hasSubmitted: true });
+    setSubmission(submittedResponse);
+    setForm({ ...form, hasSubmitted: true, submission: submittedResponse });
   }
 
   const title = form?.title ?? 'Learning Assessment';
   const formLabel = form?.isAttendance ? 'Attendance' : 'Assessment';
   const formNoun = form?.isAttendance ? 'attendance form' : 'assessment';
+  const currentSubmission = submission ?? form?.submission ?? null;
   const isBlocked = !!form && (form.expired || form.upcoming || form.hasSubmitted || submitted);
 
   return (
     <>
-      <Seo title={title} description={form?.description ?? `Learning Centre ${formNoun}`} path={`/learning/forms/${params.id ?? ''}`} />
+      <Seo title={title} description={form?.description ?? `Learning Centre ${formNoun}`} path={form ? learningFormPath(form) : `/learning/assessment/${params.slug ?? ''}`} />
       <section className="border-b border-border bg-learning-header px-6 py-10 sm:px-8 lg:px-16">
         <div className="mx-auto max-w-3xl">
           <Link to="/learning" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-white/70 transition-colors hover:text-white">
@@ -304,27 +387,31 @@ export default function LearningFormPage() {
               </div>
 
               {(form.expired || form.upcoming || form.hasSubmitted || submitted) && (
-                <Card className="border-border/60">
-                  <CardContent className="flex items-start gap-3 p-5">
-                    {form.hasSubmitted || submitted ? (
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-                    ) : (
-                      <FileQuestion className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-                    )}
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {form.hasSubmitted || submitted ? (form.isAttendance ? 'Attendance marked' : 'Response submitted') : form.expired ? `This ${formNoun} has expired` : `This ${formNoun} is not open yet`}
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {form.hasSubmitted || submitted
-                          ? form.isAttendance ? 'Each user can mark attendance once.' : 'Each user can submit this assessment once.'
-                          : form.expired
-                            ? `The submission window closed on ${formatDateTime(form.expiresAt)} and this ${formNoun} can no longer be filled.`
-                            : `The submission window opens on ${formatDateTime(form.startsAt)}.`}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                currentSubmission?.score ? (
+                  <ScoreResultCard submission={currentSubmission} formLabel={formLabel} />
+                ) : (
+                  <Card className="border-border/60">
+                    <CardContent className="flex items-start gap-3 p-5">
+                      {form.hasSubmitted || submitted ? (
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                      ) : (
+                        <FileQuestion className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                      )}
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {form.hasSubmitted || submitted ? (form.isAttendance ? 'Attendance marked' : 'Response submitted') : form.expired ? `This ${formNoun} has expired` : `This ${formNoun} is not open yet`}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {form.hasSubmitted || submitted
+                            ? form.isAttendance ? 'Each user can mark attendance once.' : 'Each user can submit this assessment once.'
+                            : form.expired
+                              ? `The submission window closed on ${formatDateTime(form.expiresAt)} and this ${formNoun} can no longer be filled.`
+                              : `The submission window opens on ${formatDateTime(form.startsAt)}.`}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
               )}
 
               {!isBlocked && (

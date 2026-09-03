@@ -61,8 +61,57 @@ function newQuestion(type: FormQuestionType = 'choice'): FormQuestion {
   return base;
 }
 
-function applyTypeDefaults(question: FormQuestion, type: FormQuestionType): FormQuestion {
-  return { ...newQuestion(type), id: question.id, title: question.title, required: question.required };
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.map(String) : [];
+}
+
+function objectAnswer(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value).map(([key, answer]) => [key, String(answer)]));
+}
+
+function isAnswerEmpty(value: unknown): boolean {
+  if (value === undefined || value === null || value === '') return true;
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === 'object') return Object.keys(value).length === 0;
+  return false;
+}
+
+function defaultCorrectAnswer(question: FormQuestion): unknown {
+  if (question.type === 'choice') return question.allowMultiple ? (question.options?.[0] ? [question.options[0]] : []) : question.options?.[0] ?? '';
+  if (question.type === 'rating') return 1;
+  if (question.type === 'date') return '';
+  if (question.type === 'ranking') return [...(question.options ?? [])];
+  if (question.type === 'likert') return Object.fromEntries((question.rows ?? []).map((row) => [row, question.options?.[0] ?? '']));
+  if (question.type === 'nps') return 0;
+  return '';
+}
+
+function withScoringDefaults(question: FormQuestion): FormQuestion {
+  if (question.type === 'section') return question;
+  return {
+    ...question,
+    points: Number(question.points) > 0 ? Number(question.points) : 1,
+    correctAnswer: isAnswerEmpty(question.correctAnswer) ? defaultCorrectAnswer(question) : question.correctAnswer,
+  };
+}
+
+function stripScoringFields(question: FormQuestion): FormQuestion {
+  const next = { ...question };
+  delete next.points;
+  delete next.correctAnswer;
+  return next;
+}
+
+function applyTypeDefaults(question: FormQuestion, type: FormQuestionType, scoringEnabled = false): FormQuestion {
+  const next = {
+    ...newQuestion(type),
+    id: question.id,
+    title: question.title,
+    required: type === 'section' ? false : question.required,
+    points: question.points,
+  };
+  return scoringEnabled ? withScoringDefaults(next) : stripScoringFields(next);
 }
 
 function toDateTimeLocal(iso: string): string {
@@ -130,6 +179,7 @@ function FormModal({ item, forms, sessions, onClose, onSaved }: FormModalProps) 
     expiresAt: item ? toDateTimeLocal(item.expiresAt) : defaultEndDate(),
     hideWhenExpired: item?.hideWhenExpired ?? false,
     isAttendance: item?.isAttendance ?? false,
+    scoringEnabled: item?.scoringEnabled ?? false,
     sortOrder: item?.sortOrder ?? 0,
   });
   const [loading, setLoading] = useState(false);
@@ -145,7 +195,16 @@ function FormModal({ item, forms, sessions, onClose, onSaved }: FormModalProps) 
   }
 
   function addQuestion(type: FormQuestionType = 'choice') {
-    set('questions', [...form.questions, newQuestion(type)]);
+    const question = newQuestion(type);
+    set('questions', [...form.questions, form.scoringEnabled ? withScoringDefaults(question) : question]);
+  }
+
+  function toggleScoring(scoringEnabled: boolean) {
+    setForm((current) => ({
+      ...current,
+      scoringEnabled,
+      questions: current.questions.map((question) => (scoringEnabled ? withScoringDefaults(question) : stripScoringFields(question))),
+    }));
   }
 
   function removeQuestion(index: number) {
@@ -265,6 +324,20 @@ function FormModal({ item, forms, sessions, onClose, onSaved }: FormModalProps) 
             </span>
           </label>
 
+          <label className="flex cursor-pointer select-none items-start gap-2 rounded-md border border-input px-3 py-2.5">
+            <Checkbox
+              className="mt-0.5"
+              checked={form.scoringEnabled}
+              onCheckedChange={(value) => toggleScoring(Boolean(value))}
+            />
+            <span className="min-w-0 text-sm text-foreground">
+              Enable scoring
+              <span className="block text-xs text-muted-foreground">
+                Add points and correct answers so users can view their score after submission.
+              </span>
+            </span>
+          </label>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="f-start">Start Date</Label>
@@ -340,6 +413,7 @@ function FormModal({ item, forms, sessions, onClose, onSaved }: FormModalProps) 
                   onChange={(next) => updateQuestion(index, next)}
                   onRemove={() => removeQuestion(index)}
                   onMove={moveQuestion}
+                  scoringEnabled={form.scoringEnabled}
                 />
               ))}
             </div>
@@ -367,9 +441,10 @@ interface QuestionEditorProps {
   onChange: (question: FormQuestion) => void;
   onRemove: () => void;
   onMove: (index: number, direction: -1 | 1) => void;
+  scoringEnabled: boolean;
 }
 
-function QuestionEditor({ question, index, isFirst, isLast, onChange, onRemove, onMove }: QuestionEditorProps) {
+function QuestionEditor({ question, index, isFirst, isLast, onChange, onRemove, onMove, scoringEnabled }: QuestionEditorProps) {
   const options = question.options ?? [];
   const rows = question.rows ?? [];
 
@@ -387,7 +462,7 @@ function QuestionEditor({ question, index, isFirst, isLast, onChange, onRemove, 
           </div>
           <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-[1fr_11rem]">
             <Input value={question.title} onChange={(e) => setField('title', e.target.value)} placeholder="Question" required />
-            <Select value={question.type} onValueChange={(value) => onChange(applyTypeDefaults(question, value as FormQuestionType))}>
+            <Select value={question.type} onValueChange={(value) => onChange(applyTypeDefaults(question, value as FormQuestionType, scoringEnabled))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {QUESTION_TYPES.map((type) => (
@@ -419,7 +494,16 @@ function QuestionEditor({ question, index, isFirst, isLast, onChange, onRemove, 
 
         {question.type === 'choice' && (
           <label className="flex cursor-pointer select-none items-center gap-2">
-            <Checkbox checked={!!question.allowMultiple} onCheckedChange={(value) => setField('allowMultiple', Boolean(value))} />
+            <Checkbox
+              checked={!!question.allowMultiple}
+              onCheckedChange={(value) => {
+                const allowMultiple = Boolean(value);
+                const correctAnswer = allowMultiple
+                  ? (typeof question.correctAnswer === 'string' && question.correctAnswer ? [question.correctAnswer] : stringArray(question.correctAnswer))
+                  : stringArray(question.correctAnswer)[0] ?? (typeof question.correctAnswer === 'string' ? question.correctAnswer : options[0] ?? '');
+                onChange({ ...question, allowMultiple, correctAnswer });
+              }}
+            />
             <span className="text-sm">Allow multiple answers</span>
           </label>
         )}
@@ -453,6 +537,22 @@ function QuestionEditor({ question, index, isFirst, isLast, onChange, onRemove, 
           </div>
         )}
 
+        {scoringEnabled && question.type !== 'section' && (
+          <div className="grid gap-4 border-t border-border pt-4 lg:grid-cols-[8rem_minmax(0,1fr)]">
+            <div className="space-y-1.5">
+              <Label>Score</Label>
+              <Input
+                type="number"
+                min={0.5}
+                step={0.5}
+                value={question.points ?? 1}
+                onChange={(e) => setField('points', Number(e.target.value) || 1)}
+              />
+            </div>
+            <CorrectAnswerEditor question={question} onChange={onChange} />
+          </div>
+        )}
+
         {question.type !== 'section' && (
           <label className="flex cursor-pointer select-none items-center gap-2 border-t border-border pt-3">
             <Checkbox checked={question.required} onCheckedChange={(value) => setField('required', Boolean(value))} />
@@ -462,6 +562,168 @@ function QuestionEditor({ question, index, isFirst, isLast, onChange, onRemove, 
       </CardContent>
     </Card>
   );
+}
+
+function CorrectAnswerEditor({ question, onChange }: { question: FormQuestion; onChange: (question: FormQuestion) => void }) {
+  const options = question.options ?? [];
+  const rows = question.rows ?? [];
+
+  function setCorrectAnswer(correctAnswer: unknown) {
+    onChange({ ...question, correctAnswer });
+  }
+
+  if (question.type === 'choice' && question.allowMultiple) {
+    const selected = stringArray(question.correctAnswer);
+    return (
+      <div className="min-w-0 space-y-2">
+        <Label>Correct Answer</Label>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {options.map((option) => (
+            <label key={option} className="flex cursor-pointer select-none items-start gap-2 rounded-md border border-border px-3 py-2">
+              <Checkbox
+                className="mt-0.5 shrink-0"
+                checked={selected.includes(option)}
+                onCheckedChange={(value) => {
+                  setCorrectAnswer(value ? [...selected, option] : selected.filter((item) => item !== option));
+                }}
+              />
+              <span className="min-w-0 break-words text-sm">{option}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (question.type === 'choice') {
+    return (
+      <div className="min-w-0 space-y-1.5">
+        <Label>Correct Answer</Label>
+        <Select value={typeof question.correctAnswer === 'string' ? question.correctAnswer : undefined} onValueChange={setCorrectAnswer}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select correct option" />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((option) => (
+              <SelectItem key={option} value={option}>{option}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
+  if (question.type === 'text') {
+    return (
+      <div className="min-w-0 space-y-1.5">
+        <Label>Correct Answer</Label>
+        <Input value={typeof question.correctAnswer === 'string' ? question.correctAnswer : ''} onChange={(e) => setCorrectAnswer(e.target.value)} />
+      </div>
+    );
+  }
+
+  if (question.type === 'rating') {
+    return (
+      <div className="min-w-0 space-y-1.5">
+        <Label>Correct Answer</Label>
+        <Input
+          type="number"
+          min={1}
+          max={question.max ?? 5}
+          value={typeof question.correctAnswer === 'number' ? question.correctAnswer : ''}
+          onChange={(e) => setCorrectAnswer(Number(e.target.value) || '')}
+        />
+      </div>
+    );
+  }
+
+  if (question.type === 'date') {
+    return (
+      <div className="min-w-0 space-y-1.5">
+        <Label>Correct Answer</Label>
+        <Input type="date" value={typeof question.correctAnswer === 'string' ? question.correctAnswer : ''} onChange={(e) => setCorrectAnswer(e.target.value)} />
+      </div>
+    );
+  }
+
+  if (question.type === 'ranking') {
+    const current = stringArray(question.correctAnswer);
+    const ranked = [...current.filter((option) => options.includes(option)), ...options.filter((option) => !current.includes(option))];
+    const move = (index: number, direction: -1 | 1) => {
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= ranked.length) return;
+      const next = [...ranked];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      setCorrectAnswer(next);
+    };
+    return (
+      <div className="min-w-0 space-y-2">
+        <Label>Correct Ranking</Label>
+        <div className="space-y-2">
+          {ranked.map((option, optionIndex) => (
+            <div key={option} className="grid grid-cols-[2rem_minmax(0,1fr)_4.5rem] items-center gap-2 rounded-md border border-border px-3 py-2">
+              <span className="text-center text-xs font-semibold text-muted-foreground">{optionIndex + 1}</span>
+              <span className="min-w-0 break-words text-sm text-foreground">{option}</span>
+              <div className="flex justify-end gap-1">
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => move(optionIndex, -1)} disabled={optionIndex === 0} aria-label="Move correct answer up">
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </Button>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => move(optionIndex, 1)} disabled={optionIndex === ranked.length - 1} aria-label="Move correct answer down">
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (question.type === 'likert') {
+    const answers = objectAnswer(question.correctAnswer);
+    return (
+      <div className="min-w-0 space-y-2">
+        <Label>Correct Answers</Label>
+        <div className="grid gap-2 md:grid-cols-2">
+          {rows.map((row) => (
+            <div key={row} className="min-w-0 space-y-1.5 rounded-md border border-border p-3">
+              <Label className="block break-words text-xs text-muted-foreground">{row}</Label>
+              <Select
+                value={answers[row] || undefined}
+                onValueChange={(value) => setCorrectAnswer({ ...answers, [row]: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select answer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (question.type === 'nps') {
+    return (
+      <div className="min-w-0 space-y-1.5">
+        <Label>Correct Answer</Label>
+        <Input
+          type="number"
+          min={0}
+          max={10}
+          value={typeof question.correctAnswer === 'number' ? question.correctAnswer : ''}
+          onChange={(e) => setCorrectAnswer(Number(e.target.value))}
+        />
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function OptionList({ label, values, onChange }: { label: string; values: string[]; onChange: (values: string[]) => void }) {
@@ -507,12 +769,13 @@ export default function FormsManagePage() {
           ? 'attendance linked session mark attendance'
           : 'assessment linked session take assessment'
         : 'standalone learning centre assessment';
+      const scoring = form.scoringEnabled ? ' scored scoring quiz' : '';
       return (
         form.title.toLowerCase().includes(q) ||
         form.description.toLowerCase().includes(q) ||
         form.entities.some((entity) => entityName(entity).toLowerCase().includes(q)) ||
         formStatus(form).label.toLowerCase().includes(q) ||
-        placement.includes(q) ||
+        `${placement}${scoring}`.includes(q) ||
         !!linkedSession?.title.toLowerCase().includes(q)
       );
     });
@@ -640,6 +903,7 @@ export default function FormsManagePage() {
                           <div className="flex min-w-0 items-center gap-2">
                             <p className="truncate text-sm font-medium text-foreground">{form.title}</p>
                             {form.isAttendance && <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[9px]">Attendance</Badge>}
+                            {form.scoringEnabled && <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-[9px]">Scored</Badge>}
                           </div>
                           <p className="truncate text-xs text-muted-foreground">{form.description || `${form.questions?.length ?? form.questionCount ?? 0} questions`}</p>
                         </div>

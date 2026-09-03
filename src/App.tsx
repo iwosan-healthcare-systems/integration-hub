@@ -149,7 +149,7 @@ const App = () => (
                 <Route path="/leadership" element={<LeadershipPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/learning" element={<LearningCentrePage />} />
-                <Route path="/learning/forms/:id" element={<LearningFormPage />} />
+                <Route path="/learning/assessment/:slug" element={<LearningFormPage />} />
                 <Route path="/courses/:slug" element={<CoursePage />} />
                 <Route path="/picture-library" element={<PictureLibraryPage />} />
                 <Route path="/album/:slug" element={<AlbumPage />} />

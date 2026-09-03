@@ -64,6 +64,7 @@ async function main() {
       expires_at        TIMESTAMPTZ NOT NULL,
       hide_when_expired BOOLEAN     NOT NULL DEFAULT false,
       is_attendance     BOOLEAN     NOT NULL DEFAULT false,
+      scoring_enabled   BOOLEAN     NOT NULL DEFAULT false,
       sort_order        INTEGER     NOT NULL DEFAULT 0,
       is_active         BOOLEAN     NOT NULL DEFAULT true,
       created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -78,6 +79,7 @@ async function main() {
     ADD COLUMN IF NOT EXISTS live_session_id INTEGER REFERENCES live_sessions(id) ON DELETE SET NULL
   `);
   await pool.query('ALTER TABLE cms_forms ADD COLUMN IF NOT EXISTS is_attendance BOOLEAN NOT NULL DEFAULT false');
+  await pool.query('ALTER TABLE cms_forms ADD COLUMN IF NOT EXISTS scoring_enabled BOOLEAN NOT NULL DEFAULT false');
   await pool.query("ALTER TABLE cms_forms ALTER COLUMN entities SET DEFAULT ARRAY['general']::TEXT[]");
   await pool.query("UPDATE cms_forms SET entities = ARRAY['general']::TEXT[] WHERE entities IS NULL OR cardinality(entities) = 0");
 
