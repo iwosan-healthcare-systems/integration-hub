@@ -64,7 +64,7 @@ export default function LoginPage() {
   } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
 
   if (!loading && user) {
-    const dest = user.role === 'admin' ? '/admin' : (from === '/admin' ? '/' : from);
+    const dest = user.role === 'admin' && !from.startsWith('/launchpad') ? '/admin' : (from === '/admin' ? '/' : from);
     return <Navigate to={dest} replace />;
   }
 
@@ -78,7 +78,7 @@ export default function LoginPage() {
         return;
       }
       setUser(loggedInUser);
-      const dest = loggedInUser.role === 'admin' ? '/admin' : (from === '/admin' ? '/' : from);
+      const dest = loggedInUser.role === 'admin' && !from.startsWith('/launchpad') ? '/admin' : (from === '/admin' ? '/' : from);
       navigate(dest, { replace: true });
     } finally {
       setIsSubmitting(false);
@@ -93,7 +93,7 @@ export default function LoginPage() {
       if (error) { setServerError(error); return; }
       if (!loggedInUser) return;
       setUser(loggedInUser);
-      const dest = loggedInUser.role === 'admin' ? '/admin' : (from === '/admin' ? '/' : from);
+      const dest = loggedInUser.role === 'admin' && !from.startsWith('/launchpad') ? '/admin' : (from === '/admin' ? '/' : from);
       navigate(dest, { replace: true });
     } finally {
       setAzureLoadingOrg(null);

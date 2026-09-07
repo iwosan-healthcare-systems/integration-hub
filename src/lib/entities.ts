@@ -10,6 +10,7 @@ export interface Entity {
 }
 
 export const ENTITIES: Entity[] = [
+  { id: 'iwosan-wellness', name: 'Iwosan Wellness' },
   { id: 'iwosan-lagoon', name: 'Lagoon Hospitals' },
   { id: 'euracare', name: 'Euracare' },
   { id: 'paelon-memorial', name: 'Paelon Memorial' },

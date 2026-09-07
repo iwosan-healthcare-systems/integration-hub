@@ -36,3 +36,7 @@ ProductionKey.pem
 
 # Local backups of uploaded CMS images
 cms-images-backup/
+# Local verification artifacts
+/tmp/
+/.playwright-cli/
+/output/playwright/

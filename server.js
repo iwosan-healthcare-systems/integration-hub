@@ -7,6 +7,7 @@
  */
 
 import express from 'express';
+import { registerLaunchpadRoutes } from './server/launchpad.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { Pool } from 'pg';
@@ -141,12 +142,12 @@ async function requireAuth(req, res, next) {
   if (!decoded) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const rows = await db(
-      'SELECT id, role, is_active, can_edit_cms, entity FROM users WHERE id = $1',
+      'SELECT id, role, is_active, can_edit_cms, can_review_launchpad, entity FROM users WHERE id = $1',
       [decoded.userId]
     );
     if (!rows[0] || !rows[0].is_active)
       return res.status(403).json({ error: 'Account deactivated' });
-    req.authUser = { ...decoded, role: rows[0].role, canEditCms: rows[0].can_edit_cms, entity: rows[0].entity };
+    req.authUser = { ...decoded, role: rows[0].role, canEditCms: rows[0].can_edit_cms, canReviewLaunchpad: rows[0].can_review_launchpad, entity: rows[0].entity };
     next();
   } catch (err) {
     console.error('requireAuth error:', err);
@@ -305,7 +306,7 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
   }
   try {
     const rows = await db(
-      'SELECT id, email, password_hash, name, role, is_first_login, is_active, auth_provider, can_edit_cms, entity FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, name, role, is_first_login, is_active, auth_provider, can_edit_cms, can_review_launchpad, entity FROM users WHERE email = $1',
       [String(email).toLowerCase().trim()]
     );
     const user = rows[0];
@@ -332,6 +333,7 @@ router.post('/auth/login', rateLimitLogin, async (req, res) => {
         isActive: user.is_active,
         authProvider: user.auth_provider,
         canEditCms: user.can_edit_cms,
+        canReviewLaunchpad: user.can_review_launchpad,
         entity: user.entity,
       },
     });
@@ -363,6 +365,7 @@ const AZURE_ORGS = {
 // registration yet, so its users are local accounts with entity assigned
 // manually.
 const ENTITIES = {
+  'iwosan-wellness': 'Iwosan Wellness',
   'iwosan-lagoon': 'Lagoon Hospitals',
   'euracare': 'Euracare',
   'paelon-memorial': 'Paelon Memorial',
@@ -469,7 +472,7 @@ router.post('/auth/azure', async (req, res) => {
 
     // 5. Find or auto-create the user
     let rows = await db(
-      'SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms FROM users WHERE email = $1',
+      'SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, can_review_launchpad FROM users WHERE email = $1',
       [email]
     );
 
@@ -478,7 +481,7 @@ router.post('/auth/azure', async (req, res) => {
       rows = await db(
         `INSERT INTO users (email, name, password_hash, role, is_first_login, is_active, auth_provider, entity)
          VALUES ($1, $2, $3, 'user', false, true, 'azure', $4)
-         RETURNING id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, entity`,
+         RETURNING id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, can_review_launchpad, entity`,
         [email, name, unusableHash, orgId]
       );
       console.log(`Azure [${orgId}]: auto-created user id=${rows[0].id}`);
@@ -507,6 +510,7 @@ router.post('/auth/azure', async (req, res) => {
         isActive: user.is_active,
         authProvider: user.auth_provider,
         canEditCms: user.can_edit_cms,
+        canReviewLaunchpad: user.can_review_launchpad,
         entity: orgId,
       },
     });
@@ -531,7 +535,7 @@ router.get('/auth/me', async (req, res) => {
   if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const rows = await db(
-      'SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, entity FROM users WHERE id = $1',
+      'SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, can_review_launchpad, entity FROM users WHERE id = $1',
       [authUser.userId]
     );
     const u = rows[0];
@@ -547,6 +551,7 @@ router.get('/auth/me', async (req, res) => {
         isActive: u.is_active,
         authProvider: u.auth_provider,
         canEditCms: u.can_edit_cms,
+        canReviewLaunchpad: u.can_review_launchpad,
         entity: u.entity,
       },
     });
@@ -677,7 +682,7 @@ router.get('/admin/users', requireAuth, async (req, res) => {
   }
   try {
     const rows = await db(
-      `SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, entity, last_sign_in_at, created_at, updated_at
+      `SELECT id, email, name, role, is_first_login, is_active, auth_provider, can_edit_cms, can_review_launchpad, entity, last_sign_in_at, created_at, updated_at
        FROM users ORDER BY created_at DESC`,
       []
     );
@@ -691,6 +696,7 @@ router.get('/admin/users', requireAuth, async (req, res) => {
         isActive: u.is_active,
         authProvider: u.auth_provider,
         canEditCms: u.can_edit_cms,
+        canReviewLaunchpad: u.can_review_launchpad,
         entity: u.entity,
         lastSignInAt: u.last_sign_in_at,
         createdAt: u.created_at,
@@ -715,7 +721,7 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Cannot modify your own account via the admin panel' });
   }
 
-  const { name, role, isActive, canEditCms, entity } = req.body ?? {};
+  const { name, role, isActive, canEditCms, canReviewLaunchpad, entity } = req.body ?? {};
 
   const targetRows = await db('SELECT email, role FROM users WHERE id = $1', [userId]);
   const targetEmail = targetRows[0]?.email;
@@ -752,6 +758,12 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
     setClauses.push(`is_active = $${idx++}`);
     params.push(Boolean(isActive));
   }
+  if (canReviewLaunchpad !== undefined) {
+    if (!isAdmin(authUser)) return res.status(403).json({ error: 'Only admins can change LaunchPad reviewer access' });
+    if (typeof canReviewLaunchpad !== 'boolean') return res.status(400).json({ error: 'LaunchPad reviewer access must be true or false' });
+    setClauses.push(`can_review_launchpad = $${idx++}`);
+    params.push(canReviewLaunchpad);
+  }
   if (canEditCms !== undefined) {
     if (!isAdmin(authUser)) {
       return res.status(403).json({ error: 'Only admins can change CMS access' });
@@ -775,7 +787,7 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
   try {
     const rows = await db(
       `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${idx}
-       RETURNING id, email, name, role, is_first_login, is_active, can_edit_cms, entity`,
+       RETURNING id, email, name, role, is_first_login, is_active, can_edit_cms, can_review_launchpad, entity`,
       params
     );
     if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
@@ -789,6 +801,7 @@ router.patch('/admin/users/:id', requireAuth, async (req, res) => {
         isFirstLogin: u.is_first_login,
         isActive: u.is_active,
         canEditCms: u.can_edit_cms,
+        canReviewLaunchpad: u.can_review_launchpad,
         entity: u.entity,
       },
     });
@@ -2967,6 +2980,8 @@ router.delete('/admin/cms/videos/:id', requireAuth, async (req, res) => {
 router.get('/health', (_, res) =>
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 );
+
+registerLaunchpadRoutes(router, { requireAuth, db, getPool, entities: ENTITIES });
 
 app.use('/api', router);
 

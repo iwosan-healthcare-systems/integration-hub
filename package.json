@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:launchpad": "node --test scripts/test-launchpad.mjs",
     "setup-db": "node scripts/setup-db.js",
     "migrate": "node scripts/run-migrations.js",
     "migrate-forms": "node scripts/migrate-forms.js",

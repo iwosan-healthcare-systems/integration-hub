@@ -24,6 +24,10 @@ const NewsPage             = lazy(() => import("./pages/NewsPage"));
 const NewsArticlePage      = lazy(() => import("./pages/NewsArticlePage"));
 const LeadershipPage       = lazy(() => import("./pages/LeadershipPage"));
 const LearningCentrePage   = lazy(() => import("./pages/LearningCentrePage"));
+const LaunchpadPage = lazy(() => import('./pages/LaunchpadPage'));
+const LaunchpadFormPage = lazy(() => import('./pages/LaunchpadFormPage'));
+const LaunchpadHistoryPage = lazy(() => import('./pages/LaunchpadHistoryPage'));
+const LaunchpadReviewPage = lazy(() => import('./pages/LaunchpadReviewPage'));
 const LearningFormPage     = lazy(() => import("./pages/LearningFormPage"));
 const CoursePage           = lazy(() => import("./pages/CoursePage"));
 const PictureLibraryPage   = lazy(() => import("./pages/PictureLibraryPage"));
@@ -67,7 +71,7 @@ function HubRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
-  if (user.role === "admin") return <Navigate to="/admin" replace />;
+  if (user.role === "admin" && !location.pathname.startsWith("/launchpad")) return <Navigate to="/admin" replace />;
   return <>{children}</>;
 }
 
@@ -148,6 +152,10 @@ const App = () => (
                 <Route path="/news/:slug" element={<NewsArticlePage />} />
                 <Route path="/leadership" element={<LeadershipPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
+                <Route path="/launchpad" element={<LaunchpadPage />} />
+                <Route path="/launchpad/submit" element={<LaunchpadFormPage />} />
+                <Route path="/launchpad/history" element={<LaunchpadHistoryPage />} />
+                <Route path="/launchpad/review" element={<LaunchpadReviewPage />} />
                 <Route path="/learning" element={<LearningCentrePage />} />
                 <Route path="/learning/assessment/:slug" element={<LearningFormPage />} />
                 <Route path="/courses/:slug" element={<CoursePage />} />

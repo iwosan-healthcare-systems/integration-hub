@@ -1,4 +1,4 @@
-import { Home, Building2, Users, FolderOpen, Newspaper, Link, GraduationCap, Images, Video } from "lucide-react";
+import { Home, Building2, Users, FolderOpen, Newspaper, Link, GraduationCap, Images, Video, Rocket } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import iwosanLogo from "@/assets/iwosan_logo.webp";
 import {
@@ -22,6 +22,7 @@ const mainNav = [
   { title: "Resources & Knowledge", url: "/resources", icon: FolderOpen },
   { title: "News & Updates", url: "/news", icon: Newspaper },
   { title: "Leadership", url: "/leadership", icon: Users },
+  { title: "LaunchPad", url: "/launchpad", icon: Rocket },
   { title: "Learning Centre", url: "/learning", icon: GraduationCap },
   { title: "Picture Library", url: "/picture-library", icon: Images },
   { title: "Video Library", url: "/videos", icon: Video },

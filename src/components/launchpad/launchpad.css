@@ -1,0 +1,24 @@
+﻿.lp-reveal { opacity: 0; transform: translateY(22px); transition: opacity .65s ease var(--lp-delay, 0ms), transform .65s cubic-bezier(.22,1,.36,1) var(--lp-delay, 0ms); }
+.lp-reveal.lp-visible, .lp-reveal:focus-within { opacity: 1; transform: none; }
+.lp-card { transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease; }
+.lp-card:hover { transform: translateY(-5px); box-shadow: 0 18px 40px -24px hsl(var(--primary) / .4); }
+.lp-card .lp-card-icon { transition: transform .4s cubic-bezier(.22,1,.36,1); }
+.lp-card:hover .lp-card-icon { transform: rotate(-7deg) scale(1.1); }
+.lp-hero-glow { animation: lp-drift 7s ease-in-out 3 alternate; }
+.lp-enter { animation: lp-enter .6s cubic-bezier(.22,1,.36,1) both; }
+.lp-form-section { scroll-margin-top: 24px; transition: border-color .25s, box-shadow .25s; }
+.lp-form-section:focus-within { border-color: hsl(var(--accent) / .55); box-shadow: 0 8px 32px -18px hsl(var(--accent) / .3); }
+.lp-form-section input, .lp-form-section textarea { transition: border-color .2s, box-shadow .2s, background-color .2s; }
+.lp-form-section input:not([type=radio]), .lp-form-section textarea { border-radius: .75rem; background: hsl(var(--muted) / .22); }
+.lp-form-section input:focus, .lp-form-section textarea:focus { background: hsl(var(--background)); }
+.lp-form-section input:not([type=radio]) { min-height: 46px; }
+.lp-step-link { transition: background-color .2s, color .2s, transform .2s; }
+.lp-step-link:hover { transform: translateY(-2px); }
+@keyframes lp-enter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes lp-drift { from { transform: translate(0,0) scale(1); } to { transform: translate(-25px,20px) scale(1.12); } }
+@media (prefers-reduced-motion: reduce) {
+  .lp-reveal, .lp-enter { opacity: 1 !important; transform: none !important; animation: none !important; transition: none !important; }
+  .lp-hero-glow { animation: none !important; }
+  .lp-card, .lp-card .lp-card-icon, .lp-step-link, .lp-form-section, .lp-form-section input, .lp-form-section textarea { transition: none !important; }
+  .lp-card:hover, .lp-card:hover .lp-card-icon, .lp-step-link:hover { transform: none !important; }
+}
