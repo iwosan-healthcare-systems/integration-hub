@@ -71,6 +71,7 @@ function HubRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  if ((user.role === "admin" || user.role === "manager") && location.pathname.replace(/\/$/, "") === "/launchpad/review") return <Navigate to="/admin/launchpad" replace />;
   if (user.role === "admin" && !location.pathname.startsWith("/launchpad")) return <Navigate to="/admin" replace />;
   return <>{children}</>;
 }
@@ -109,6 +110,7 @@ const App = () => (
               >
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/users" element={<UsersPage />} />
+                <Route path="/admin/launchpad" element={<LaunchpadReviewPage panel />} />
                 <Route path="/admin/cms/news" element={<NewsManagePage />} />
                 <Route path="/admin/cms/courses" element={<CoursesManagePage />} />
                 <Route path="/admin/cms/sessions" element={<SessionsManagePage />} />

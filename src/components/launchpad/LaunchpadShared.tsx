@@ -13,14 +13,14 @@ export function StatusBadge({ status }: { status: IdeaStatus }) {
   const colors = { submitted: 'bg-blue-50 text-blue-800 border-blue-200', under_review: 'bg-amber-50 text-amber-800 border-amber-200', successful: 'bg-emerald-50 text-emerald-800 border-emerald-200', rejected: 'bg-rose-50 text-rose-800 border-rose-200' };
   return <Badge className={`whitespace-nowrap ${colors[status]}`}>{LAUNCHPAD_STATUSES[status]}</Badge>;
 }
-export function LaunchpadShell({ children }: { children: React.ReactNode }) {
+export function LaunchpadShell({ children, panel = false }: { children: React.ReactNode; panel?: boolean }) {
   const { user } = useAuth();
-  const reviewer = user?.role === 'admin' || user?.canReviewLaunchpad;
+  const reviewer = user?.role === 'user' && user.canReviewLaunchpad;
   return <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-9 space-y-7">
-    <div className="flex items-center gap-3"><span className="rounded-2xl bg-accent/10 p-3 text-accent"><Rocket className="h-6 w-6" /></span><div><Link to="/launchpad" className="font-display text-2xl font-bold">LaunchPad</Link><p className="text-sm text-muted-foreground">Your idea. Your ownership. Our support.</p></div></div>
-    <nav aria-label="LaunchPad navigation" className="flex flex-wrap gap-2 border-b pb-4">
+    <div className="flex items-center gap-3"><span className="rounded-2xl bg-accent/10 p-3 text-accent"><Rocket className="h-6 w-6" /></span><div><span className="font-display text-2xl font-bold">{panel ? 'LaunchPad' : <Link to="/launchpad">LaunchPad</Link>}</span><p className="text-sm text-muted-foreground">Your idea. Your ownership. Our support.</p></div></div>
+    {!panel && <nav aria-label="LaunchPad navigation" className="flex flex-wrap gap-2 border-b pb-4">
       {[['/launchpad','Overview'],['/launchpad/submit','Submit an idea'],['/launchpad/history','My submissions'],...(reviewer ? [['/launchpad/review','Review dashboard']] : [])].map(([to,label]) => <NavLink key={to} to={to} end className={({isActive}) => `rounded-full px-4 py-2 text-sm font-medium transition-colors ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted/60 hover:bg-muted'}`}>{label}</NavLink>)}
-    </nav>{children}
+    </nav>}{children}
   </div>;
 }
 export function LoadError({ error, retry }: { error: Error; retry: () => void }) { return <div role="alert" className="rounded-xl border border-destructive/30 p-5 space-y-3"><p>{error.message}</p><Button variant="outline" onClick={retry}>Try again</Button></div>; }

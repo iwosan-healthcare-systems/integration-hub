@@ -13,6 +13,7 @@ import iwosanIcon from '@/assets/iwosan_icon.webp';
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/users', label: 'Users', icon: Users, end: false },
+  { to: '/admin/launchpad', label: 'LaunchPad', icon: LayoutDashboard, end: false },
 ];
 
 const cmsItems = [
@@ -69,7 +70,6 @@ function SidebarContent({
           </NavLink>
         ))}
 
-        {(user?.role === 'admin' || user?.canReviewLaunchpad) && <NavLink to="/launchpad/review" onClick={onNavClick} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted"><LayoutDashboard className="h-4 w-4" />LaunchPad</NavLink>}
         {/* CMS section */}
         <div className="pt-3 pb-1">
           <p className="flex items-center gap-1.5 px-3 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest mb-1">

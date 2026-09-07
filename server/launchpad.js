@@ -1,6 +1,6 @@
 ﻿export const VALUES = ['Empathetic', 'Ethical', 'Knowledge-driven', 'Innovative', 'Accessible'];
 export const STATUSES = { submitted: 'Submitted', under_review: 'Under Review', successful: 'Successful', rejected: 'Rejected' };
-export const canReviewLaunchpad = (u) => u?.role === 'admin' || u?.canReviewLaunchpad === true;
+export const canReviewLaunchpad = (u) => u?.role === 'admin' || u?.role === 'manager' || (u?.role === 'user' && u?.canReviewLaunchpad === true);
 const reference = (id) => `IHS-${String(id).padStart(6, '0')}`;
 const validDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
 export function validateSubmission(input) {

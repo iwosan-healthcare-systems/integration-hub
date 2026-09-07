@@ -26,7 +26,7 @@ async function api(path,user=users[0],options={}) {
 before(async()=>{
   await pool.query(readFileSync('server/launchpad-schema.sql','utf8').replace(/^\uFEFF/,''));
   const hash=await bcrypt.hash('Launchpad-test-password-42!',4);
-  for(const [role,reviewer,entity] of [['user',false,'iwosan-lagoon'],['user',true,'euracare'],['manager',false,'paelon-memorial'],['admin',false,null]]) {
+  for(const [role,reviewer,entity] of [['user',false,'iwosan-lagoon'],['user',true,'euracare'],['manager',false,'paelon-memorial'],['admin',false,null],['user',false,'paelon-memorial']]) {
     const {rows:[u]}=await pool.query('INSERT INTO users (email,name,password_hash,role,is_first_login,is_active,entity,can_review_launchpad) VALUES ($1,$2,$3,$4,false,true,$5,$6) RETURNING id,email,name,role',[`lp-test-${tag}-${users.length}@example.invalid`,'LaunchPad Test '+users.length,hash,role,entity,reviewer]);
     u.token=jwt.sign({userId:u.id,email:u.email,role:u.role},process.env.JWT_SECRET,{expiresIn:'10m'});users.push(u);
   }
@@ -56,9 +56,12 @@ test('login and session expose the new permission',async()=>{
  const r=await api('/auth/login',null,{method:'POST',body:JSON.stringify({email:users[1].email,password:'Launchpad-test-password-42!'})});assert.equal(r.status,200);assert.equal(r.data.user.canReviewLaunchpad,true);
  assert.equal((await api('/auth/me',users[0])).data.user.canReviewLaunchpad,false);
 });
-test('requires authentication and prevents ordinary users/managers from review and export',async()=>{
+test('requires authentication and prevents ordinary users from review and export',async()=>{
  assert.equal((await api('/launchpad/submissions/mine',null)).status,401);
- for(const u of [users[0],users[2]]) for(const path of ['/launchpad/review','/launchpad/review/export']) assert.equal((await api(path,u)).status,403);
+ for(const u of [users[0],users[4]]) for(const path of ['/launchpad/review','/launchpad/review/export']) assert.equal((await api(path,u)).status,403);
+});
+test('admins and managers can review and export without individual permission',async()=>{
+ for(const u of [users[2],users[3]]) for(const path of ['/launchpad/review','/launchpad/review/export']) assert.equal((await api(path,u)).status,200);
 });
 test('submits multiple ideas and ignores spoofed identity and status',async()=>{
  const r=await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers,userName:'Spoof',userEntity:'euracare',status:'successful'})});
@@ -68,13 +71,13 @@ test('submits multiple ideas and ignores spoofed identity and status',async()=>{
 test('rejects invalid submissions at the API',async()=>{assert.equal((await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers:{...answers,funding:100001}})})).status,400);});
 test('isolates personal history and protects response details',async()=>{
  const mine=await api('/launchpad/submissions/mine');assert.equal(mine.data.submissions.length,2);
- assert.equal((await api('/launchpad/submissions/mine',users[2])).data.submissions.length,0);
- assert.equal((await api(`/launchpad/submissions/${first.id}`,users[2])).status,404);
+ assert.equal((await api('/launchpad/submissions/mine',users[4])).data.submissions.length,0);
+ assert.equal((await api(`/launchpad/submissions/${first.id}`,users[4])).status,404);
  assert.equal((await api(`/launchpad/submissions/${first.id}`,users[1])).status,200);
 });
 test('status updates preserve history, reject stale edits, and refresh owner results',async()=>{
  assert.equal((await api(`/launchpad/submissions/${first.id}/status`,users[0],{method:'PATCH',body:JSON.stringify({status:'successful',version:1})})).status,403);
- const r=await api(`/launchpad/submissions/${first.id}/status`,users[1],{method:'PATCH',body:JSON.stringify({status:'under_review',version:1})});assert.equal(r.status,200);assert.equal(r.data.submission.version,2);
+ const r=await api(`/launchpad/submissions/${first.id}/status`,users[2],{method:'PATCH',body:JSON.stringify({status:'under_review',version:1})});assert.equal(r.status,200);assert.equal(r.data.submission.version,2);
  assert.equal((await api(`/launchpad/submissions/${first.id}/status`,users[1],{method:'PATCH',body:JSON.stringify({status:'rejected',version:1})})).status,409);
  const detail=await api(`/launchpad/submissions/${first.id}`);assert.equal(detail.data.submission.status,'under_review');assert.deepEqual(detail.data.history.map(h=>h.status),['submitted','under_review']);
  for(const [status,version] of [['successful',2],['rejected',3]]) assert.equal((await api(`/launchpad/submissions/${first.id}/status`,users[1],{method:'PATCH',body:JSON.stringify({status,version})})).status,200);

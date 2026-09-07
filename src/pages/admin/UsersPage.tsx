@@ -550,7 +550,7 @@ export default function UsersPage() {
                         {roleBadge(u.role)}
                         <StatusBadge active={u.isActive} />
                         {u.canEditCms && u.role === 'user' && <CmsBadge />}
-                        {u.canReviewLaunchpad && <Badge variant="outline" className="text-[10px]">LaunchPad reviewer</Badge>}
+                        {u.role === 'user' && u.canReviewLaunchpad && <Badge variant="outline" className="text-[10px]">LaunchPad reviewer</Badge>}
                       </div>
 
                       {/* Auth provider */}
@@ -622,7 +622,7 @@ export default function UsersPage() {
                           <DropdownMenuItem onClick={() => setEditTarget(u)}>
                             <Pencil className="h-3.5 w-3.5 mr-2" /> Edit user
                           </DropdownMenuItem>
-                          {isAdmin && u.role !== 'admin' && <DropdownMenuItem onClick={() => handleToggleLaunchpad(u)}><LayoutDashboard className="h-3.5 w-3.5 mr-2" />{u.canReviewLaunchpad ? 'Revoke LaunchPad reviewer access' : 'Grant LaunchPad reviewer access'}</DropdownMenuItem>}
+                          {isAdmin && u.role === 'user' && <DropdownMenuItem onClick={() => handleToggleLaunchpad(u)}><LayoutDashboard className="h-3.5 w-3.5 mr-2" />{u.canReviewLaunchpad ? 'Revoke LaunchPad reviewer access' : 'Grant LaunchPad reviewer access'}</DropdownMenuItem>}
                           <DropdownMenuItem onClick={() => handleToggleActive(u)}>
                             {u.isActive
                               ? <><UserX className="h-3.5 w-3.5 mr-2" /> Deactivate</>

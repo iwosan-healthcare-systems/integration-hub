@@ -1,12 +1,14 @@
 # LaunchPad
 
-Routes: `/launchpad` (overview), `/launchpad/submit` (shareable form link), `/launchpad/history` (own submissions), `/launchpad/review` (review dashboard).
+Routes: `/launchpad` (overview), `/launchpad/submit` (shareable form link), `/launchpad/history` (own submissions), `/launchpad/review` (permitted regular users), `/admin/launchpad` (admin/manager review dashboard).
 
 ## Enable on a deployed environment
 
 Run `npm run migrate` before restarting the API, then deploy the frontend build. The migration runner automatically includes `scripts/migrate-launchpad.js`. For a database already current with previous app migrations, `node scripts/migrate-launchpad.js` applies only LaunchPad. The migration is transactional and safe to repeat.
 
-Admins have reviewer access. In Admin > Users, open a user's action menu and choose **Grant LaunchPad reviewer access**. Managers and CMS editors need this separate permission. The API checks the current permission on every request. The dashboard opens from the LaunchPad navigation; admins also have a LaunchPad link in their sidebar.
+Admins and managers have reviewer access automatically through **Panel > LaunchPad**. The shared dashboard renders inside the panel layout at `/admin/launchpad`, with the same counts, filters, responses, status actions and exports. Their hub review links redirect to the panel, and the hub review tab is hidden for these roles.
+
+Regular users need an admin to grant **LaunchPad reviewer access** in Admin > Users. They review at `/launchpad/review` in the hub. CMS access alone does not grant review permission. The API checks the current role and permission on every request.
 
 ## Behaviour
 
