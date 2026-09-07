@@ -17,7 +17,7 @@ if(!['localhost','127.0.0.1','[::1]'].includes(host)) throw new Error('LaunchPad
 const pool=new pg.Pool(process.env.DATABASE_URL ? {connectionString:process.env.DATABASE_URL} : {host,port:Number(process.env.DB_PORT||5432),database:process.env.DB_NAME,user:process.env.DB_USER,password:process.env.DB_PASSWORD});
 const tag=randomUUID(); const users=[]; let server; let first; let second; let logs='';
 const base='http://127.0.0.1:3197/api';
-const answers={department:'Quality',managerName:'Test Manager',managerEmail:'manager@example.invalid',problem:'Patients miss appointments.',idea:'SMS appointment reminders.',values:['Innovative'],testPlan:'One clinic, with the reception team.',funding:95000,startDate:'2027-01-01',endDate:'2027-02-26',measurement:'No-show rate down 20%.',risks:'',owner:'Test Employee',managerSupported:false};
+const answers={department:'Quality',managerName:'Test Manager',managerEmail:'manager@example.invalid',problem:'Patients miss appointments.',idea:'SMS appointment reminders.',values:['Innovative'],testMethod:'Pilot reminders in one clinic.',testTeam:'The reception team.',funding:95000,startDate:'2027-01-01',endDate:'2027-02-26',measurement:'No-show rate down 20%.',risks:'',owner:'Test Employee',managerSupported:false};
 async function api(path,user=users[0],options={}) {
  const response=await fetch(base+path,{...options,headers:{'Content-Type':'application/json',...(user?{Authorization:`Bearer ${user.token}`}:{})}});
  const data=(response.headers.get('content-type')||'').includes('application/json')?await response.json():await response.text();

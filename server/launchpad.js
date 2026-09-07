@@ -6,7 +6,7 @@ const validDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) 
 export function validateSubmission(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Please complete the form.');
   const answers = {};
-  const fields = { department: ['Department',200], managerName: ['Line manager name',200], managerEmail: ['Line manager email',254], problem: ['The problem',5000], idea: ['Your idea',5000], testPlan: ['Where and with whom you will test it',5000], measurement: ['Success measurement',500], owner: ['Pilot owner',200], risks: ['Pilot risks',5000] };
+  const fields = { department: ['Department',200], managerName: ['Line manager name',200], managerEmail: ['Line manager email',254], problem: ['The problem',5000], idea: ['Your idea',5000], testMethod: ['How will you test out this idea?',5000], testTeam: ['Who will you be working with to test out this idea?',5000], measurement: ['Success measurement',500], owner: ['Pilot owner',200], risks: ['Pilot risks',5000] };
   for (const [key,[label,max]] of Object.entries(fields)) {
     const value = input[key] ?? '';
     if (typeof value !== 'string' || value.trim().length > max || (key !== 'risks' && !value.trim())) throw new Error(`${label} is required and must be at most ${max} characters.`);
@@ -94,9 +94,9 @@ export function registerLaunchpadRoutes(router, { requireAuth, db, getPool, enti
   router.get('/launchpad/review/export',requireAuth,reviewer,safe(async(req,res) => {
     const f = filters(req,res); if (!f) return;
     const rows = await db(`SELECT * FROM launchpad_submissions ${f.where} ORDER BY submitted_at DESC, id DESC`,f.params);
-    const headers = ['Reference','Submitted at (Africa/Lagos)','Status','Name','Email','Entity','Department','Line manager name','Line manager email','Problem and who it affects','Proposed change','Iwosan values','Where and with whom','Funding (NGN)','Pilot start','Pilot end','Success measurement','Risks','Pilot owner','Line manager supported','Last updated (Africa/Lagos)'];
+    const headers = ['Reference','Submitted at (Africa/Lagos)','Status','Name','Email','Entity','Department','Line manager name','Line manager email','Problem and who it affects','Proposed change','Iwosan values','How will you test out this idea?','Who will you be working with to test out this idea?','Original combined testing response','Funding (NGN)','Pilot start','Pilot end','Success measurement','Risks','Pilot owner','Line manager supported','Last updated (Africa/Lagos)'];
     const stamp = d => new Date(d).toLocaleString('en-GB',{timeZone:'Africa/Lagos',hour12:false});
-    const lines = [headers,...rows.map(r => { const a=r.answers; return [reference(r.id),stamp(r.submitted_at),STATUSES[r.status],r.user_name,r.user_email,entities[r.user_entity]??'Unassigned',a.department,a.managerName,a.managerEmail,a.problem,a.idea,a.values.join('; '),a.testPlan,a.funding,a.startDate,a.endDate,a.measurement,a.risks,a.owner,a.managerSupported?'Yes':'No',stamp(r.updated_at)]; })];
+    const lines = [headers,...rows.map(r => { const a=r.answers; return [reference(r.id),stamp(r.submitted_at),STATUSES[r.status],r.user_name,r.user_email,entities[r.user_entity]??'Unassigned',a.department,a.managerName,a.managerEmail,a.problem,a.idea,a.values.join('; '),a.testMethod??'',a.testTeam??'',a.testPlan??'',a.funding,a.startDate,a.endDate,a.measurement,a.risks,a.owner,a.managerSupported?'Yes':'No',stamp(r.updated_at)]; })];
     res.setHeader('Content-Type','text/csv; charset=utf-8'); res.setHeader('Content-Disposition','attachment; filename="launchpad-responses.csv"');
     res.send('\uFEFF'+lines.map(line=>line.map(csvCell).join(',')).join('\r\n'));
   }));

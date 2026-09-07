@@ -4,7 +4,7 @@ export const LAUNCHPAD_STATUSES = { submitted: 'Submitted', under_review: 'Under
 export type IdeaStatus = keyof typeof LAUNCHPAD_STATUSES;
 export interface IdeaAnswers {
   department: string; managerName: string; managerEmail: string; problem: string; idea: string;
-  values: string[]; testPlan: string; funding: number; startDate: string; endDate: string;
+  values: string[]; testPlan?: string; testMethod?: string; testTeam?: string; funding: number; startDate: string; endDate: string;
   measurement: string; risks: string; owner: string; managerSupported: boolean;
 }
 export interface IdeaSubmission {
