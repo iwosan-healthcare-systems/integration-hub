@@ -1,4 +1,4 @@
-import { act } from 'react';
+﻿import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -98,4 +98,56 @@ it('status cards toggle the filter, reset pagination, and clear to all submissio
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
   await act(async () => { card('All submissions').click(); });
   expect(card('All submissions').getAttribute('aria-pressed')).toBe('true');
+});
+
+it('orders cards before charts and filters, with independent chart switches', async () => {
+  account = { id: 1, role: 'manager', canReviewLaunchpad: false };
+  await show('/admin/launchpad');
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
+  const cards = container.querySelector('[aria-label="Filter submissions by status"]')!;
+  const status = container.querySelector('[aria-label="Ideas by status chart type"]')!;
+  const entity = container.querySelector('[aria-label="Ideas by entity chart type"]')!;
+  const form = container.querySelector('form')!;
+  expect(cards.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(entity.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  const button = (group: Element, type: string) => group.querySelector<HTMLButtonElement>(`[aria-label="${type} chart"]`)!;
+  expect(button(status, 'Bar').getAttribute('aria-pressed')).toBe('true');
+  expect(button(entity, 'Pie').getAttribute('aria-pressed')).toBe('true');
+  await act(async () => { button(status, 'Pie').click(); });
+  expect(button(status, 'Pie').getAttribute('aria-pressed')).toBe('true');
+  expect(button(entity, 'Pie').getAttribute('aria-pressed')).toBe('true');
+  await act(async () => { button(entity, 'Bar').click(); });
+  expect(button(entity, 'Bar').getAttribute('aria-pressed')).toBe('true');
+  expect(button(status, 'Pie').getAttribute('aria-pressed')).toBe('true');
+});
+
+describe('status reversal controls', () => {
+  for (const role of ['manager', 'user', 'admin']) {
+    for (const status of ['under_review', 'successful', 'rejected'] as const) {
+      it(`${role} has the correct controls for ${status}`, async () => {
+        account = { id: 1, role, canReviewLaunchpad: true };
+        const result = await vi.mocked(getReview)({ status: '', entity: '', from: '', to: '', search: '' }, 1);
+        vi.mocked(getReview).mockResolvedValue({
+          ...result,
+          submissions: [{
+            id: 1, reference: 'IHS-000001', userName: 'Reviewer test', userEmail: 'test@example.com',
+            userEntity: null, status, version: 1, submittedAt: '2026-09-07T10:00:00Z', updatedAt: '2026-09-07T10:00:00Z',
+            answers: { department: 'IT', managerName: '', managerEmail: '', problem: '', idea: 'Test idea', values: [], testPlan: '', funding: 0, startDate: '', endDate: '', measurement: '', risks: '', owner: '', managerSupported: true },
+          }],
+        });
+        await show(role === 'user' ? '/launchpad/review' : '/admin/launchpad');
+        await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
+        const select = container.querySelector<HTMLSelectElement>('[aria-label="Status for IHS-000001"]')!;
+        const option = (value: string) => select.querySelector<HTMLOptionElement>(`option[value="${value}"]`)!;
+        expect(option('submitted').disabled).toBe(role !== 'admin');
+        expect(select.disabled).toBe(role !== 'admin' && status !== 'under_review');
+        if (role === 'admin') {
+          expect([...select.options].every(item => !item.disabled)).toBe(true);
+        } else if (status === 'under_review') {
+          expect(option('successful').disabled).toBe(false);
+          expect(option('rejected').disabled).toBe(false);
+        }
+      });
+    }
+  }
 });
