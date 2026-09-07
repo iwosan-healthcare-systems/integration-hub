@@ -1,4 +1,4 @@
-﻿import { act } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -31,7 +31,7 @@ beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  vi.mocked(getReview).mockReset().mockResolvedValue({ submissions: [], summary: { submitted: 0, under_review: 0, successful: 0, rejected: 0 }, total: 0, page: 1, pageSize: 25 });
+  vi.mocked(getReview).mockReset().mockResolvedValue({ submissions: [], summary: { submitted: 0, under_review: 0, successful: 0, rejected: 0 }, statusSummary: { submitted: 0, under_review: 0, successful: 0, rejected: 0 }, entitySummary: [], total: 0, page: 1, pageSize: 25 });
 });
 afterEach(async () => { await act(async () => root.unmount()); client.clear(); container.remove(); vi.unstubAllGlobals(); });
 
@@ -76,4 +76,26 @@ describe('LaunchPad review location and access', () => {
     expect(container.textContent).toBe('LaunchPad overview');
     expect(getReview).not.toHaveBeenCalled();
   });
+});
+
+
+it('status cards toggle the filter, reset pagination, and clear to all submissions', async () => {
+  account = { id: 1, role: 'manager', canReviewLaunchpad: false };
+  await show('/admin/launchpad');
+  // Flush the query observer notification before interacting with loaded cards.
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
+  const card = (label: string) => [...container.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find(button => button.textContent?.includes(label))!;
+  expect(container.querySelector('#review-status')).toBeNull();
+  expect(card('Submitted')).toBeDefined();
+  await act(async () => { card('Submitted').click(); });
+  expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'submitted' }), 1);
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
+  expect(card('Submitted').getAttribute('aria-pressed')).toBe('true');
+  await act(async () => { card('Submitted').click(); });
+  expect(card('All submissions').getAttribute('aria-pressed')).toBe('true');
+  await act(async () => { card('Under Review').click(); });
+  expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'under_review' }), 1);
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
+  await act(async () => { card('All submissions').click(); });
+  expect(card('All submissions').getAttribute('aria-pressed')).toBe('true');
 });

@@ -1,4 +1,4 @@
-﻿export const VALUES = ['Empathetic', 'Ethical', 'Knowledge-driven', 'Innovative', 'Accessible'];
+export const VALUES = ['Empathetic', 'Ethical', 'Knowledge-driven', 'Innovative', 'Accessible'];
 export const STATUSES = { submitted: 'Submitted', under_review: 'Under Review', successful: 'Successful', rejected: 'Rejected' };
 export const canReviewLaunchpad = (u) => u?.role === 'admin' || u?.role === 'manager' || (u?.role === 'user' && u?.canReviewLaunchpad === true);
 const reference = (id) => `IHS-${String(id).padStart(6, '0')}`;
@@ -74,10 +74,22 @@ export function registerLaunchpadRoutes(router, { requireAuth, db, getPool, enti
     const page = Number(req.query.page ?? 1);
     if (!Number.isSafeInteger(page) || page < 1 || page > 1000000) return res.status(400).json({error:'Invalid page.'});
     const rows = await db(`SELECT * FROM launchpad_submissions ${f.where} ORDER BY submitted_at DESC, id DESC LIMIT 25 OFFSET $${f.params.length+1}`,[...f.params,(page-1)*25]);
-    const counts = await db(`SELECT status, COUNT(*)::integer AS count FROM launchpad_submissions ${f.where} GROUP BY status`,f.params);
-    const summary = Object.fromEntries(Object.keys(STATUSES).map(s => [s,0]));
-    for (const c of counts) summary[c.status] = c.count;
-    res.json({submissions:rows.map(mapRow),summary,total:Object.values(summary).reduce((a,b)=>a+b,0),page,pageSize:25});
+    // Aggregate every matching response, independently of pagination. Keep all
+    // status card counts available while a single status is selected.
+    const baseFilter = buildFilters({...req.query, status: ''}, entities);
+    const counts = await db(`SELECT status, user_entity, COUNT(*)::integer AS count FROM launchpad_submissions ${baseFilter.where} GROUP BY status, user_entity`,baseFilter.params);
+    const statusSummary = Object.fromEntries(Object.keys(STATUSES).map(s => [s,0]));
+    const summary = {...statusSummary};
+    const entityCounts = new Map();
+    for (const c of counts) {
+      statusSummary[c.status] += c.count;
+      if (!req.query.status || c.status === req.query.status) {
+        summary[c.status] += c.count;
+        entityCounts.set(c.user_entity, (entityCounts.get(c.user_entity) ?? 0) + c.count);
+      }
+    }
+    const entitySummary = [...entityCounts].map(([entity,count]) => ({entity,count})).sort((a,b) => b.count-a.count || String(a.entity).localeCompare(String(b.entity)));
+    res.json({submissions:rows.map(mapRow),summary,statusSummary,entitySummary,total:Object.values(summary).reduce((a,b)=>a+b,0),page,pageSize:25});
   }));
   router.get('/launchpad/review/export',requireAuth,reviewer,safe(async(req,res) => {
     const f = filters(req,res); if (!f) return;

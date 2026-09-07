@@ -24,3 +24,5 @@ Regular users need an admin to grant **LaunchPad reviewer access** in Admin > Us
 `npm run build`, `node node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit`, and `npm test` verify the frontend.
 
 `npm run test:launchpad` runs the API against the configured localhost PostgreSQL database, creates temporary test users and submissions, and removes them afterward. Apply existing app migrations first. The test starts an isolated API on port 3197 and refuses remote databases. It checks identity capture, multiple submissions, authorisation, validation, concurrent status updates, history, filters, CSV export, and permission revocation.
+
+The review status cards are toggle filters; All submissions clears the status. Cards and the status bar chart retain counts across all statuses for the applied date, entity and search. The entity pie chart, response list and export follow the selected status as well. All charts aggregate every matching response, independently of pagination.

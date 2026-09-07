@@ -98,3 +98,23 @@ test('only admins grant reviewer permission; stale tokens lose access after revo
  assert.equal((await api(`/admin/users/${users[0].id}`,users[3],{method:'PATCH',body:JSON.stringify({canReviewLaunchpad:false})})).status,200);
  assert.equal((await api('/launchpad/review',users[0])).status,403);
 });
+
+
+test('chart totals cover every page and retain all status counts while filtering',async()=>{
+ const marker='chart-'+tag;
+ const a=JSON.stringify({...answers,idea:marker});
+ await pool.query("INSERT INTO launchpad_submissions (user_id,user_name,user_email,user_entity,answers,status) SELECT $1,$2,$3,'iwosan-lagoon',$4::jsonb,'submitted' FROM generate_series(1,26)",[users[0].id,users[0].name,users[0].email,a]);
+ await pool.query("INSERT INTO launchpad_submissions (user_id,user_name,user_email,user_entity,answers,status) VALUES ($1,$2,$3,'euracare',$4::jsonb,'under_review'),($5,$6,$7,NULL,$4::jsonb,'successful')",[users[1].id,users[1].name,users[1].email,a,users[3].id,users[3].name,users[3].email]);
+ const q='search='+encodeURIComponent(marker);
+ const all=await api('/launchpad/review?'+q,users[1]);
+ assert.equal(all.status,200);assert.equal(all.data.submissions.length,25);assert.equal(all.data.total,28);
+ assert.deepEqual(all.data.statusSummary,{submitted:26,under_review:1,successful:1,rejected:0});
+ assert.equal(all.data.entitySummary.reduce((sum,row)=>sum+row.count,0),28);
+ assert.ok(all.data.entitySummary.some(row=>row.entity===null&&row.count===1));
+ const filtered=await api('/launchpad/review?'+q+'&status=under_review',users[1]);
+ assert.equal(filtered.data.total,1);assert.equal(filtered.data.statusSummary.submitted,26);
+ assert.deepEqual(filtered.data.entitySummary,[{entity:'euracare',count:1}]);
+ const entity=await api('/launchpad/review?'+q+'&entity=iwosan-lagoon&page=2',users[1]);
+ assert.equal(entity.data.submissions.length,1);assert.equal(entity.data.statusSummary.submitted,26);
+ assert.deepEqual(entity.data.entitySummary,[{entity:'iwosan-lagoon',count:26}]);
+});

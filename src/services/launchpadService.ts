@@ -13,7 +13,7 @@ export interface IdeaSubmission {
 }
 export interface IdeaDetail { submission: IdeaSubmission; history: { status: IdeaStatus; changedAt: string }[] }
 export interface ReviewFilters { status: string; entity: string; from: string; to: string; search: string }
-export interface ReviewResult { submissions: IdeaSubmission[]; summary: Record<IdeaStatus, number>; total: number; page: number; pageSize: number }
+export interface ReviewResult { submissions: IdeaSubmission[]; summary: Record<IdeaStatus, number>; statusSummary: Record<IdeaStatus, number>; entitySummary: { entity: string | null; count: number }[]; total: number; page: number; pageSize: number }
 const base = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 async function request(path: string, options: RequestInit = {}) {
   const token = getStoredToken();
