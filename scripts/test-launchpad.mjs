@@ -65,7 +65,7 @@ test('admins and managers can review and export without individual permission',a
 });
 test('submits multiple ideas and ignores spoofed identity and status',async()=>{
  const r=await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers,userName:'Spoof',userEntity:'euracare',status:'successful'})});
- assert.equal(r.status,201);first=r.data.submission;assert.equal(first.userName,users[0].name);assert.equal(first.userEntity,'iwosan-lagoon');assert.equal(first.status,'submitted');assert.match(first.reference,/^IHS-\d+$/);
+ assert.equal(r.status,201);first=r.data.submission;assert.equal(first.userName,users[0].name);assert.equal(first.userEntity,'iwosan-lagoon');assert.equal(first.status,'submitted');assert.equal(first.reference,'IHS-'+String(first.id).padStart(2,'0'));
  const r2=await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers:{...answers,idea:'=Test export formula',funding:0}})});assert.equal(r2.status,201);second=r2.data.submission;assert.notEqual(first.id,second.id);
 });
 test('rejects invalid submissions at the API',async()=>{assert.equal((await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers:{...answers,funding:100001}})})).status,400);});

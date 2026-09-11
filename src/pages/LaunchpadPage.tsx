@@ -25,12 +25,12 @@ export default function LaunchpadPage() {
     <section className="lp-enter relative isolate overflow-hidden rounded-[2rem] bg-primary text-primary-foreground p-7 sm:p-12">
       <div className="lp-hero-glow pointer-events-none absolute -right-24 -top-28 h-96 w-96 rounded-full bg-cyan-300/10 blur-2xl" aria-hidden="true" />
       <div className="pointer-events-none absolute -right-8 bottom-0 h-72 w-72 rounded-full border-[36px] border-white/5" aria-hidden="true" />
-      <div className="relative max-w-2xl space-y-6">
+      <div className="relative flex flex-col lg:flex-row lg:items-center gap-8"><div className="max-w-2xl space-y-6">
         <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-[10px] sm:text-xs uppercase tracking-[.18em] font-semibold text-cyan-200"><Sparkles className="h-4 w-4" /> Group innovation framework</p>
         <h1 className="text-3xl sm:text-5xl font-bold leading-tight">The people closest to the problem <span className="text-cyan-200">can change it.</span></h1>
         <p className="text-base sm:text-lg text-white/85 leading-relaxed">LaunchPad gives Iwosan employees the support to turn practical ideas into better care. Develop your idea, secure backing and lead delivery, with funding from your facility and guidance from the Group Panel.</p>
         <div className="flex items-center gap-3 border-t border-white/15 pt-5"><Rocket className="h-5 w-5 text-cyan-200 shrink-0" /><p className="font-medium text-cyan-200">The idea stays with you, from start to finish.</p></div>
-      </div>
+      </div><div className="shrink-0"><SubmitLink /></div></div>
     </section>
 
     <section aria-labelledby="values-heading" className="space-y-5 py-3">

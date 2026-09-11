@@ -12,7 +12,7 @@ Regular users need an admin to grant **LaunchPad reviewer access** in Admin > Us
 
 ## Behaviour
 
-- References use the `IHS-` prefix (for example `IHS-000001`) in screens, search and CSV export, including existing submissions.
+- References use the `IHS-` prefix (for example `IHS-01`) in screens, search and CSV export, including existing submissions.
 - Account name, email and entity are captured server-side as a submission snapshot. No unique-per-user submission restriction applies.
 - Five form sections and the appointment-reminder example follow the supplied requirements. Funding is capped at NGN 100,000; pilot dates are user-entered. Programme deadlines are not enforced.
 - Statuses: Submitted, Under Review, Successful, Rejected. Status changes are transactional and retain an audit history. Concurrent changes require the reviewer to refresh.
@@ -26,3 +26,5 @@ Regular users need an admin to grant **LaunchPad reviewer access** in Admin > Us
 `npm run test:launchpad` runs the API against the configured localhost PostgreSQL database, creates temporary test users and submissions, and removes them afterward. Apply existing app migrations first. The test starts an isolated API on port 3197 and refuses remote databases. It checks identity capture, multiple submissions, authorisation, validation, concurrent status updates, history, filters, CSV export, and permission revocation.
 
 The review status cards are toggle filters; All submissions clears the status. Cards and the status bar chart retain counts across all statuses for the applied date, entity and search. The entity pie chart, response list and export follow the selected status as well. All charts aggregate every matching response, independently of pagination.
+
+Review responses use compact rows with 25 responses per page. Search applies after a 250 ms typing pause and cancels superseded requests; entity and valid date ranges apply immediately. Previous results remain visible during refresh.

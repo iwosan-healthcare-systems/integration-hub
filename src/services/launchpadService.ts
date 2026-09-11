@@ -1,4 +1,4 @@
-﻿import { getStoredToken } from './authService';
+import { getStoredToken } from './authService';
 export const LAUNCHPAD_VALUES = ['Empathetic', 'Ethical', 'Knowledge-driven', 'Innovative', 'Accessible'];
 export const LAUNCHPAD_STATUSES = { submitted: 'Submitted', under_review: 'Under Review', successful: 'Successful', rejected: 'Rejected' } as const;
 export type IdeaStatus = keyof typeof LAUNCHPAD_STATUSES;
@@ -25,7 +25,7 @@ export async function submitIdea(answers: IdeaAnswers): Promise<{ submission: Id
 export async function getMyIdeas(): Promise<{ submissions: IdeaSubmission[] }> { return (await request('/submissions/mine')).json(); }
 export async function getIdea(id: number): Promise<IdeaDetail> { return (await request(`/submissions/${id}`)).json(); }
 const query = (filters: ReviewFilters) => new URLSearchParams(Object.entries(filters).filter(([, value]) => value)).toString();
-export async function getReview(filters: ReviewFilters, page: number): Promise<ReviewResult> { return (await request(`/review?${query(filters)}&page=${page}`)).json(); }
+export async function getReview(filters: ReviewFilters, page: number, signal?: AbortSignal): Promise<ReviewResult> { return (await request(`/review?${query(filters)}&page=${page}`, { signal })).json(); }
 export async function changeIdeaStatus(id: number, status: IdeaStatus, version: number) { return (await request(`/submissions/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, version }) })).json(); }
 export async function exportIdeas(filters: ReviewFilters) {
   const blob = await (await request(`/review/export?${query(filters)}`)).blob();

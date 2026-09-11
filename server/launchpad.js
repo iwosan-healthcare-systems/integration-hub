@@ -1,7 +1,7 @@
 export const VALUES = ['Empathetic', 'Ethical', 'Knowledge-driven', 'Innovative', 'Accessible'];
 export const STATUSES = { submitted: 'Submitted', under_review: 'Under Review', successful: 'Successful', rejected: 'Rejected' };
 export const canReviewLaunchpad = (u) => u?.role === 'admin' || u?.role === 'manager' || (u?.role === 'user' && u?.canReviewLaunchpad === true);
-const reference = (id) => `IHS-${String(id).padStart(6, '0')}`;
+const reference = (id) => `IHS-${String(id).padStart(2, '0')}`;
 const validDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
 export function validateSubmission(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Please complete the form.');
@@ -40,7 +40,7 @@ export function buildFilters(query, entities) {
     if (query.search.length > 200) throw new Error('Search must be at most 200 characters.');
     params.push(`%${query.search.trim().replace(/[\\%_]/g,'\\$&')}%`);
     const n = `$${params.length}`;
-    clauses.push(`(user_name ILIKE ${n} OR user_email ILIKE ${n} OR answers->>'idea' ILIKE ${n} OR ('IHS-' || LPAD(id::text, GREATEST(6,LENGTH(id::text)), '0')) ILIKE ${n})`);
+    clauses.push(`(user_name ILIKE ${n} OR user_email ILIKE ${n} OR answers->>'idea' ILIKE ${n} OR ('IHS-' || LPAD(id::text, GREATEST(2,LENGTH(id::text)), '0')) ILIKE ${n})`);
   }
   return { where: clauses.length ? `WHERE ${clauses.join(' AND ')}` : '', params };
 }

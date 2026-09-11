@@ -1,4 +1,4 @@
-﻿import { act } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -88,13 +88,13 @@ it('status cards toggle the filter, reset pagination, and clear to all submissio
   expect(container.querySelector('#review-status')).toBeNull();
   expect(card('Submitted')).toBeDefined();
   await act(async () => { card('Submitted').click(); });
-  expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'submitted' }), 1);
+  expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'submitted' }), 1, expect.any(AbortSignal));
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
   expect(card('Submitted').getAttribute('aria-pressed')).toBe('true');
   await act(async () => { card('Submitted').click(); });
   expect(card('All submissions').getAttribute('aria-pressed')).toBe('true');
   await act(async () => { card('Under Review').click(); });
-  expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'under_review' }), 1);
+  expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'under_review' }), 1, expect.any(AbortSignal));
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
   await act(async () => { card('All submissions').click(); });
   expect(card('All submissions').getAttribute('aria-pressed')).toBe('true');
@@ -150,4 +150,20 @@ describe('status reversal controls', () => {
       });
     }
   }
+});
+
+
+it('searches while typing and applies entity filters immediately', async () => {
+  account = { id: 1, role: 'manager', canReviewLaunchpad: true };
+  await show('/admin/launchpad');
+  const input = container.querySelector<HTMLInputElement>('#review-search')!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'IHS-01');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 300)); });
+  expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'IHS-01' }), 1, expect.any(AbortSignal));
+  const entity = container.querySelector<HTMLSelectElement>('#review-entity')!;
+  await act(async () => { entity.value = 'unassigned'; entity.dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ entity: 'unassigned', search: 'IHS-01' }), 1, expect.any(AbortSignal));
 });

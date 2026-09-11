@@ -10,8 +10,8 @@ import { getIdea, LAUNCHPAD_STATUSES, type IdeaStatus } from '@/services/launchp
 export const money = (amount: number) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(amount);
 export const dateTime = (value: string) => new Date(value).toLocaleString('en-GB', { timeZone: 'Africa/Lagos', dateStyle: 'medium', timeStyle: 'short' });
 export function StatusBadge({ status }: { status: IdeaStatus }) {
-  const colors = { submitted: 'bg-blue-50 text-blue-800 border-blue-200', under_review: 'bg-amber-50 text-amber-800 border-amber-200', successful: 'bg-emerald-50 text-emerald-800 border-emerald-200', rejected: 'bg-rose-50 text-rose-800 border-rose-200' };
-  return <Badge className={`whitespace-nowrap ${colors[status]}`}>{LAUNCHPAD_STATUSES[status]}</Badge>;
+  const colors = { submitted: 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30', under_review: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30', successful: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30', rejected: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30' };
+  return <Badge variant="outline" className={`self-start shrink-0 whitespace-nowrap ${colors[status]}`}>{LAUNCHPAD_STATUSES[status]}</Badge>;
 }
 export function LaunchpadShell({ children, panel = false }: { children: React.ReactNode; panel?: boolean }) {
   const { user } = useAuth();
@@ -19,7 +19,7 @@ export function LaunchpadShell({ children, panel = false }: { children: React.Re
   return <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-9 space-y-7">
     <div className="flex items-center gap-3"><span className="rounded-2xl bg-accent/10 p-3 text-accent"><Rocket className="h-6 w-6" /></span><div><span className="font-display text-2xl font-bold">{panel ? 'LaunchPad' : <Link to="/launchpad">LaunchPad</Link>}</span><p className="text-sm text-muted-foreground">Your idea. Your ownership. Our support.</p></div></div>
     {!panel && <nav aria-label="LaunchPad navigation" className="flex flex-wrap gap-2 border-b pb-4">
-      {[['/launchpad','Overview'],['/launchpad/submit','Submit an idea'],['/launchpad/history','My submissions'],...(reviewer ? [['/launchpad/review','Review dashboard']] : [])].map(([to,label]) => <NavLink key={to} to={to} end className={({isActive}) => `inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${to === '/launchpad/submit' ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/40 motion-safe:hover:-translate-y-0.5 ' + (isActive ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-background' : '') : isActive ? 'bg-primary text-primary-foreground' : 'bg-muted/60 hover:bg-muted'}`}>{to === '/launchpad/submit' && <Rocket aria-hidden="true" className="h-4 w-4" />}{label}{to === '/launchpad/submit' && <ArrowUpRight aria-hidden="true" className="h-4 w-4" />}</NavLink>)}
+      {[['/launchpad','Overview'],['/launchpad/history','My submissions'],...(reviewer ? [['/launchpad/review','Review dashboard']] : [])].map(([to,label]) => <NavLink key={to} to={to} end className={({isActive}) => `rounded-full px-4 py-2 text-sm font-medium transition-colors ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted/60 hover:bg-muted'}`}>{label}</NavLink>)}
     </nav>}{children}
   </div>;
 }
@@ -39,4 +39,4 @@ export function IdeaDetails({ id, onClose }: { id: number | null; onClose: () =>
     </div>}
   </DialogContent></Dialog>;
 }
-export function SubmitLink() { return <Button asChild size="lg" className="rounded-xl bg-accent text-accent-foreground shadow-lg shadow-accent/15 hover:bg-accent/90 motion-safe:transition-all motion-safe:hover:-translate-y-0.5"><Link to="/launchpad/submit">Submit an idea <ArrowUpRight className="ml-2 h-4 w-4" /></Link></Button>; }
+export function SubmitLink() { return <Button asChild size="lg" className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-blue-500 motion-safe:transition-all motion-safe:hover:-translate-y-0.5"><Link to="/launchpad/submit">Submit an idea <ArrowUpRight className="ml-2 h-4 w-4" /></Link></Button>; }
