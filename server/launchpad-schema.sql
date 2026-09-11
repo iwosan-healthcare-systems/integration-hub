@@ -18,3 +18,6 @@ CREATE TABLE IF NOT EXISTS launchpad_status_history (
  changed_by_name TEXT NOT NULL, changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS launchpad_history_idx ON launchpad_status_history (submission_id, id);
+
+ALTER TABLE launchpad_submissions ADD COLUMN IF NOT EXISTS rejection_comment TEXT;
+ALTER TABLE launchpad_status_history ADD COLUMN IF NOT EXISTS rejection_comment TEXT;

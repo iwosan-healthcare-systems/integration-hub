@@ -9,9 +9,9 @@ export interface IdeaAnswers {
 }
 export interface IdeaSubmission {
   id: number; reference: string; userName: string; userEmail: string; userEntity: string | null;
-  answers: IdeaAnswers; status: IdeaStatus; submittedAt: string; updatedAt: string; version: number;
+  rejectionComment?: string | null; answers: IdeaAnswers; status: IdeaStatus; submittedAt: string; updatedAt: string; version: number;
 }
-export interface IdeaDetail { submission: IdeaSubmission; history: { status: IdeaStatus; changedAt: string }[] }
+export interface IdeaDetail { submission: IdeaSubmission; history: { status: IdeaStatus; changedAt: string; rejectionComment?: string | null }[] }
 export interface ReviewFilters { status: string; entity: string; from: string; to: string; search: string }
 export interface ReviewResult { submissions: IdeaSubmission[]; summary: Record<IdeaStatus, number>; statusSummary: Record<IdeaStatus, number>; entitySummary: { entity: string | null; count: number }[]; total: number; page: number; pageSize: number }
 const base = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
@@ -26,7 +26,7 @@ export async function getMyIdeas(): Promise<{ submissions: IdeaSubmission[] }> {
 export async function getIdea(id: number): Promise<IdeaDetail> { return (await request(`/submissions/${id}`)).json(); }
 const query = (filters: ReviewFilters) => new URLSearchParams(Object.entries(filters).filter(([, value]) => value)).toString();
 export async function getReview(filters: ReviewFilters, page: number, signal?: AbortSignal): Promise<ReviewResult> { return (await request(`/review?${query(filters)}&page=${page}`, { signal })).json(); }
-export async function changeIdeaStatus(id: number, status: IdeaStatus, version: number) { return (await request(`/submissions/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, version }) })).json(); }
+export async function changeIdeaStatus(id: number, status: IdeaStatus, version: number, rejectionComment?: string) { return (await request(`/submissions/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, version, rejectionComment }) })).json(); }
 export async function exportIdeas(filters: ReviewFilters) {
   const blob = await (await request(`/review/export?${query(filters)}`)).blob();
   const url = URL.createObjectURL(blob); const a = document.createElement('a');

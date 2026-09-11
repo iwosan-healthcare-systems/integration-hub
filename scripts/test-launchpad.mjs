@@ -40,9 +40,9 @@ after(async()=>{
   if(users.length){await pool.query('DELETE FROM launchpad_submissions WHERE user_id = ANY($1::int[])',[users.map(u=>u.id)]);await pool.query('DELETE FROM users WHERE id = ANY($1::int[])',[users.map(u=>u.id)]);}
   await pool.end();
 });
-test('validates cap, malformed dates, required text, values and explicit support',()=>{
+test('validates funding, malformed dates, required text, values and explicit support',()=>{
  assert.equal(validateSubmission(answers).managerSupported,false);
- for(const patch of [{funding:100000.01},{funding:-1},{funding:'95000'},{funding:1.001},{startDate:'2027-02-30'},{endDate:'2026-01-01'},{values:[]},{values:['Unknown']},{managerSupported:'yes'},{managerEmail:'bad'},{problem:' '},{risks:'x'.repeat(5001)}]) assert.throws(()=>validateSubmission({...answers,...patch}));
+ for(const patch of [{funding:Number.MAX_SAFE_INTEGER},{funding:-1},{funding:'95000'},{funding:1.001},{startDate:'2027-02-30'},{endDate:'2026-01-01'},{values:[]},{values:['Unknown']},{managerSupported:'yes'},{managerEmail:'bad'},{problem:' '},{risks:'x'.repeat(5001)}]) assert.throws(()=>validateSubmission({...answers,...patch}));
  assert.equal(validateSubmission({...answers,funding:100000}).funding,100000);
 });
 test('uses safe filters and spreadsheet-safe CSV',()=>{
@@ -68,7 +68,7 @@ test('submits multiple ideas and ignores spoofed identity and status',async()=>{
  assert.equal(r.status,201);first=r.data.submission;assert.equal(first.userName,users[0].name);assert.equal(first.userEntity,'iwosan-lagoon');assert.equal(first.status,'submitted');assert.equal(first.reference,'IHS-'+String(first.id).padStart(2,'0'));
  const r2=await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers:{...answers,idea:'=Test export formula',funding:0}})});assert.equal(r2.status,201);second=r2.data.submission;assert.notEqual(first.id,second.id);
 });
-test('rejects invalid submissions at the API',async()=>{assert.equal((await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers:{...answers,funding:100001}})})).status,400);});
+test('rejects invalid submissions at the API',async()=>{assert.equal((await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers:{...answers,funding:-1}})})).status,400);});
 test('isolates personal history and protects response details',async()=>{
  const mine=await api('/launchpad/submissions/mine');assert.equal(mine.data.submissions.length,2);
  assert.equal((await api('/launchpad/submissions/mine',users[4])).data.submissions.length,0);
@@ -80,7 +80,7 @@ test('status updates preserve history, reject stale edits, and refresh owner res
  const r=await api(`/launchpad/submissions/${first.id}/status`,users[2],{method:'PATCH',body:JSON.stringify({status:'under_review',version:1})});assert.equal(r.status,200);assert.equal(r.data.submission.version,2);
  assert.equal((await api(`/launchpad/submissions/${first.id}/status`,users[1],{method:'PATCH',body:JSON.stringify({status:'rejected',version:1})})).status,409);
  const detail=await api(`/launchpad/submissions/${first.id}`);assert.equal(detail.data.submission.status,'under_review');assert.deepEqual(detail.data.history.map(h=>h.status),['submitted','under_review']);
- for(const [status,version] of [['successful',2],['rejected',3]]) assert.equal((await api(`/launchpad/submissions/${first.id}/status`,users[1],{method:'PATCH',body:JSON.stringify({status,version})})).status,200);
+ for(const [status,version] of [['successful',2],['rejected',3]]) assert.equal((await api(`/launchpad/submissions/${first.id}/status`,users[1],{method:'PATCH',body:JSON.stringify({status,version,rejectionComment:status==='rejected'?'Please explain the expected patient benefit.':undefined})})).status,200);
 });
 test('filters counts and exports across entities including full end dates',async()=>{
  const day=new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Lagos'});
@@ -117,4 +117,31 @@ test('chart totals cover every page and retain all status counts while filtering
  const entity=await api('/launchpad/review?'+q+'&entity=iwosan-lagoon&page=2',users[1]);
  assert.equal(entity.data.submissions.length,1);assert.equal(entity.data.statusSummary.submitted,26);
  assert.deepEqual(entity.data.entitySummary,[{entity:'iwosan-lagoon',count:26}]);
+});
+
+test('funding survives submission and stored detail without changing kobo',async()=>{
+ for(const funding of [20000,20000.50,19999.96,0.01,100000,100000.01,150000.50]){
+  const created=await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers:{...answers,funding}})});
+  assert.equal(created.status,201);
+  assert.equal(created.data.submission.answers.funding,funding);
+  const detail=await api('/launchpad/submissions/'+created.data.submission.id,users[0]);
+  assert.equal(detail.data.submission.answers.funding,funding);
+ }
+});
+
+test('requires a rejection reason and exposes it only to the owner and reviewers',async()=>{
+ const created=await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers})});
+ const id=created.data.submission.id;
+ const update=body=>api('/launchpad/submissions/'+id+'/status',users[1],{method:'PATCH',body:JSON.stringify(body)});
+ for(const rejectionComment of [undefined,' ', 'x'.repeat(2001)]) assert.equal((await update({status:'rejected',version:1,rejectionComment})).status,400);
+ const rejectionComment='The pilot needs a clearer measurement plan.';
+ assert.equal((await update({status:'rejected',version:1,rejectionComment})).status,200);
+ const detail=await api('/launchpad/submissions/'+id,users[0]);
+ assert.equal(detail.data.submission.rejectionComment,rejectionComment);
+ assert.equal(detail.data.history.at(-1).rejectionComment,rejectionComment);
+ assert.equal((await api('/launchpad/submissions/'+id,users[4])).status,404);
+ assert.equal((await api('/launchpad/submissions/'+id+'/status',users[3],{method:'PATCH',body:JSON.stringify({status:'under_review',version:2})})).status,200);
+ const reopened=await api('/launchpad/submissions/'+id,users[0]);
+ assert.equal(reopened.data.submission.rejectionComment,null);
+ assert.equal(reopened.data.history.find(h=>h.status==='rejected').rejectionComment,rejectionComment);
 });

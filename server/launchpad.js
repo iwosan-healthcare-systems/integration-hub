@@ -15,7 +15,7 @@ export function validateSubmission(input) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.managerEmail)) throw new Error('Enter a valid line manager email address.');
   if (!Array.isArray(input.values) || !input.values.length || input.values.length > VALUES.length || input.values.some(v => !VALUES.includes(v))) throw new Error('Select at least one Iwosan value.');
   answers.values = [...new Set(input.values)];
-  if (typeof input.funding !== 'number' || !Number.isFinite(input.funding) || input.funding < 0 || input.funding > 100000 || Math.abs(input.funding * 100 - Math.round(input.funding * 100)) > 0.00001) throw new Error('Funding must be between ₦0 and ₦100,000, with at most two decimal places.');
+  if (typeof input.funding !== 'number' || !Number.isFinite(input.funding) || input.funding < 0 || !Number.isSafeInteger(Math.round(input.funding * 100)) || Math.abs(input.funding * 100 - Math.round(input.funding * 100)) > 0.00001) throw new Error('Funding must be a non-negative amount with at most two decimal places and a safely representable kobo value.');
   answers.funding = input.funding;
   if (!validDate(input.startDate) || !validDate(input.endDate) || input.endDate < input.startDate) throw new Error('Enter valid pilot dates, with the end on or after the start.');
   answers.startDate = input.startDate; answers.endDate = input.endDate;
@@ -49,7 +49,7 @@ export function csvCell(value) {
   if (/^[\s\uFEFF]*[=+@-]/.test(text) || /^[\t\r\n]/.test(text)) text = `'${text}`;
   return `"${text.replace(/"/g,'""')}"`;
 }
-const mapRow = r => ({ id:r.id, reference:reference(r.id), userName:r.user_name, userEmail:r.user_email, userEntity:r.user_entity, answers:r.answers, status:r.status, submittedAt:r.submitted_at, updatedAt:r.updated_at, version:r.version });
+const mapRow = r => ({ id:r.id, reference:reference(r.id), rejectionComment:r.rejection_comment??null, userName:r.user_name, userEmail:r.user_email, userEntity:r.user_entity, answers:r.answers, status:r.status, submittedAt:r.submitted_at, updatedAt:r.updated_at, version:r.version });
 export function registerLaunchpadRoutes(router, { requireAuth, db, getPool, entities }) {
   const reviewer = (req,res,next) => canReviewLaunchpad(req.authUser) ? next() : res.status(403).json({error:'LaunchPad reviewer access required.'});
   const safe = handler => async (req,res) => { try { await handler(req,res); } catch(e) { console.error('LaunchPad:',e); res.status(500).json({error:'Unable to complete the LaunchPad request. Please try again.'}); } };
@@ -94,9 +94,9 @@ export function registerLaunchpadRoutes(router, { requireAuth, db, getPool, enti
   router.get('/launchpad/review/export',requireAuth,reviewer,safe(async(req,res) => {
     const f = filters(req,res); if (!f) return;
     const rows = await db(`SELECT * FROM launchpad_submissions ${f.where} ORDER BY submitted_at DESC, id DESC`,f.params);
-    const headers = ['Reference','Submitted at (Africa/Lagos)','Status','Name','Email','Entity','Department','Line manager name','Line manager email','Problem and who it affects','Proposed change','Iwosan values','How will you test out this idea?','Who will you be working with to test out this idea?','Original combined testing response','Funding (NGN)','Pilot start','Pilot end','Success measurement','Risks','Pilot owner','Line manager supported','Last updated (Africa/Lagos)'];
+    const headers = ['Reference','Submitted at (Africa/Lagos)','Status','Rejection reason','Name','Email','Entity','Department','Line manager name','Line manager email','Problem and who it affects','Proposed change','Iwosan values','How will you test out this idea?','Who will you be working with to test out this idea?','Original combined testing response','Funding (NGN)','Above NGN 100000','Pilot start','Pilot end','Success measurement','Risks','Pilot owner','Line manager supported','Last updated (Africa/Lagos)'];
     const stamp = d => new Date(d).toLocaleString('en-GB',{timeZone:'Africa/Lagos',hour12:false});
-    const lines = [headers,...rows.map(r => { const a=r.answers; return [reference(r.id),stamp(r.submitted_at),STATUSES[r.status],r.user_name,r.user_email,entities[r.user_entity]??'Unassigned',a.department,a.managerName,a.managerEmail,a.problem,a.idea,a.values.join('; '),a.testMethod??'',a.testTeam??'',a.testPlan??'',a.funding,a.startDate,a.endDate,a.measurement,a.risks,a.owner,a.managerSupported?'Yes':'No',stamp(r.updated_at)]; })];
+    const lines = [headers,...rows.map(r => { const a=r.answers; return [reference(r.id),stamp(r.submitted_at),STATUSES[r.status],r.rejection_comment??'',r.user_name,r.user_email,entities[r.user_entity]??'Unassigned',a.department,a.managerName,a.managerEmail,a.problem,a.idea,a.values.join('; '),a.testMethod??'',a.testTeam??'',a.testPlan??'',a.funding,a.funding>100000?'Yes':'No',a.startDate,a.endDate,a.measurement,a.risks,a.owner,a.managerSupported?'Yes':'No',stamp(r.updated_at)]; })];
     res.setHeader('Content-Type','text/csv; charset=utf-8'); res.setHeader('Content-Disposition','attachment; filename="launchpad-responses.csv"');
     res.send('\uFEFF'+lines.map(line=>line.map(csvCell).join(',')).join('\r\n'));
   }));
@@ -104,20 +104,22 @@ export function registerLaunchpadRoutes(router, { requireAuth, db, getPool, enti
     if (!/^\d+$/.test(req.params.id)) return res.status(404).json({error:'Submission not found.'});
     const [row] = await db('SELECT * FROM launchpad_submissions WHERE id = $1 AND (user_id = $2 OR $3::boolean)',[req.params.id,req.authUser.userId,canReviewLaunchpad(req.authUser)]);
     if (!row) return res.status(404).json({error:'Submission not found.'});
-    const history = await db('SELECT status, changed_at AS "changedAt" FROM launchpad_status_history WHERE submission_id = $1 ORDER BY id',[row.id]);
+    const history = await db('SELECT status, rejection_comment AS "rejectionComment", changed_at AS "changedAt" FROM launchpad_status_history WHERE submission_id = $1 ORDER BY id',[row.id]);
     res.json({submission:mapRow(row),history});
   }));
   router.patch('/launchpad/submissions/:id/status',requireAuth,reviewer,safe(async(req,res) => {
-    const {status,version} = req.body??{};
+    const {status,version,rejectionComment} = req.body??{};
     if (!/^\d+$/.test(req.params.id) || !Object.hasOwn(STATUSES,status) || !Number.isInteger(version) || version<1) return res.status(400).json({error:'A valid submission, status and version are required.'});
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
       const {rows:[row]} = await client.query('SELECT * FROM launchpad_submissions WHERE id = $1 FOR UPDATE',[req.params.id]);
       if (!row || row.version!==version) { await client.query('ROLLBACK'); return res.status(row?409:404).json({error:row?'This submission changed. Refresh it before updating.':'Submission not found.'}); }
+      const comment = status === 'rejected' && typeof rejectionComment === 'string' ? rejectionComment.trim() : null;
+      if (status === 'rejected' && (!comment || comment.length > 2000)) { await client.query('ROLLBACK'); return res.status(400).json({error:'Enter a rejection reason of at most 2,000 characters.'}); }
       if (row.status===status) { await client.query('COMMIT'); return res.json({submission:mapRow(row)}); }
-      const {rows:[updated]} = await client.query('UPDATE launchpad_submissions SET status = $2, updated_at = NOW(), version = version + 1 WHERE id = $1 RETURNING *',[row.id,status]);
-      await client.query('INSERT INTO launchpad_status_history (submission_id,status,changed_by,changed_by_name) SELECT $1,$2,id,name FROM users WHERE id = $3',[row.id,status,req.authUser.userId]);
+      const {rows:[updated]} = await client.query('UPDATE launchpad_submissions SET status = $2, rejection_comment = $3, updated_at = NOW(), version = version + 1 WHERE id = $1 RETURNING *',[row.id,status,comment]);
+      await client.query('INSERT INTO launchpad_status_history (submission_id,status,changed_by,changed_by_name,rejection_comment) SELECT $1,$2,id,name,$4 FROM users WHERE id = $3',[row.id,status,req.authUser.userId,comment]);
       await client.query('COMMIT'); res.json({submission:mapRow(updated)});
     } catch(e) { await client.query('ROLLBACK'); throw e; } finally { client.release(); }
   }));

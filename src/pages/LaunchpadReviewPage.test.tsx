@@ -1,3 +1,4 @@
+import { FundingFlag } from '@/components/launchpad/LaunchpadShared';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -166,4 +167,11 @@ it('searches while typing and applies entity filters immediately', async () => {
   const entity = container.querySelector<HTMLSelectElement>('#review-entity')!;
   await act(async () => { entity.value = 'unassigned'; entity.dispatchEvent(new Event('change', { bubbles: true })); });
   expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ entity: 'unassigned', search: 'IHS-01' }), 1, expect.any(AbortSignal));
+});
+
+it('flags only amounts strictly above the funding limit', async () => {
+  for (const amount of [99999.99, 100000, 100000.01, 150000]) {
+    await act(async () => { root.render(<FundingFlag amount={amount} />); });
+    expect(container.textContent?.includes('requires review')).toBe(amount > 100000);
+  }
 });

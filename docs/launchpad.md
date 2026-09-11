@@ -14,7 +14,7 @@ Regular users need an admin to grant **LaunchPad reviewer access** in Admin > Us
 
 - References use the `IHS-` prefix (for example `IHS-01`) in screens, search and CSV export, including existing submissions.
 - Account name, email and entity are captured server-side as a submission snapshot. No unique-per-user submission restriction applies.
-- Five form sections and the appointment-reminder example follow the supplied requirements. Funding is capped at NGN 100,000; pilot dates are user-entered. Programme deadlines are not enforced.
+- Five form sections and the appointment-reminder example follow the supplied requirements. Funding above NGN 100,000 is flagged for review; pilot dates are user-entered. Programme deadlines are not enforced.
 - Statuses: Submitted, Under Review, Successful, Rejected. Status changes are transactional and retain an audit history. Concurrent changes require the reviewer to refresh.
 - Users see only their own history; reviewers can view all entities. Date filters include both calendar dates in Africa/Lagos. Dashboard counts and CSV exports use the applied filters; export includes every matching page and every answer. Text cells are protected against spreadsheet formula execution.
 - Email notifications are deferred. MD/CEO approval remains outside the platform. Iwosan Wellness is available for account entity assignment.
@@ -28,3 +28,7 @@ Regular users need an admin to grant **LaunchPad reviewer access** in Admin > Us
 The review status cards are toggle filters; All submissions clears the status. Cards and the status bar chart retain counts across all statuses for the applied date, entity and search. The entity pie chart, response list and export follow the selected status as well. All charts aggregate every matching response, independently of pagination.
 
 Review responses use compact rows with 25 responses per page. Search applies after a 250 ms typing pause and cancels superseded requests; entity and valid date ranges apply immediately. Previous results remain visible during refresh.
+
+Funding above NGN 100,000 is accepted and flagged in review cards, response details and CSV exports. The exact requested amount is retained; the flag does not automatically change the submission status.
+
+Rejecting an idea requires a reason (up to 2,000 characters). The owner and reviewers can read it in response details and status history; it is also included in CSV exports. Pushing to master automatically runs this migration through the deployment workflow's npm run migrate step before the API restarts. Include scripts/migrate-launchpad-rejection-comments.js and the updated schema in the commit; no manual production command is needed. Older rejected submissions show that no comment was recorded.

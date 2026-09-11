@@ -7,10 +7,11 @@ import { Download, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ENTITIES, entityName } from '@/lib/entities';
-import { LaunchpadShell, StatusBadge, IdeaDetails, LoadError, dateTime, money } from '@/components/launchpad/LaunchpadShared';
+import { LaunchpadShell, FundingFlag, StatusBadge, IdeaDetails, LoadError, dateTime, money } from '@/components/launchpad/LaunchpadShared';
 import { getReview, changeIdeaStatus, exportIdeas, LAUNCHPAD_STATUSES, type IdeaStatus, type IdeaSubmission, type ReviewFilters } from '@/services/launchpadService';
 const empty: ReviewFilters={status:'',entity:'',from:'',to:'',search:''};
 const selectClass='flex h-8 w-full rounded-md border border-input bg-background px-3 py-2 text-sm';
@@ -20,8 +21,10 @@ function StatusEditor({ submission, onSaved }: { submission: IdeaSubmission; onS
   const canSelect = (next: IdeaStatus) => isAdmin || next === submission.status || submission.status === 'submitted' || (submission.status === 'under_review' && (next === 'successful' || next === 'rejected'));
   const locked = !isAdmin && (submission.status === 'successful' || submission.status === 'rejected');
   const [status,setStatus]=useState<IdeaStatus>(submission.status); const [busy,setBusy]=useState(false);
-  const save=async()=>{ if (!canSelect(status) || status === submission.status) return; setBusy(true); try { await changeIdeaStatus(submission.id,status,submission.version); toast.success('Status updated'); await onSaved(); } catch(e) { toast.error(e instanceof Error?e.message:'Could not update status'); await onSaved(); } finally {setBusy(false);} };
-  return <div className="space-y-1.5"><div className="flex gap-2"><select aria-label={`Status for ${submission.reference}`} className={`${selectClass} min-w-36`} value={status} onChange={e=>{ const next = e.target.value as IdeaStatus; if (canSelect(next)) setStatus(next); }} disabled={busy || locked}>{Object.entries(LAUNCHPAD_STATUSES).map(([key,label])=><option key={key} value={key} disabled={!canSelect(key as IdeaStatus)}>{label}</option>)}</select><Button size="sm" className="h-8" disabled={busy || !canSelect(status) || status===submission.status} onClick={save}>{busy?'Saving...':'Save'}</Button></div>{!isAdmin && submission.status !== 'submitted' && <p className="text-xs text-muted-foreground">{locked ? 'Only an admin can change a final decision.' : 'Only an admin can revert a status.'}</p>}</div>;
+  const [comment, setComment] = useState('');
+  const reasonMissing = status === 'rejected' && !comment.trim();
+  const save=async()=>{ if (!canSelect(status) || status === submission.status || reasonMissing) return; setBusy(true); try { await changeIdeaStatus(submission.id,status,submission.version,status === 'rejected' ? comment.trim() : undefined); toast.success('Status updated'); await onSaved(); } catch(e) { toast.error(e instanceof Error?e.message:'Could not update status'); await onSaved(); } finally {setBusy(false);} };
+  return <div className="space-y-1.5"><div className="flex gap-2"><select aria-label={`Status for ${submission.reference}`} className={`${selectClass} min-w-36`} value={status} onChange={e=>{ const next = e.target.value as IdeaStatus; if (canSelect(next)) setStatus(next); }} disabled={busy || locked}>{Object.entries(LAUNCHPAD_STATUSES).map(([key,label])=><option key={key} value={key} disabled={!canSelect(key as IdeaStatus)}>{label}</option>)}</select><Button size="sm" className="h-8" disabled={busy || reasonMissing || !canSelect(status) || status===submission.status} onClick={save}>{busy?'Saving...':'Save'}</Button></div>{status === 'rejected' && submission.status !== 'rejected' && <div className="space-y-1"><Label htmlFor={`rejection-${submission.id}`}>Reason for rejection *</Label><Textarea id={`rejection-${submission.id}`} value={comment} onChange={e=>setComment(e.target.value)} maxLength={2000} rows={3} disabled={busy} placeholder="Explain why this idea was rejected. The submitter will see this comment." /></div>}{!isAdmin && submission.status !== 'submitted' && <p className="text-xs text-muted-foreground">{locked ? 'Only an admin can change a final decision.' : 'Only an admin can revert a status.'}</p>}</div>;
 }
 export default function LaunchpadReviewPage({ panel = false }: { panel?: boolean }) {
   const {user}=useAuth();
@@ -77,7 +80,7 @@ export default function LaunchpadReviewPage({ panel = false }: { panel?: boolean
       {result.isFetching && <p role="status" className="text-xs text-muted-foreground">Updating results...</p>}
       <div className="space-y-2" aria-busy={result.isFetching}>{result.data.submissions.map(s=><article key={s.id} className="rounded-xl border bg-card p-3 sm:p-4 transition-colors hover:border-accent/40 hover:bg-muted/30">
         <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-          <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="min-w-0 flex-1 space-y-1.5"><FundingFlag amount={s.answers.funding} />
             <div className="flex flex-wrap items-center gap-2"><button className="text-xs font-semibold text-accent hover:underline" onClick={()=>setSelected(s.id)}>{s.reference}</button><StatusBadge status={s.status}/><span className="text-[10px] text-muted-foreground">{dateTime(s.submittedAt)}</span></div>
             <button className="block text-left text-sm font-semibold line-clamp-2 break-words hover:text-accent" onClick={()=>setSelected(s.id)}>{s.answers.idea}</button>
             <p className="text-xs text-muted-foreground truncate" title={s.userEmail}><span className="font-medium text-foreground">{s.userName}</span> / {entityName(s.userEntity)} / {s.answers.department} / {money(s.answers.funding)}</p>
