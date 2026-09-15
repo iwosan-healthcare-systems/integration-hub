@@ -1,11 +1,11 @@
 import { getStoredToken } from './authService';
 export const LAUNCHPAD_VALUES = ['Empathetic', 'Ethical', 'Knowledge-driven', 'Innovative', 'Accessible'];
-export const LAUNCHPAD_STATUSES = { submitted: 'Submitted', under_review: 'Under Review', successful: 'Successful', rejected: 'Rejected' } as const;
+export const LAUNCHPAD_STATUSES = { submitted: 'Idea Received', under_review: 'Under MD Review', successful: 'MD Approved', under_implementation: 'Under Implementation', concluded_pilot: 'Concluded Pilot', rejected: 'Parked' } as const;
 export type IdeaStatus = keyof typeof LAUNCHPAD_STATUSES;
 export interface IdeaAnswers {
   department: string; managerName: string; managerEmail: string; problem: string; idea: string;
-  values: string[]; testPlan?: string; testMethod?: string; testTeam?: string; funding: number; startDate: string; endDate: string;
-  measurement: string; risks: string; owner: string; managerSupported: boolean;
+  implementationPlan?: string; duration?: string; values: string[]; testPlan?: string; testMethod?: string; testTeam?: string; funding: number; startDate: string; endDate?: string;
+  measurement: string; risks?: string; owner: string; managerSupported: boolean; mdApproved?: boolean;
 }
 export interface IdeaSubmission {
   id: number; reference: string; userName: string; userEmail: string; userEntity: string | null;

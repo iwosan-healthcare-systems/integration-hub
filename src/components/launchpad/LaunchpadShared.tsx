@@ -1,3 +1,4 @@
+import { launchpadStatusColors } from '@/lib/launchpadStatusColors';
 import { Link, NavLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Rocket, ArrowUpRight } from 'lucide-react';
@@ -13,8 +14,8 @@ export function FundingFlag({ amount }: { amount: number }) {
   return amount > 100000 ? <p className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">Above the NGN 100,000 funding limit by {money(amount - 100000)} - requires review</p> : null;
 }
 export function StatusBadge({ status }: { status: IdeaStatus }) {
-  const colors = { submitted: 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30', under_review: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30', successful: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30', rejected: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30' };
-  return <Badge variant="outline" className={`self-start shrink-0 whitespace-nowrap ${colors[status]}`}>{LAUNCHPAD_STATUSES[status]}</Badge>;
+
+  return <Badge variant="outline" className={`self-start shrink-0 whitespace-nowrap ${launchpadStatusColors[status].badge}`}>{LAUNCHPAD_STATUSES[status]}</Badge>;
 }
 export function LaunchpadShell({ children, panel = false }: { children: React.ReactNode; panel?: boolean }) {
   const { user } = useAuth();
@@ -37,7 +38,20 @@ export function IdeaDetails({ id, onClose }: { id: number | null; onClose: () =>
     {detail.error && <LoadError error={detail.error} retry={() => detail.refetch()} />}
     {s && a && <div className="space-y-6"><div className="flex flex-wrap items-center gap-3"><StatusBadge status={s.status} /><span className="text-sm text-muted-foreground">{dateTime(s.submittedAt)}</span></div>
       <dl className="grid sm:grid-cols-2 gap-4 rounded-xl bg-muted/50 p-4">{[['Name',s.userName],['Email',s.userEmail],['Entity',entityName(s.userEntity)],['Department',a.department],['Line manager',a.managerName],['Manager email',a.managerEmail]].map(([label,value])=><div key={label} className="min-w-0"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="break-words text-sm font-medium">{value}</dd></div>)}</dl>
-      {s.status === 'rejected' && <section className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4"><h3 className="font-semibold text-sm mb-2">Reason for rejection</h3><p className="text-sm whitespace-pre-wrap break-words">{s.rejectionComment || 'No rejection comment was recorded for this submission.'}</p></section>}<FundingFlag amount={a.funding} /><dl className="space-y-5">{[['The problem and who it affects',a.problem],['What would you like to change?',a.idea],['Iwosan values',a.values.join(', ')],...(a.testPlan ? [['Where and with whom will you test it? (original response)',a.testPlan]] : []),['How will you test out this idea?',a.testMethod || 'Not collected on the original form'],['Who will you be working with to test out this idea?',a.testTeam || 'Not collected on the original form'],['Funding requested',money(a.funding)],['Pilot dates',`${a.startDate} to ${a.endDate}`],['How will you know it worked?',a.measurement],['What could prevent the pilot from working?',a.risks || 'Not provided'],['Pilot owner',a.owner],['Line manager support',a.managerSupported ? 'Yes' : 'No']].map(([label,value])=><div key={label}><dt className="font-semibold text-sm mb-1">{label}</dt><dd className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{value}</dd></div>)}</dl>
+      {s.status === 'rejected' && <section className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4"><h3 className="font-semibold text-sm mb-2">Reason for parking</h3><p className="text-sm whitespace-pre-wrap break-words">{s.rejectionComment || 'No parking comment was recorded for this submission.'}</p></section>}<FundingFlag amount={a.funding} /><dl className="space-y-5">{[['The problem and who it affects',a.problem],['What would you like to change?',a.idea],['Iwosan values',a.values.join(', ')],...(a.implementationPlan ? [
+        ['How will you implement this idea?',a.implementationPlan],
+        ['How will you know it worked - what KPIs/outcomes are you testing for',a.measurement],
+        ['When would you like to start working on idea?',a.startDate],
+        ['How much time do you think it will take to achieve this objective?',a.duration || 'Not provided'],
+        ['How much funding will you need? (The standard funding limit is N100,000 per idea)',money(a.funding)],
+        ['What could prevent the pilot from working?',a.risks || 'Not provided']
+      ] : [
+        ...(a.testPlan ? [['Where and with whom will you test it? (original response)',a.testPlan]] : []),
+        ...(a.testMethod ? [['How will you test out this idea? (original response)',a.testMethod]] : []),
+        ...(a.testTeam ? [['Who will you be working with to test out this idea? (original response)',a.testTeam]] : []),
+        ['Funding requested',money(a.funding)],['Pilot dates',`${a.startDate} to ${a.endDate || 'Not provided'}`],
+        ['How will you know it worked?',a.measurement],['What could prevent the pilot from working?',a.risks || 'Not provided']
+      ]),['Pilot owner',a.owner],['Line manager support',a.managerSupported ? 'Yes' : 'No'],['Has your MD approved this idea?',typeof a.mdApproved === 'boolean' ? (a.mdApproved ? 'Yes' : 'No') : 'Not collected on the original form']].map(([label,value])=><div key={label}><dt className="font-semibold text-sm mb-1">{label}</dt><dd className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{value}</dd></div>)}</dl>
       <section className="border-t pt-4"><h3 className="font-semibold mb-3">Status history</h3><ol className="space-y-3">{detail.data.history.map((h,i)=><li key={i} className="flex flex-wrap gap-3 items-center text-sm"><StatusBadge status={h.status}/><span>{dateTime(h.changedAt)}</span>{h.rejectionComment && <p className="w-full whitespace-pre-wrap break-words text-muted-foreground">{h.rejectionComment}</p>}</li>)}</ol></section>
     </div>}
   </DialogContent></Dialog>;

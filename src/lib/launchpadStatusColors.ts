@@ -1,0 +1,58 @@
+import type { IdeaStatus } from '@/services/launchpadService';
+
+export const launchpadStatusColors: Record<IdeaStatus, { chart: string; badge: string; text: string; background: string; border: string; card: string; active: string }> = {
+  submitted: {
+    chart: '#3b82f6',
+    badge: 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30',
+    text: 'text-blue-700 dark:text-blue-300',
+    background: 'bg-blue-500/10',
+    border: 'border-l-blue-400',
+    card: 'border-blue-200 bg-blue-50/50 hover:bg-blue-100 dark:border-blue-500/25 dark:bg-blue-500/5 dark:hover:bg-blue-500/15',
+    active: 'border-blue-400 bg-blue-100 ring-2 ring-blue-400/40 dark:border-blue-400 dark:bg-blue-500/20',
+  },
+  under_review: {
+    chart: '#f59e0b',
+    badge: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30',
+    text: 'text-amber-700 dark:text-amber-300',
+    background: 'bg-amber-500/10',
+    border: 'border-l-amber-400',
+    card: 'border-amber-200 bg-amber-50/50 hover:bg-amber-100 dark:border-amber-500/25 dark:bg-amber-500/5 dark:hover:bg-amber-500/15',
+    active: 'border-amber-400 bg-amber-100 ring-2 ring-amber-400/40 dark:border-amber-400 dark:bg-amber-500/20',
+  },
+  successful: {
+    chart: '#14b8a6',
+    badge: 'bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-500/15 dark:text-teal-300 dark:border-teal-500/30',
+    text: 'text-teal-700 dark:text-teal-300',
+    background: 'bg-teal-500/10',
+    border: 'border-l-teal-400',
+    card: 'border-teal-200 bg-teal-50/50 hover:bg-teal-100 dark:border-teal-500/25 dark:bg-teal-500/5 dark:hover:bg-teal-500/15',
+    active: 'border-teal-400 bg-teal-100 ring-2 ring-teal-400/40 dark:border-teal-400 dark:bg-teal-500/20',
+  },
+  under_implementation: {
+    chart: '#8b5cf6',
+    badge: 'bg-violet-50 text-violet-800 border-violet-200 dark:bg-violet-500/15 dark:text-violet-300 dark:border-violet-500/30',
+    text: 'text-violet-700 dark:text-violet-300',
+    background: 'bg-violet-500/10',
+    border: 'border-l-violet-400',
+    card: 'border-violet-200 bg-violet-50/50 hover:bg-violet-100 dark:border-violet-500/25 dark:bg-violet-500/5 dark:hover:bg-violet-500/15',
+    active: 'border-violet-400 bg-violet-100 ring-2 ring-violet-400/40 dark:border-violet-400 dark:bg-violet-500/20',
+  },
+  concluded_pilot: {
+    chart: '#10b981',
+    badge: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    background: 'bg-emerald-500/10',
+    border: 'border-l-emerald-400',
+    card: 'border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-500/5 dark:hover:bg-emerald-500/15',
+    active: 'border-emerald-400 bg-emerald-100 ring-2 ring-emerald-400/40 dark:border-emerald-400 dark:bg-emerald-500/20',
+  },
+  rejected: {
+    chart: '#64748b',
+    badge: 'bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/30',
+    text: 'text-slate-700 dark:text-slate-300',
+    background: 'bg-slate-500/10',
+    border: 'border-l-slate-400',
+    card: 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 dark:border-slate-500/25 dark:bg-slate-500/5 dark:hover:bg-slate-500/15',
+    active: 'border-slate-400 bg-slate-100 ring-2 ring-slate-400/40 dark:border-slate-400 dark:bg-slate-500/20',
+  },
+};

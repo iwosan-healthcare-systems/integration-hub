@@ -32,7 +32,7 @@ beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  vi.mocked(getReview).mockReset().mockResolvedValue({ submissions: [], summary: { submitted: 0, under_review: 0, successful: 0, rejected: 0 }, statusSummary: { submitted: 0, under_review: 0, successful: 0, rejected: 0 }, entitySummary: [], total: 0, page: 1, pageSize: 25 });
+  vi.mocked(getReview).mockReset().mockResolvedValue({ submissions: [], summary: { submitted: 0, under_review: 0, successful: 0, under_implementation: 0, concluded_pilot: 0, rejected: 0 }, statusSummary: { submitted: 0, under_review: 0, successful: 0, under_implementation: 0, concluded_pilot: 0, rejected: 0 }, entitySummary: [], total: 0, page: 1, pageSize: 25 });
 });
 afterEach(async () => { await act(async () => root.unmount()); client.clear(); container.remove(); vi.unstubAllGlobals(); });
 
@@ -87,14 +87,14 @@ it('status cards toggle the filter, reset pagination, and clear to all submissio
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
   const card = (label: string) => [...container.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find(button => button.textContent?.includes(label))!;
   expect(container.querySelector('#review-status')).toBeNull();
-  expect(card('Submitted')).toBeDefined();
-  await act(async () => { card('Submitted').click(); });
+  expect(card('Idea Received')).toBeDefined();
+  await act(async () => { card('Idea Received').click(); });
   expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'submitted' }), 1, expect.any(AbortSignal));
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
-  expect(card('Submitted').getAttribute('aria-pressed')).toBe('true');
-  await act(async () => { card('Submitted').click(); });
+  expect(card('Idea Received').getAttribute('aria-pressed')).toBe('true');
+  await act(async () => { card('Idea Received').click(); });
   expect(card('All submissions').getAttribute('aria-pressed')).toBe('true');
-  await act(async () => { card('Under Review').click(); });
+  await act(async () => { card('Under MD Review').click(); });
   expect(getReview).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'under_review' }), 1, expect.any(AbortSignal));
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
   await act(async () => { card('All submissions').click(); });
@@ -124,7 +124,7 @@ it('orders cards before charts and filters, with independent chart switches', as
 
 describe('status reversal controls', () => {
   for (const role of ['manager', 'user', 'admin']) {
-    for (const status of ['under_review', 'successful', 'rejected'] as const) {
+    for (const status of ['under_review', 'successful', 'under_implementation', 'concluded_pilot', 'rejected'] as const) {
       it(`${role} has the correct controls for ${status}`, async () => {
         account = { id: 1, role, canReviewLaunchpad: true };
         const result = await vi.mocked(getReview)({ status: '', entity: '', from: '', to: '', search: '' }, 1);
@@ -141,11 +141,12 @@ describe('status reversal controls', () => {
         const select = container.querySelector<HTMLSelectElement>('[aria-label="Status for IHS-000001"]')!;
         const option = (value: string) => select.querySelector<HTMLOptionElement>(`option[value="${value}"]`)!;
         expect(option('submitted').disabled).toBe(role !== 'admin');
-        expect(select.disabled).toBe(role !== 'admin' && status !== 'under_review');
+        expect(select.disabled).toBe(role !== 'admin' && (status === 'concluded_pilot' || status === 'rejected'));
         if (role === 'admin') {
           expect([...select.options].every(item => !item.disabled)).toBe(true);
-        } else if (status === 'under_review') {
-          expect(option('successful').disabled).toBe(false);
+        } else if (status !== 'concluded_pilot' && status !== 'rejected') {
+          expect(option('concluded_pilot').disabled).toBe(false);
+          expect(option('under_review').disabled).toBe(status !== 'under_review');
           expect(option('rejected').disabled).toBe(false);
         }
       });

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS launchpad_submissions (
  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
  user_name TEXT NOT NULL, user_email TEXT NOT NULL, user_entity TEXT,
  answers JSONB NOT NULL,
- status TEXT NOT NULL DEFAULT 'submitted' CHECK (status IN ('submitted','under_review','successful','rejected')),
+ status TEXT NOT NULL DEFAULT 'submitted' CHECK (status IN ('submitted','under_review','successful','under_implementation','concluded_pilot','rejected')),
  submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
  version INTEGER NOT NULL DEFAULT 1
 );
@@ -13,7 +13,7 @@ CREATE INDEX IF NOT EXISTS launchpad_filter_idx ON launchpad_submissions (status
 CREATE TABLE IF NOT EXISTS launchpad_status_history (
  id SERIAL PRIMARY KEY,
  submission_id INTEGER NOT NULL REFERENCES launchpad_submissions(id) ON DELETE CASCADE,
- status TEXT NOT NULL CHECK (status IN ('submitted','under_review','successful','rejected')),
+ status TEXT NOT NULL CHECK (status IN ('submitted','under_review','successful','under_implementation','concluded_pilot','rejected')),
  changed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
  changed_by_name TEXT NOT NULL, changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -21,3 +21,8 @@ CREATE INDEX IF NOT EXISTS launchpad_history_idx ON launchpad_status_history (su
 
 ALTER TABLE launchpad_submissions ADD COLUMN IF NOT EXISTS rejection_comment TEXT;
 ALTER TABLE launchpad_status_history ADD COLUMN IF NOT EXISTS rejection_comment TEXT;
+
+ALTER TABLE launchpad_submissions DROP CONSTRAINT IF EXISTS launchpad_submissions_status_check;
+ALTER TABLE launchpad_submissions ADD CONSTRAINT launchpad_submissions_status_check CHECK (status IN ('submitted','under_review','successful','under_implementation','concluded_pilot','rejected'));
+ALTER TABLE launchpad_status_history DROP CONSTRAINT IF EXISTS launchpad_status_history_status_check;
+ALTER TABLE launchpad_status_history ADD CONSTRAINT launchpad_status_history_status_check CHECK (status IN ('submitted','under_review','successful','under_implementation','concluded_pilot','rejected'));

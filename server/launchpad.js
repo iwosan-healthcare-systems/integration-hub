@@ -1,12 +1,12 @@
 export const VALUES = ['Empathetic', 'Ethical', 'Knowledge-driven', 'Innovative', 'Accessible'];
-export const STATUSES = { submitted: 'Submitted', under_review: 'Under Review', successful: 'Successful', rejected: 'Rejected' };
+export const STATUSES = { submitted: 'Idea Received', under_review: 'Under MD Review', successful: 'MD Approved', under_implementation: 'Under Implementation', concluded_pilot: 'Concluded Pilot', rejected: 'Parked' };
 export const canReviewLaunchpad = (u) => u?.role === 'admin' || u?.role === 'manager' || (u?.role === 'user' && u?.canReviewLaunchpad === true);
 const reference = (id) => `IHS-${String(id).padStart(2, '0')}`;
 const validDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
 export function validateSubmission(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Please complete the form.');
   const answers = {};
-  const fields = { department: ['Department',200], managerName: ['Line manager name',200], managerEmail: ['Line manager email',254], problem: ['The problem',5000], idea: ['Your idea',5000], testMethod: ['How will you test out this idea?',5000], testTeam: ['Who will you be working with to test out this idea?',5000], measurement: ['Success measurement',500], owner: ['Pilot owner',200], risks: ['Pilot risks',5000] };
+  const fields = { department: ['Department',200], managerName: ['Line manager name',200], managerEmail: ['Line manager email',254], problem: ['The problem',5000], idea: ['Your idea',5000], implementationPlan: ['How will you implement this idea?',5000], duration: ['Expected time to achieve the objective',500], measurement: ['KPIs and outcomes',5000], owner: ['Pilot owner',200], risks: ['Pilot risks',5000] };
   for (const [key,[label,max]] of Object.entries(fields)) {
     const value = input[key] ?? '';
     if (typeof value !== 'string' || value.trim().length > max || (key !== 'risks' && !value.trim())) throw new Error(`${label} is required and must be at most ${max} characters.`);
@@ -17,10 +17,12 @@ export function validateSubmission(input) {
   answers.values = [...new Set(input.values)];
   if (typeof input.funding !== 'number' || !Number.isFinite(input.funding) || input.funding < 0 || !Number.isSafeInteger(Math.round(input.funding * 100)) || Math.abs(input.funding * 100 - Math.round(input.funding * 100)) > 0.00001) throw new Error('Funding must be a non-negative amount with at most two decimal places and a safely representable kobo value.');
   answers.funding = input.funding;
-  if (!validDate(input.startDate) || !validDate(input.endDate) || input.endDate < input.startDate) throw new Error('Enter valid pilot dates, with the end on or after the start.');
-  answers.startDate = input.startDate; answers.endDate = input.endDate;
+  if (!validDate(input.startDate)) throw new Error('Enter a valid implementation start date.');
+  answers.startDate = input.startDate;
   if (typeof input.managerSupported !== 'boolean') throw new Error('Select whether your line manager supports the idea.');
   answers.managerSupported = input.managerSupported;
+  if (typeof input.mdApproved !== 'boolean') throw new Error('Select whether your MD has approved the idea.');
+  answers.mdApproved = input.mdApproved;
   return answers;
 }
 // Inclusive calendar dates in Lagos, independent of database/server timezone.
@@ -94,9 +96,9 @@ export function registerLaunchpadRoutes(router, { requireAuth, db, getPool, enti
   router.get('/launchpad/review/export',requireAuth,reviewer,safe(async(req,res) => {
     const f = filters(req,res); if (!f) return;
     const rows = await db(`SELECT * FROM launchpad_submissions ${f.where} ORDER BY submitted_at DESC, id DESC`,f.params);
-    const headers = ['Reference','Submitted at (Africa/Lagos)','Status','Rejection reason','Name','Email','Entity','Department','Line manager name','Line manager email','Problem and who it affects','Proposed change','Iwosan values','How will you test out this idea?','Who will you be working with to test out this idea?','Original combined testing response','Funding (NGN)','Above NGN 100000','Pilot start','Pilot end','Success measurement','Risks','Pilot owner','Line manager supported','Last updated (Africa/Lagos)'];
+    const headers = ['Reference','Submitted at (Africa/Lagos)','Status','Reason for parking','Name','Email','Entity','Department','Line manager name','Line manager email','Problem and who it affects','Proposed change','Iwosan values','How will you implement this idea?','Expected time to achieve the objective','How will you test out this idea?','Who will you be working with to test out this idea?','Original combined testing response','Funding (NGN)','Above NGN 100000','Implementation start','Original pilot end','KPIs and outcomes','What could prevent the pilot from working?','Pilot owner','Line manager supported','MD approved','Last updated (Africa/Lagos)'];
     const stamp = d => new Date(d).toLocaleString('en-GB',{timeZone:'Africa/Lagos',hour12:false});
-    const lines = [headers,...rows.map(r => { const a=r.answers; return [reference(r.id),stamp(r.submitted_at),STATUSES[r.status],r.rejection_comment??'',r.user_name,r.user_email,entities[r.user_entity]??'Unassigned',a.department,a.managerName,a.managerEmail,a.problem,a.idea,a.values.join('; '),a.testMethod??'',a.testTeam??'',a.testPlan??'',a.funding,a.funding>100000?'Yes':'No',a.startDate,a.endDate,a.measurement,a.risks,a.owner,a.managerSupported?'Yes':'No',stamp(r.updated_at)]; })];
+    const lines = [headers,...rows.map(r => { const a=r.answers; return [reference(r.id),stamp(r.submitted_at),STATUSES[r.status],r.rejection_comment??'',r.user_name,r.user_email,entities[r.user_entity]??'Unassigned',a.department,a.managerName,a.managerEmail,a.problem,a.idea,a.values.join('; '),a.implementationPlan??'',a.duration??'',a.testMethod??'',a.testTeam??'',a.testPlan??'',a.funding,a.funding>100000?'Yes':'No',a.startDate,a.endDate,a.measurement,a.risks,a.owner,a.managerSupported?'Yes':'No',typeof a.mdApproved === 'boolean' ? (a.mdApproved ? 'Yes' : 'No') : 'Not collected on the original form',stamp(r.updated_at)]; })];
     res.setHeader('Content-Type','text/csv; charset=utf-8'); res.setHeader('Content-Disposition','attachment; filename="launchpad-responses.csv"');
     res.send('\uFEFF'+lines.map(line=>line.map(csvCell).join(',')).join('\r\n'));
   }));
@@ -116,7 +118,7 @@ export function registerLaunchpadRoutes(router, { requireAuth, db, getPool, enti
       const {rows:[row]} = await client.query('SELECT * FROM launchpad_submissions WHERE id = $1 FOR UPDATE',[req.params.id]);
       if (!row || row.version!==version) { await client.query('ROLLBACK'); return res.status(row?409:404).json({error:row?'This submission changed. Refresh it before updating.':'Submission not found.'}); }
       const comment = status === 'rejected' && typeof rejectionComment === 'string' ? rejectionComment.trim() : null;
-      if (status === 'rejected' && (!comment || comment.length > 2000)) { await client.query('ROLLBACK'); return res.status(400).json({error:'Enter a rejection reason of at most 2,000 characters.'}); }
+      if (status === 'rejected' && (!comment || comment.length > 2000)) { await client.query('ROLLBACK'); return res.status(400).json({error:'Enter a reason for parking of at most 2,000 characters.'}); }
       if (row.status===status) { await client.query('COMMIT'); return res.json({submission:mapRow(row)}); }
       const {rows:[updated]} = await client.query('UPDATE launchpad_submissions SET status = $2, rejection_comment = $3, updated_at = NOW(), version = version + 1 WHERE id = $1 RETURNING *',[row.id,status,comment]);
       await client.query('INSERT INTO launchpad_status_history (submission_id,status,changed_by,changed_by_name,rejection_comment) SELECT $1,$2,id,name,$4 FROM users WHERE id = $3',[row.id,status,req.authUser.userId,comment]);

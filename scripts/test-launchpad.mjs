@@ -17,7 +17,7 @@ if(!['localhost','127.0.0.1','[::1]'].includes(host)) throw new Error('LaunchPad
 const pool=new pg.Pool(process.env.DATABASE_URL ? {connectionString:process.env.DATABASE_URL} : {host,port:Number(process.env.DB_PORT||5432),database:process.env.DB_NAME,user:process.env.DB_USER,password:process.env.DB_PASSWORD});
 const tag=randomUUID(); const users=[]; let server; let first; let second; let logs='';
 const base='http://127.0.0.1:3197/api';
-const answers={department:'Quality',managerName:'Test Manager',managerEmail:'manager@example.invalid',problem:'Patients miss appointments.',idea:'SMS appointment reminders.',values:['Innovative'],testMethod:'Pilot reminders in one clinic.',testTeam:'The reception team.',funding:95000,startDate:'2027-01-01',endDate:'2027-02-26',measurement:'No-show rate down 20%.',risks:'',owner:'Test Employee',managerSupported:false};
+const answers={department:'Quality',managerName:'Test Manager',managerEmail:'manager@example.invalid',problem:'Patients miss appointments.',idea:'SMS appointment reminders.',values:['Innovative'],implementationPlan:'Pilot reminders in one clinic with reception.',duration:'8 weeks',funding:95000,startDate:'2027-01-01',measurement:'No-show rate down 20%.',owner:'Test Employee',managerSupported:false,mdApproved:false};
 async function api(path,user=users[0],options={}) {
  const response=await fetch(base+path,{...options,headers:{'Content-Type':'application/json',...(user?{Authorization:`Bearer ${user.token}`}:{})}});
  const data=(response.headers.get('content-type')||'').includes('application/json')?await response.json():await response.text();
@@ -42,7 +42,7 @@ after(async()=>{
 });
 test('validates funding, malformed dates, required text, values and explicit support',()=>{
  assert.equal(validateSubmission(answers).managerSupported,false);
- for(const patch of [{funding:Number.MAX_SAFE_INTEGER},{funding:-1},{funding:'95000'},{funding:1.001},{startDate:'2027-02-30'},{endDate:'2026-01-01'},{values:[]},{values:['Unknown']},{managerSupported:'yes'},{managerEmail:'bad'},{problem:' '},{risks:'x'.repeat(5001)}]) assert.throws(()=>validateSubmission({...answers,...patch}));
+ for(const patch of [{funding:Number.MAX_SAFE_INTEGER},{funding:-1},{funding:'95000'},{funding:1.001},{startDate:'2027-02-30'},{values:[]},{values:['Unknown']},{managerSupported:'yes'},{mdApproved:undefined},{mdApproved:'yes'},{managerEmail:'bad'},{problem:' '},{implementationPlan:' '},{duration:' '},{measurement:'x'.repeat(5001)}]) assert.throws(()=>validateSubmission({...answers,...patch}));
  assert.equal(validateSubmission({...answers,funding:100000}).funding,100000);
 });
 test('uses safe filters and spreadsheet-safe CSV',()=>{
@@ -108,7 +108,7 @@ test('chart totals cover every page and retain all status counts while filtering
  const q='search='+encodeURIComponent(marker);
  const all=await api('/launchpad/review?'+q,users[1]);
  assert.equal(all.status,200);assert.equal(all.data.submissions.length,25);assert.equal(all.data.total,28);
- assert.deepEqual(all.data.statusSummary,{submitted:26,under_review:1,successful:1,rejected:0});
+ assert.deepEqual(all.data.statusSummary,{submitted:26,under_review:1,successful:1,under_implementation:0,concluded_pilot:0,rejected:0});
  assert.equal(all.data.entitySummary.reduce((sum,row)=>sum+row.count,0),28);
  assert.ok(all.data.entitySummary.some(row=>row.entity===null&&row.count===1));
  const filtered=await api('/launchpad/review?'+q+'&status=under_review',users[1]);
@@ -144,4 +144,26 @@ test('requires a rejection reason and exposes it only to the owner and reviewers
  const reopened=await api('/launchpad/submissions/'+id,users[0]);
  assert.equal(reopened.data.submission.rejectionComment,null);
  assert.equal(reopened.data.history.find(h=>h.status==='rejected').rejectionComment,rejectionComment);
+});
+
+test('new implementation stages persist and filter across dashboard and history',async()=>{
+ const created=await api('/launchpad/submissions',users[0],{method:'POST',body:JSON.stringify({answers})});
+ assert.equal(created.status,201);
+ assert.equal(created.data.submission.answers.duration,'8 weeks');
+ assert.equal(created.data.submission.answers.implementationPlan,answers.implementationPlan);
+ assert.equal(created.data.submission.answers.endDate,undefined);
+ const id=created.data.submission.id;
+ let version=1;
+ for(const status of ['under_review','successful','under_implementation','concluded_pilot']){
+  const result=await api('/launchpad/submissions/'+id+'/status',users[1],{method:'PATCH',body:JSON.stringify({status,version})});
+  assert.equal(result.status,200);version++;
+  const filtered=await api('/launchpad/review?status='+status+'&search='+created.data.submission.reference,users[1]);
+  assert.equal(filtered.data.total,1);
+ }
+ const detail=await api('/launchpad/submissions/'+id,users[0]);
+ assert.deepEqual(detail.data.history.map(h=>h.status),['submitted','under_review','successful','under_implementation','concluded_pilot']);
+ const csv=await api('/launchpad/review/export?search='+created.data.submission.reference,users[1]);
+ assert.match(csv.data,/Concluded Pilot/);
+ assert.match(csv.data,/8 weeks/);
+ assert.ok(csv.data.includes(answers.implementationPlan));
 });

@@ -1,10 +1,11 @@
-﻿import { useState } from 'react';
+import { launchpadStatusColors } from '@/lib/launchpadStatusColors';
+import { useState } from 'react';
 import { ChartPie, ChartColumn } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { LAUNCHPAD_STATUSES, type ReviewResult, type IdeaStatus } from '@/services/launchpadService';
 import { ENTITIES, entityName } from '@/lib/entities';
 
-const statusColors: Record<IdeaStatus, string> = { submitted: '#3b82f6', under_review: '#f59e0b', successful: '#10b981', rejected: '#f43f5e' };
+
 const entityColors = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#64748b'];
 const tooltipStyle = { background: 'hsl(var(--popover))', color: 'hsl(var(--popover-foreground))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 12 };
 type ChartRow = { name: string; count: number; color: string };
@@ -27,13 +28,13 @@ function ReviewChart({ id, title, description, rows, initialType }: {
     </div>
     <p className="text-xs text-muted-foreground mt-1 mb-4">{description}</p>
     {total ? <>
-      <div id={id + '-plot'} className="h-56" role="img" aria-label={type + ' chart. ' + rows.map(row => `${row.name}: ${row.count}`).join(', ')}>
+      <div id={id + '-plot'} className="h-64" role="img" aria-label={type + ' chart. ' + rows.map(row => `${row.name}: ${row.count}`).join(', ')}>
         <ResponsiveContainer width="100%" height="100%">
           {type === 'bar' ?
             <BarChart data={rows} layout="vertical" margin={{ top: 5, right: 20, bottom: 0, left: 0 }} accessibilityLayer>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
               <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+              <YAxis dataKey="name" type="category" width={125} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'hsl(var(--muted) / .5)' }} />
               <Bar dataKey="count" name="Ideas" barSize={22} radius={[0, 5, 5, 0]} isAnimationActive={false}>{rows.map(row => <Cell key={row.name} fill={row.color} />)}</Bar>
             </BarChart> :
@@ -49,7 +50,7 @@ function ReviewChart({ id, title, description, rows, initialType }: {
 }
 
 export function LaunchpadReviewCharts({ data, status }: { data: ReviewResult; status: string }) {
-  const statuses = Object.entries(LAUNCHPAD_STATUSES).map(([key, name]) => ({ name, count: data.statusSummary[key as IdeaStatus], color: statusColors[key as IdeaStatus] }));
+  const statuses = Object.entries(LAUNCHPAD_STATUSES).map(([key, name]) => ({ name, count: data.statusSummary[key as IdeaStatus], color: launchpadStatusColors[key as IdeaStatus].chart }));
   const entities = data.entitySummary.map(row => {
     const index = ENTITIES.findIndex(entity => entity.id === row.entity);
     return { name: entityName(row.entity), count: row.count, color: entityColors[index >= 0 ? index % entityColors.length : entityColors.length - 1] };

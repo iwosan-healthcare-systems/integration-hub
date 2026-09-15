@@ -1,3 +1,4 @@
+import { launchpadStatusColors } from '@/lib/launchpadStatusColors';
 import { Seo } from '@/components/Seo';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -10,10 +11,12 @@ import { LaunchpadReveal } from '@/components/launchpad/LaunchpadMotion';
 import { getMyIdeas, type IdeaStatus } from '@/services/launchpadService';
 
 const statusStyle = {
-  submitted: { icon: Send, color: 'text-blue-600 dark:text-blue-300', background: 'bg-blue-500/10', border: 'border-l-blue-400', label: 'Submitted' },
-  under_review: { icon: Clock3, color: 'text-amber-600 dark:text-amber-300', background: 'bg-amber-500/10', border: 'border-l-amber-400', label: 'Under Review' },
-  successful: { icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-300', background: 'bg-emerald-500/10', border: 'border-l-emerald-400', label: 'Successful' },
-  rejected: { icon: CircleX, color: 'text-rose-600 dark:text-rose-300', background: 'bg-rose-500/10', border: 'border-l-rose-400', label: 'Rejected' },
+  submitted: { icon: Send, color: launchpadStatusColors.submitted.text, background: launchpadStatusColors.submitted.background, border: launchpadStatusColors.submitted.border, label: 'Idea Received' },
+  under_review: { icon: Clock3, color: launchpadStatusColors.under_review.text, background: launchpadStatusColors.under_review.background, border: launchpadStatusColors.under_review.border, label: 'Under MD Review' },
+  successful: { icon: CheckCircle2, color: launchpadStatusColors.successful.text, background: launchpadStatusColors.successful.background, border: launchpadStatusColors.successful.border, label: 'MD Approved' },
+  under_implementation: { icon: Lightbulb, color: launchpadStatusColors.under_implementation.text, background: launchpadStatusColors.under_implementation.background, border: launchpadStatusColors.under_implementation.border, label: 'Under Implementation' },
+  concluded_pilot: { icon: CheckCircle2, color: launchpadStatusColors.concluded_pilot.text, background: launchpadStatusColors.concluded_pilot.background, border: launchpadStatusColors.concluded_pilot.border, label: 'Concluded Pilot' },
+  rejected: { icon: CircleX, color: launchpadStatusColors.rejected.text, background: launchpadStatusColors.rejected.background, border: launchpadStatusColors.rejected.border, label: 'Parked' },
 };
 
 export default function LaunchpadHistoryPage() {
@@ -38,9 +41,9 @@ export default function LaunchpadHistoryPage() {
     {result.error && <LoadError error={result.error} retry={() => result.refetch()} />}
 
     {result.data && <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{(Object.keys(statusStyle) as IdeaStatus[]).map((status, i) => {
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">{(Object.keys(statusStyle) as IdeaStatus[]).map((status, i) => {
         const style = statusStyle[status];
-        return <LaunchpadReveal key={status} delay={i * 55}><button type="button" aria-pressed={statusFilter === status} aria-controls="idea-collection" aria-label={`Filter by ${style.label}`} onClick={() => setStatusFilter(current => current === status ? null : status)} className={`w-full rounded-2xl border p-4 sm:p-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${statusFilter === status ? 'border-accent bg-accent/5 ring-2 ring-accent/30' : 'bg-card hover:border-accent/50 hover:bg-accent/5'}`}><div className="flex justify-between items-center gap-2"><span className={`inline-flex rounded-xl p-2.5 ${style.background} ${style.color}`}><style.icon className="h-4 w-4" /></span><span className="text-3xl font-bold">{ideas.filter(s => s.status === status).length}</span></div><p className="text-xs text-muted-foreground mt-4">{style.label}</p></button></LaunchpadReveal>;
+        return <LaunchpadReveal key={status} delay={i * 55}><button type="button" aria-pressed={statusFilter === status} aria-controls="idea-collection" aria-label={`Filter by ${style.label}`} onClick={() => setStatusFilter(current => current === status ? null : status)} className={`w-full rounded-2xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${statusFilter === status ? launchpadStatusColors[status].active : launchpadStatusColors[status].card}`}><div className="flex justify-between items-center gap-2"><span className={`inline-flex rounded-xl p-2.5 ${style.background} ${style.color}`}><style.icon className="h-4 w-4" /></span><span className="text-3xl font-bold">{ideas.filter(s => s.status === status).length}</span></div><p className="text-xs text-muted-foreground mt-4">{style.label}</p></button></LaunchpadReveal>;
       })}</div>
       {ideas.length === 0 && !statusFilter ? <LaunchpadReveal><div id="idea-collection" className="relative overflow-hidden rounded-3xl border border-dashed border-accent/30 bg-gradient-to-b from-accent/5 to-card p-8 sm:p-14 text-center space-y-5"><span className="inline-flex rounded-3xl bg-accent/10 p-5 ring-8 ring-accent/5"><Lightbulb className="h-10 w-10 text-accent" /></span><h2 className="text-2xl font-bold">A small idea can start something good.</h2><p className="text-muted-foreground max-w-md mx-auto leading-relaxed">You haven’t submitted an idea yet. Think of one thing that could make the day better for your patients or colleagues.</p><SubmitLink /></div></LaunchpadReveal> : <section id="idea-collection" className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Your idea collection</h2><div className="flex flex-wrap items-center gap-2"><span role="status" className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">{statusFilter ? `${statusStyle[statusFilter].label}: ` : ''}{filteredIdeas.length} {filteredIdeas.length === 1 ? 'idea' : 'ideas'}</span>{statusFilter && <Button size="sm" variant="ghost" onClick={() => setStatusFilter(null)}>Show all</Button>}</div></div>
