@@ -1,6 +1,6 @@
 # LaunchPad
 
-Routes: `/launchpad` (overview), `/launchpad/submit` (shareable form link), `/launchpad/history` (own submissions), `/launchpad/review` (permitted regular users), `/admin/launchpad` (admin/manager review dashboard).
+Routes: `/launchpad` (overview), `/launchpad/your_idea` (shareable form link), `/launchpad/history` (own submissions), `/launchpad/review` (permitted regular users), `/admin/launchpad` (admin/manager review dashboard).
 
 ## Enable on a deployed environment
 

@@ -62,6 +62,6 @@ export default function LaunchpadPage() {
       <p className="text-xs text-muted-foreground leading-relaxed">Amounts are illustrative. Every idea is capped at ₦100,000. The pilot programme funds up to four ideas per entity; you can submit more than one idea.</p>
     </section>
 
-    <LaunchpadReveal><section className="relative overflow-hidden rounded-3xl bg-primary text-primary-foreground p-7 sm:p-9 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"><div><p className="text-xs uppercase tracking-widest text-cyan-200 mb-3">Make your first move</p><h2 className="text-2xl font-bold">What would you change?</h2><p className="text-white/75 mt-2">One simple form is all it takes to start.</p></div><div className="rounded-xl bg-white/10 p-2"><SubmitLink /></div></section></LaunchpadReveal>
+    <LaunchpadReveal><section className="relative overflow-hidden rounded-3xl bg-primary text-primary-foreground p-7 sm:p-9 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"><div><p className="text-xs uppercase tracking-widest text-cyan-200 mb-3">Make your first move</p><h2 className="text-2xl font-bold">What would you change?</h2><p className="text-white/75 mt-2">One simple form is all it takes to start.</p></div><div className="shrink-0"><SubmitLink /></div></section></LaunchpadReveal>
   </LaunchpadShell>;
 }

@@ -56,4 +56,4 @@ export function IdeaDetails({ id, onClose }: { id: number | null; onClose: () =>
     </div>}
   </DialogContent></Dialog>;
 }
-export function SubmitLink() { return <Button asChild size="lg" className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-blue-500 motion-safe:transition-all motion-safe:hover:-translate-y-0.5"><Link to="/launchpad/submit">Submit an idea <ArrowUpRight className="ml-2 h-4 w-4" /></Link></Button>; }
+export function SubmitLink() { return <Button asChild size="lg" className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-blue-500 motion-safe:transition-all motion-safe:hover:-translate-y-0.5"><Link to="/launchpad/your_idea">Submit an idea <ArrowUpRight className="ml-2 h-4 w-4" /></Link></Button>; }

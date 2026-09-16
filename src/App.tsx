@@ -155,7 +155,8 @@ const App = () => (
                 <Route path="/leadership" element={<LeadershipPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/launchpad" element={<LaunchpadPage />} />
-                <Route path="/launchpad/submit" element={<LaunchpadFormPage />} />
+                <Route path="/launchpad/your_idea" element={<LaunchpadFormPage />} />
+                <Route path="/launchpad/submit" element={<Navigate to="/launchpad/your_idea" replace />} />
                 <Route path="/launchpad/history" element={<LaunchpadHistoryPage />} />
                 <Route path="/launchpad/review" element={<LaunchpadReviewPage />} />
                 <Route path="/learning" element={<LearningCentrePage />} />

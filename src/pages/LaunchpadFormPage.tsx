@@ -48,7 +48,7 @@ export default function LaunchpadFormPage() {
     catch(e) { setError(e instanceof Error ? e.message : 'Unable to submit. Please try again.'); requestAnimationFrame(()=>errorRef.current?.focus()); }
     finally { sending.current=false; setBusy(false); }
   };
-  return <LaunchpadShell><Seo path="/launchpad/submit" title="Submit an idea | LaunchPad" description="Share your idea for a better Iwosan." /><div className="max-w-3xl mx-auto space-y-6">
+  return <LaunchpadShell><Seo path="/launchpad/your_idea" title="Submit an idea | LaunchPad" description="Share your idea for a better Iwosan." /><div className="max-w-3xl mx-auto space-y-6">
     <header className="lp-enter relative overflow-hidden rounded-3xl border border-accent/15 bg-gradient-to-br from-accent/10 via-card to-card p-6 sm:p-8 space-y-4">
       <span className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent"><Sparkles className="h-4 w-4" /> A better Iwosan starts with you</span>
       <h1 className="text-3xl sm:text-4xl font-bold leading-tight">Give your idea<br />a starting point.</h1>
