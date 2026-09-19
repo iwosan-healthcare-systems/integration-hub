@@ -15,7 +15,7 @@ describe('Implementing Your Idea form', () => {
     container.innerHTML = html;
     const section = container.querySelector('#idea-section-4')!;
     expect(section.textContent).toContain('Implementing Your Idea');
-    expect(section.textContent).toContain('Test your ideas through a pilot, with clear measures of success');
+    expect(section.textContent).toContain('Implement your ideas through a project, with clear measures of success');
     expect([...section.querySelectorAll('input,textarea')].map(input => input.getAttribute('name'))).toEqual(['implementationPlan','measurement','startDate','duration','funding','risks']);
     expect(section.querySelector('[name="duration"]')?.getAttribute('type')).not.toBe('date');
     expect(section.querySelector('label[for="funding"]')?.textContent).toContain('(The standard funding limit is N100,000 per idea)');

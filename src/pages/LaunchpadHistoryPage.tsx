@@ -15,7 +15,7 @@ const statusStyle = {
   under_review: { icon: Clock3, color: launchpadStatusColors.under_review.text, background: launchpadStatusColors.under_review.background, border: launchpadStatusColors.under_review.border, label: 'Under MD Review' },
   successful: { icon: CheckCircle2, color: launchpadStatusColors.successful.text, background: launchpadStatusColors.successful.background, border: launchpadStatusColors.successful.border, label: 'MD Approved' },
   under_implementation: { icon: Lightbulb, color: launchpadStatusColors.under_implementation.text, background: launchpadStatusColors.under_implementation.background, border: launchpadStatusColors.under_implementation.border, label: 'Under Implementation' },
-  concluded_pilot: { icon: CheckCircle2, color: launchpadStatusColors.concluded_pilot.text, background: launchpadStatusColors.concluded_pilot.background, border: launchpadStatusColors.concluded_pilot.border, label: 'Concluded Pilot' },
+  concluded_pilot: { icon: CheckCircle2, color: launchpadStatusColors.concluded_pilot.text, background: launchpadStatusColors.concluded_pilot.background, border: launchpadStatusColors.concluded_pilot.border, label: 'Completed implementation' },
   rejected: { icon: CircleX, color: launchpadStatusColors.rejected.text, background: launchpadStatusColors.rejected.background, border: launchpadStatusColors.rejected.border, label: 'Parked' },
 };
 

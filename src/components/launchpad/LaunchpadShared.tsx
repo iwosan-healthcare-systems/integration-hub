@@ -44,16 +44,16 @@ export function IdeaDetails({ id, onClose }: { id: number | null; onClose: () =>
         ['When would you like to start working on idea?',a.startDate],
         ['How much time do you think it will take to achieve this objective?',a.duration || 'Not provided'],
         ['How much funding will you need? (The standard funding limit is N100,000 per idea)',money(a.funding)],
-        ['What could prevent the pilot from working?',a.risks || 'Not provided']
+        ['What could prevent your project/solution from working?',a.risks || 'Not provided']
       ] : [
         ...(a.testPlan ? [['Where and with whom will you test it? (original response)',a.testPlan]] : []),
         ...(a.testMethod ? [['How will you test out this idea? (original response)',a.testMethod]] : []),
         ...(a.testTeam ? [['Who will you be working with to test out this idea? (original response)',a.testTeam]] : []),
-        ['Funding requested',money(a.funding)],['Pilot dates',`${a.startDate} to ${a.endDate || 'Not provided'}`],
-        ['How will you know it worked?',a.measurement],['What could prevent the pilot from working?',a.risks || 'Not provided']
-      ]),['Pilot owner',a.owner],['Line manager support',a.managerSupported ? 'Yes' : 'No'],['Has your MD approved this idea?',typeof a.mdApproved === 'boolean' ? (a.mdApproved ? 'Yes' : 'No') : 'Not collected on the original form']].map(([label,value])=><div key={label}><dt className="font-semibold text-sm mb-1">{label}</dt><dd className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{value}</dd></div>)}</dl>
+        ['Funding requested',money(a.funding)],['Project dates',`${a.startDate} to ${a.endDate || 'Not provided'}`],
+        ['How will you know it worked?',a.measurement],['What could prevent your project/solution from working?',a.risks || 'Not provided']
+      ]),['Project owner',a.owner],['Line manager support',a.managerSupported ? 'Yes' : 'No'],['Has your MD approved this idea?',typeof a.mdApproved === 'boolean' ? (a.mdApproved ? 'Yes' : 'No') : 'Not collected on the original form']].map(([label,value])=><div key={label}><dt className="font-semibold text-sm mb-1">{label}</dt><dd className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{value}</dd></div>)}</dl>
       <section className="border-t pt-4"><h3 className="font-semibold mb-3">Status history</h3><ol className="space-y-3">{detail.data.history.map((h,i)=><li key={i} className="flex flex-wrap gap-3 items-center text-sm"><StatusBadge status={h.status}/><span>{dateTime(h.changedAt)}</span>{h.rejectionComment && <p className="w-full whitespace-pre-wrap break-words text-muted-foreground">{h.rejectionComment}</p>}</li>)}</ol></section>
     </div>}
   </DialogContent></Dialog>;
 }
-export function SubmitLink() { return <Button asChild size="lg" className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-blue-500 motion-safe:transition-all motion-safe:hover:-translate-y-0.5"><Link to="/launchpad/your_idea">Submit an idea <ArrowUpRight className="ml-2 h-4 w-4" /></Link></Button>; }
+export function SubmitLink() { return <Button asChild size="lg" className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-blue-500 dark:bg-none dark:bg-cyan-100 dark:text-slate-950 dark:shadow-cyan-950/20 dark:hover:bg-cyan-200 motion-safe:transition-all motion-safe:hover:-translate-y-0.5"><Link to="/launchpad/your_idea">Submit an idea <ArrowUpRight className="ml-2 h-4 w-4" /></Link></Button>; }

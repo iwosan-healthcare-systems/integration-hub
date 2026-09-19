@@ -17,7 +17,7 @@ if(!['localhost','127.0.0.1','[::1]'].includes(host)) throw new Error('LaunchPad
 const pool=new pg.Pool(process.env.DATABASE_URL ? {connectionString:process.env.DATABASE_URL} : {host,port:Number(process.env.DB_PORT||5432),database:process.env.DB_NAME,user:process.env.DB_USER,password:process.env.DB_PASSWORD});
 const tag=randomUUID(); const users=[]; let server; let first; let second; let logs='';
 const base='http://127.0.0.1:3197/api';
-const answers={department:'Quality',managerName:'Test Manager',managerEmail:'manager@example.invalid',problem:'Patients miss appointments.',idea:'SMS appointment reminders.',values:['Innovative'],implementationPlan:'Pilot reminders in one clinic with reception.',duration:'8 weeks',funding:95000,startDate:'2027-01-01',measurement:'No-show rate down 20%.',owner:'Test Employee',managerSupported:false,mdApproved:false};
+const answers={department:'Quality',managerName:'Test Manager',managerEmail:'manager@example.invalid',problem:'Patients miss appointments.',idea:'SMS appointment reminders.',values:['Innovative'],implementationPlan:'Implement reminders in one clinic with reception.',duration:'8 weeks',funding:95000,startDate:'2027-01-01',measurement:'No-show rate down 20%.',owner:'Test Employee',managerSupported:false,mdApproved:false};
 async function api(path,user=users[0],options={}) {
  const response=await fetch(base+path,{...options,headers:{'Content-Type':'application/json',...(user?{Authorization:`Bearer ${user.token}`}:{})}});
  const data=(response.headers.get('content-type')||'').includes('application/json')?await response.json():await response.text();
@@ -134,7 +134,7 @@ test('requires a rejection reason and exposes it only to the owner and reviewers
  const id=created.data.submission.id;
  const update=body=>api('/launchpad/submissions/'+id+'/status',users[1],{method:'PATCH',body:JSON.stringify(body)});
  for(const rejectionComment of [undefined,' ', 'x'.repeat(2001)]) assert.equal((await update({status:'rejected',version:1,rejectionComment})).status,400);
- const rejectionComment='The pilot needs a clearer measurement plan.';
+ const rejectionComment='The project needs a clearer measurement plan.';
  assert.equal((await update({status:'rejected',version:1,rejectionComment})).status,200);
  const detail=await api('/launchpad/submissions/'+id,users[0]);
  assert.equal(detail.data.submission.rejectionComment,rejectionComment);
@@ -163,7 +163,7 @@ test('new implementation stages persist and filter across dashboard and history'
  const detail=await api('/launchpad/submissions/'+id,users[0]);
  assert.deepEqual(detail.data.history.map(h=>h.status),['submitted','under_review','successful','under_implementation','concluded_pilot']);
  const csv=await api('/launchpad/review/export?search='+created.data.submission.reference,users[1]);
- assert.match(csv.data,/Concluded Pilot/);
+ assert.match(csv.data,/Completed implementation/);
  assert.match(csv.data,/8 weeks/);
  assert.ok(csv.data.includes(answers.implementationPlan));
 });

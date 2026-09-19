@@ -1,6 +1,6 @@
 import { getStoredToken } from './authService';
 export const LAUNCHPAD_VALUES = ['Empathetic', 'Ethical', 'Knowledge-driven', 'Innovative', 'Accessible'];
-export const LAUNCHPAD_STATUSES = { submitted: 'Idea Received', under_review: 'Under MD Review', successful: 'MD Approved', under_implementation: 'Under Implementation', concluded_pilot: 'Concluded Pilot', rejected: 'Parked' } as const;
+export const LAUNCHPAD_STATUSES = { submitted: 'Idea Received', under_review: 'Under MD Review', successful: 'MD Approved', under_implementation: 'Under Implementation', concluded_pilot: 'Completed implementation', rejected: 'Parked' } as const;
 export type IdeaStatus = keyof typeof LAUNCHPAD_STATUSES;
 export interface IdeaAnswers {
   department: string; managerName: string; managerEmail: string; problem: string; idea: string;
