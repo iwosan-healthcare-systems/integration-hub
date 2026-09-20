@@ -1,5 +1,5 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
-import { ArrowRight, Heart, Stethoscope, BookOpen, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowRight, Heart, Stethoscope, BookOpen, ChevronRight, Sparkles, Rocket, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import heroBannerMobileImg from "@/assets/hero-hub-mobile.webp";
@@ -124,6 +124,24 @@ const Index = () => {
                 </Link>
               </div>
             </AnimateOnScroll>
+          </div>
+        </div>
+      </section>
+
+      {/* LaunchPad announcement */}
+      <section aria-labelledby="launchpad-announcement-title" className="bg-background px-6 py-7 sm:px-8 lg:px-16">
+        <div className="group relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-cyan-500/25 bg-gradient-to-br from-cyan-50 via-background to-blue-50 p-5 sm:p-7 dark:from-cyan-950/40 dark:via-card dark:to-blue-950/30">
+          <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full border-[28px] border-cyan-500/5" />
+          <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-4">
+              <span className="hidden shrink-0 rounded-2xl bg-cyan-500/10 p-4 text-cyan-700 ring-1 ring-cyan-500/20 motion-safe:transition-transform motion-safe:group-hover:-rotate-6 dark:text-cyan-300 sm:inline-flex"><Rocket className="h-7 w-7" aria-hidden="true" /></span>
+              <div className="max-w-2xl">
+                <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-600/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.16em] text-cyan-800 dark:text-cyan-200"><span className="h-1.5 w-1.5 rounded-full bg-cyan-500 motion-safe:animate-pulse" aria-hidden="true" />New on the hub</p>
+                <h2 id="launchpad-announcement-title" className="text-xl font-bold leading-tight sm:text-2xl">Meet LaunchPad. Your idea could make the difference.</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">See a better way to care, collaborate or work? Share your idea, find support and take the first step towards making it happen.</p>
+              </div>
+            </div>
+            <Link to="/launchpad" className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-cyan-700 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-900/10 transition-colors hover:bg-cyan-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-all motion-safe:hover:-translate-y-0.5 dark:bg-cyan-200 dark:text-slate-950 dark:hover:bg-cyan-100 md:self-center">Discover LaunchPad<ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link>
           </div>
         </div>
       </section>
