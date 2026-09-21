@@ -400,3 +400,23 @@ input:-webkit-autofill:active {
 .link-underline:hover::after {
   width: 100%;
 }
+
+
+/* Suspended homepage announcement, anchored just below the header. */
+.hub-launchpad-hanger {
+  transform-origin: 50% 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hub-launchpad-hanger {
+    animation: hub-launchpad-swing 4.8s ease-in-out infinite;
+  }
+  .hub-launchpad-hanger:hover,
+  .hub-launchpad-hanger:focus-within,
+  .hub-launchpad-hanger[data-paused="true"] {
+    animation-play-state: paused;
+  }
+}
+@keyframes hub-launchpad-swing {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50% { transform: rotate(1.5deg); }
+}

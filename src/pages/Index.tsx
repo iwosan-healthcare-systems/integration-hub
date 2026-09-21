@@ -1,5 +1,5 @@
 import { AnimateOnScroll } from "@/hooks/useScrollAnimation";
-import { ArrowRight, Heart, Stethoscope, BookOpen, ChevronRight, Sparkles, Rocket, ArrowUpRight } from "lucide-react";
+import { ArrowRight, Heart, Stethoscope, BookOpen, ChevronRight, Sparkles, Rocket, ArrowUpRight, Pause, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import heroBannerMobileImg from "@/assets/hero-hub-mobile.webp";
@@ -49,6 +49,7 @@ const faqs = [
 ];
 
 const Index = () => {
+  const [hangerPaused, setHangerPaused] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
   const { count: heroCount, fullyTyped: heroFullyTyped } = useTypewriterLoop(HERO_FULL_TEXT);
@@ -81,7 +82,21 @@ const Index = () => {
           <img src={heroBannerDesktopImg} alt="" className="hidden md:block w-full h-full object-cover object-center" fetchPriority="high" loading="eager" decoding="async" />
           <div className="absolute inset-0 bg-iwosan-navy/75" />
         </div>
-        <div className="relative z-10 w-full px-6 sm:px-8 md:px-10 lg:px-16 py-16 md:py-20">
+        <aside aria-label="Discover LaunchPad" className="absolute inset-x-0 top-0 z-20 flex justify-center px-6">
+          <div className="hub-launchpad-hanger relative w-full max-w-2xl pt-7 sm:pt-8" data-paused={hangerPaused}>
+            <span aria-hidden="true" className="absolute left-[12%] top-0 h-9 w-px bg-cyan-100/80" />
+            <span aria-hidden="true" className="absolute right-[12%] top-0 h-9 w-px bg-cyan-100/80" />
+            <div className="relative flex items-center gap-3 rounded-2xl border border-cyan-200 bg-gradient-to-r from-cyan-50 to-white p-3 shadow-xl shadow-slate-950/25 dark:border-cyan-700 dark:from-slate-900 dark:to-cyan-950 sm:gap-4 sm:px-5">
+              <span className="hidden rounded-xl bg-cyan-500/10 p-2.5 text-cyan-700 dark:text-cyan-200 sm:inline-flex"><Rocket className="h-6 w-6" aria-hidden="true" /></span>
+              <Link to="/launchpad" className="group flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">
+                <span className="min-w-0"><span className="block text-[9px] font-bold uppercase tracking-[.16em] text-cyan-700 dark:text-cyan-300">New on the hub</span><span className="block text-sm font-bold text-slate-900 dark:text-white sm:text-lg">Meet LaunchPad. Make your idea happen.</span><span className="hidden text-xs text-slate-600 dark:text-slate-300 sm:block">Small ideas. Real improvements. Your next step starts here.</span></span>
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-cyan-700 px-3 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-cyan-800 dark:bg-cyan-200 dark:text-slate-950 dark:group-hover:bg-cyan-100"><span className="hidden sm:inline">Discover</span><ArrowUpRight className="h-4 w-4" aria-hidden="true" /><span className="sr-only sm:hidden">Discover LaunchPad</span></span>
+              </Link>
+              <button type="button" onClick={()=>setHangerPaused(value=>!value)} aria-label={hangerPaused ? 'Resume announcement animation' : 'Pause announcement animation'} aria-pressed={hangerPaused} className="rounded-full p-2 text-slate-500 hover:bg-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-slate-300 dark:hover:bg-cyan-900 motion-reduce:hidden">{hangerPaused ? <Play className="h-3 w-3" aria-hidden="true" /> : <Pause className="h-3 w-3" aria-hidden="true" />}</button>
+            </div>
+          </div>
+        </aside>
+        <div className="relative z-10 w-full px-6 sm:px-8 md:px-10 lg:px-16 pb-16 pt-40 md:pb-20 md:pt-44">
           <div className="max-w-3xl">
             <AnimateOnScroll>
               <p className="inline-flex items-center gap-2 font-sans uppercase tracking-[0.2em] text-white text-sm sm:text-base font-bold mb-5">
@@ -124,24 +139,6 @@ const Index = () => {
                 </Link>
               </div>
             </AnimateOnScroll>
-          </div>
-        </div>
-      </section>
-
-      {/* LaunchPad announcement */}
-      <section aria-labelledby="launchpad-announcement-title" className="bg-background px-6 py-7 sm:px-8 lg:px-16">
-        <div className="group relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-cyan-500/25 bg-gradient-to-br from-cyan-50 via-background to-blue-50 p-5 sm:p-7 dark:from-cyan-950/40 dark:via-card dark:to-blue-950/30">
-          <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full border-[28px] border-cyan-500/5" />
-          <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-4">
-              <span className="hidden shrink-0 rounded-2xl bg-cyan-500/10 p-4 text-cyan-700 ring-1 ring-cyan-500/20 motion-safe:transition-transform motion-safe:group-hover:-rotate-6 dark:text-cyan-300 sm:inline-flex"><Rocket className="h-7 w-7" aria-hidden="true" /></span>
-              <div className="max-w-2xl">
-                <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-600/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.16em] text-cyan-800 dark:text-cyan-200"><span className="h-1.5 w-1.5 rounded-full bg-cyan-500 motion-safe:animate-pulse" aria-hidden="true" />New on the hub</p>
-                <h2 id="launchpad-announcement-title" className="text-xl font-bold leading-tight sm:text-2xl">Meet LaunchPad. Your idea could make the difference.</h2>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">See a better way to care, collaborate or work? Share your idea, find support and take the first step towards making it happen.</p>
-              </div>
-            </div>
-            <Link to="/launchpad" className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-cyan-700 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-900/10 transition-colors hover:bg-cyan-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-safe:transition-all motion-safe:hover:-translate-y-0.5 dark:bg-cyan-200 dark:text-slate-950 dark:hover:bg-cyan-100 md:self-center">Discover LaunchPad<ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link>
           </div>
         </div>
       </section>
